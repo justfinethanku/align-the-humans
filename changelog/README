@@ -1,0 +1,121 @@
+# AI Assessment Changelog Index
+
+This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
+
+**Total Changelogs: 12**
+
+
+### [2025-11-10-0407 - alignment-flow-stabilization](./2025-11-10-0407-alignment-flow-stabilization.md)
+**Keywords:** [ALIGNMENT] [AI] [SUPABASE] [UI] [PDF]
+Stabilized template persistence, the clarity/questionnaire flow, dashboard status sourcing, analysis auto-run, and document exports (now real PDFs) across the alignment workflow.
+
+### [2025-11-10-0218 - use-cases-component](./2025-11-10-0218-use-cases-component.md)
+**Keywords:** [COMPONENT] [HOMEPAGE] [UI] [ACCESSIBILITY] [RESPONSIVE]
+Built UseCases component displaying 4 partnership scenario cards with responsive grid, hover effects, keyboard navigation, and full accessibility support.
+
+### [2025-11-10-0218 - testimonials-component](./2025-11-10-0218-testimonials-component.md)
+**Keywords:** [COMPONENT] [HOMEPAGE] [UI] [TESTIMONIALS]
+Created testimonials section component with user quotes and avatars.
+
+### [2025-11-10-0217 - hero-section-component](./2025-11-10-0217-hero-section-component.md)
+**Keywords:** [COMPONENT] [HOMEPAGE] [UI] [HERO]
+Implemented hero section with heading, description, and CTA button.
+
+### [2025-11-10-0212 - authentication-pages](./2025-11-10-0212-authentication-pages.md)
+**Keywords:** [AUTH] [PAGES] [SUPABASE] [FORMS]
+Built login and signup pages with Supabase authentication integration.
+
+### [2025-11-10-0205 - typescript-types-supabase-clients](./2025-11-10-0205-typescript-types-supabase-clients.md)
+**Keywords:** [TYPESCRIPT] [SUPABASE] [TYPES] [CLIENTS]
+Generated TypeScript types from Supabase schema and configured server/client utilities.
+
+### [2025-11-10-0204 - nextjs-project-initialization](./2025-11-10-0204-nextjs-project-initialization.md)
+**Keywords:** [NEXTJS] [SETUP] [INITIALIZATION]
+Initialized Next.js 14 project with TypeScript and core dependencies.
+
+### [2025-11-10-0204 - config-utilities-error-handling](./2025-11-10-0204-config-utilities-error-handling.md)
+**Keywords:** [CONFIG] [UTILITIES] [ERROR-HANDLING]
+Set up project configuration, utilities, and error handling patterns.
+
+### [2025-11-10-0202 - shadcn-ui-design-system](./2025-11-10-0202-shadcn-ui-design-system.md)
+**Keywords:** [UI] [SHADCN] [COMPONENTS] [DESIGN-SYSTEM]
+Installed and configured shadcn/ui component library with design system integration.
+
+### [2025-11-10-0156 - feature-builder-subagent-devtools-integration](./2025-11-10-0156-feature-builder-subagent-devtools-integration.md)
+**Keywords:** [SUBAGENT] [ORCHESTRATION] [DEVTOOLS] [AUTOMATION] [PLANNING]
+Created autonomous feature-builder sub-agent with Chrome DevTools validation, mandatory changelog documentation, and 88% token reduction strategy. Includes complete reusable template for future projects.
+
+### [2025-11-10-0127 - design-system-assets](./2025-11-10-0127-design-system-assets.md)
+**Keywords:** [DESIGN] [TAILWIND] [STYLES] [PLANNING]
+Checked in the reusable Tailwind preset + CSS utilities under `design-system/` and updated `plan_a.md` with import instructions.
+
+### [2025-11-10-0122 - design-source-sync](./2025-11-10-0122-design-source-sync.md)
+**Keywords:** [PLANNING] [DESIGN] [TAILWIND] [DOCS]
+Captured how to translate `page_design_templates` code/html assets into React components and linked each page in `plan_a.md` to its canonical template.
+
+### [2025-11-10-0116 - status-mapping-plan-update](./2025-11-10-0116-status-mapping-plan-update.md)
+**Keywords:** [PLANNING] [SUPABASE] [STATUS] [DOCS]
+Documented the UI badge to Supabase status mapping and synced `plan_a.md` to rely on the derived `ui_status` view.
+
+### [2025-11-10-0111 - ai-template-api-contracts](./2025-11-10-0111-ai-template-api-contracts.md)
+**Keywords:** [PLANNING] [AI] [API] [NEXTJS]
+Documented AI-generated question schema/persistence strategy and formalized request/response contracts for all planned alignment endpoints.
+
+### [2025-11-10-0032 - supabase database setup](./2025-11-10-0032-supabase-database-setup.md)
+**Keywords:** [DATABASE] [SUPABASE] [RLS] [MIGRATIONS] [REALTIME] [INFRASTRUCTURE]
+Comprehensive Supabase database setup with 8 tables, RLS policies, realtime triggers, and production-ready Next.js examples.
+
+### [yyyy-mm-dd-hhmm - example entry](./yyyy-mm-dd-hhmm-example-entry.md)
+**Keywords:** [KEYWORD] [KEYWORD] [KEYWORD]
+High-level non-verbose succinct description of that's in the session summary.
+
+---
+
+## Keyword Index
+
+- **[ACCESSIBILITY]** (1): 2025-11-10-0218-use-cases-component
+- **[AI]** (2): 2025-11-10-0111-ai-template-api-contracts, 2025-11-10-0407-alignment-flow-stabilization
+- **[ALIGNMENT]** (1): 2025-11-10-0407-alignment-flow-stabilization
+- **[API]** (1): 2025-11-10-0111-ai-template-api-contracts
+- **[AUTH]** (1): 2025-11-10-0212-authentication-pages
+- **[AUTOMATION]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
+- **[CLIENTS]** (1): 2025-11-10-0205-typescript-types-supabase-clients
+- **[COMPONENT]** (3): 2025-11-10-0217-hero-section-component, 2025-11-10-0218-testimonials-component, 2025-11-10-0218-use-cases-component
+- **[COMPONENTS]** (1): 2025-11-10-0202-shadcn-ui-design-system
+- **[CONFIG]** (1): 2025-11-10-0204-config-utilities-error-handling
+- **[DATABASE]** (1): 2025-11-10-0032-supabase-database-setup
+- **[DESIGN]** (2): 2025-11-10-0122-design-source-sync, 2025-11-10-0127-design-system-assets
+- **[DESIGN-SYSTEM]** (1): 2025-11-10-0202-shadcn-ui-design-system
+- **[DEVTOOLS]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
+- **[DOCS]** (2): 2025-11-10-0116-status-mapping-plan-update, 2025-11-10-0122-design-source-sync
+- **[ERROR-HANDLING]** (1): 2025-11-10-0204-config-utilities-error-handling
+- **[FORMS]** (1): 2025-11-10-0212-authentication-pages
+- **[HERO]** (1): 2025-11-10-0217-hero-section-component
+- **[HOMEPAGE]** (3): 2025-11-10-0217-hero-section-component, 2025-11-10-0218-testimonials-component, 2025-11-10-0218-use-cases-component
+- **[INFRASTRUCTURE]** (1): 2025-11-10-0032-supabase-database-setup
+- **[INITIALIZATION]** (1): 2025-11-10-0204-nextjs-project-initialization
+- **[MIGRATIONS]** (1): 2025-11-10-0032-supabase-database-setup
+- **[NEXTJS]** (2): 2025-11-10-0111-ai-template-api-contracts, 2025-11-10-0204-nextjs-project-initialization
+- **[ORCHESTRATION]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
+- **[PDF]** (1): 2025-11-10-0407-alignment-flow-stabilization
+- **[PAGES]** (1): 2025-11-10-0212-authentication-pages
+- **[PLANNING]** (5): 2025-11-10-0111-ai-template-api-contracts, 2025-11-10-0116-status-mapping-plan-update, 2025-11-10-0122-design-source-sync, 2025-11-10-0127-design-system-assets, 2025-11-10-0156-feature-builder-subagent-devtools-integration
+- **[REALTIME]** (1): 2025-11-10-0032-supabase-database-setup
+- **[RESPONSIVE]** (1): 2025-11-10-0218-use-cases-component
+- **[RLS]** (1): 2025-11-10-0032-supabase-database-setup
+- **[SETUP]** (1): 2025-11-10-0204-nextjs-project-initialization
+- **[SHADCN]** (1): 2025-11-10-0202-shadcn-ui-design-system
+- **[STATUS]** (1): 2025-11-10-0116-status-mapping-plan-update
+- **[STYLES]** (1): 2025-11-10-0127-design-system-assets
+- **[SUBAGENT]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
+- **[SUPABASE]** (4): 2025-11-10-0032-supabase-database-setup, 2025-11-10-0116-status-mapping-plan-update, 2025-11-10-0212-authentication-pages, 2025-11-10-0407-alignment-flow-stabilization
+- **[TAILWIND]** (2): 2025-11-10-0122-design-source-sync, 2025-11-10-0127-design-system-assets
+- **[TESTIMONIALS]** (1): 2025-11-10-0218-testimonials-component
+- **[TYPES]** (1): 2025-11-10-0205-typescript-types-supabase-clients
+- **[TYPESCRIPT]** (1): 2025-11-10-0205-typescript-types-supabase-clients
+- **[UI]** (5): 2025-11-10-0202-shadcn-ui-design-system, 2025-11-10-0217-hero-section-component, 2025-11-10-0218-testimonials-component, 2025-11-10-0218-use-cases-component, 2025-11-10-0407-alignment-flow-stabilization
+- **[UTILITIES]** (1): 2025-11-10-0204-config-utilities-error-handling
+
+---
+
+*Last updated: 2025-11-10 

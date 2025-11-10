@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Align The Humans - Conflict Resolution</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4180F6",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#1A1A1A",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+</head>
+<body class="font-display bg-background-dark text-slate-200">
+<div class="relative flex min-h-screen w-full flex-col">
+<header class="sticky top-0 z-50 flex h-16 w-full items-center justify-center border-b border-slate-800/80 bg-background-dark/80 backdrop-blur-sm">
+<div class="flex w-full max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
+<div class="flex items-center gap-3">
+<svg class="h-8 w-8 text-primary" fill="none" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+<path d="M16 31C24.2843 31 31 24.2843 31 16C31 7.71573 24.2843 1 16 1C7.71573 1 1 7.71573 1 16C1 24.2843 7.71573 31 16 31Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M22 22L16 16L10 22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M10 10L16 16L22 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<h2 class="text-xl font-bold tracking-tight text-slate-50">Align The Humans</h2>
+</div>
+<div class="flex items-center gap-2">
+<img alt="User avatar" class="size-9 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPBT8jSRYxjTAVgDvm8GfETXmeZ0JuqFFiekWp511pKE-yHL5V3aEcBogW7k64GGhOyGxXC-93BxLmCpN1_JHT9qbLj8TNNIJDrjjAOwxhbFavXbKxduwq3u2D9MQRXKFOPdhl1kmWRxDu7JwBfBFDvP4qKJw9dp9tgQ2l7PEF08I2cHQmo_1xiJFO82YCHLsyzRx_fZaqSoVHDbTYHim-idhx4t1ByXLlhgGCELNGI77V0qQF2izoMHn7X2uNwkNMr0sXY3XXCYo"/>
+</div>
+</div>
+</header>
+<main class="flex-1 px-4 py-8 sm:py-12 md:px-6">
+<div class="mx-auto w-full max-w-4xl">
+<div class="mb-8 text-center sm:mb-12">
+<span class="inline-flex items-center rounded-full bg-primary/10 px-4 py-1 text-sm font-medium text-primary">Round 2</span>
+<h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">Conflict: Office Location</h1>
+<p class="mt-3 text-lg text-slate-400">Let's find a solution that works for both of you.</p>
+</div>
+<div class="flex flex-col gap-8 lg:gap-12">
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:gap-8">
+<div class="flex flex-col gap-4 rounded-xl border border-slate-800 bg-[#2C2C2C] p-6">
+<h3 class="text-lg font-semibold text-slate-50">Your Position</h3>
+<p class="text-slate-400">"I believe a downtown office is crucial for client meetings and attracting top talent. The energy of the city center is important for our brand."</p>
+</div>
+<div class="flex flex-col gap-4 rounded-xl border border-slate-800 bg-[#2C2C2C] p-6">
+<h3 class="text-lg font-semibold text-slate-50">Partner's Position</h3>
+<p class="text-slate-400">"I prefer a suburban location to reduce overhead costs and offer employees a better work-life balance with easier commutes and free parking."</p>
+</div>
+</div>
+<div class="rounded-xl border border-slate-800 bg-[#2C2C2C] p-6">
+<div class="flex flex-col gap-6">
+<h3 class="text-xl font-bold text-slate-50">Choose a Resolution</h3>
+<div class="space-y-4">
+<label class="flex cursor-pointer items-start gap-4 rounded-lg border border-slate-700 p-4 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/10">
+<input class="mt-1 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-slate-600 bg-slate-800 checked:border-primary checked:bg-primary checked:before:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-[#2C2C2C]" name="resolution" type="radio"/>
+<span class="flex flex-col">
+<span class="font-medium text-slate-200">Hybrid Model (AI Compromise)</span>
+<span class="text-sm text-slate-400">Establish a small downtown hub for client-facing meetings (2 days/week) and a primary suburban office for focused work (3 days/week).</span>
+</span>
+</label>
+<label class="flex cursor-pointer items-start gap-4 rounded-lg border border-slate-700 p-4 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/10">
+<input class="mt-1 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-slate-600 bg-slate-800 checked:border-primary checked:bg-primary checked:before:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-[#2C2C2C]" name="resolution" type="radio"/>
+<span class="flex flex-col">
+<span class="font-medium text-slate-200">Phased Approach (AI Compromise)</span>
+<span class="text-sm text-slate-400">Start in a flexible suburban co-working space for 1 year to save capital, then re-evaluate a downtown move once profitable.</span>
+</span>
+</label>
+<label class="flex cursor-pointer flex-col gap-4 rounded-lg border border-slate-700 p-4 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/10">
+<div class="flex items-start gap-4">
+<input class="mt-1 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-slate-600 bg-slate-800 checked:border-primary checked:bg-primary checked:before:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-[#2C2C2C]" name="resolution" type="radio"/>
+<span class="flex flex-col">
+<span class="font-medium text-slate-200">Write a custom solution</span>
+<span class="text-sm text-slate-400">Propose your own path forward.</span>
+</span>
+</div>
+<textarea class="w-full rounded-md border-slate-600 bg-slate-800 text-slate-200 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" placeholder="e.g., We will both research three options and present our findings next week..." rows="3"></textarea>
+</label>
+</div>
+</div>
+</div>
+<div class="flex justify-center pt-4">
+<button class="flex h-12 w-full max-w-sm cursor-pointer items-center justify-center rounded-full bg-primary px-8 text-base font-bold text-white shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 hover:shadow-md hover:shadow-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background-dark">
+<span class="truncate">Submit Resolution</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

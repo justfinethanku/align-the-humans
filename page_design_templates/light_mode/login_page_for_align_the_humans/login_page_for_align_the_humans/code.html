@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - Align The Humans</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#137fec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101922",
+            },
+            fontFamily: {
+              "display": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .form-input {
+            border-radius: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000); /* Resetting default browser styles */
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200">
+<div class="relative flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-background-light to-white dark:from-background-dark dark:to-background-dark group/design-root">
+<div class="absolute top-0 left-0 w-full p-6 lg:p-10">
+<header class="flex items-center gap-4 text-[#111418] dark:text-white">
+<div class="h-6 w-6">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_319)">
+<path d="M8.57829 8.57829C5.52816 11.6284 3.451 15.5145 2.60947 19.7452C1.76794 23.9758 2.19984 28.361 3.85056 32.3462C5.50128 36.3314 8.29667 39.7376 11.8832 42.134C15.4698 44.5305 19.6865 45.8096 24 45.8096C28.3135 45.8096 32.5302 44.5305 36.1168 42.134C39.7033 39.7375 42.4987 36.3314 44.1494 32.3462C45.8002 28.361 46.2321 23.9758 45.3905 19.7452C44.549 15.5145 42.4718 11.6284 39.4217 8.57829L24 24L8.57829 8.57829Z"></path>
+</g>
+<defs>
+<clippath id="clip0_6_319">
+<rect fill="white" height="48" width="48"></rect>
+</clippath>
+</defs>
+</svg>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Align The Humans</h2>
+</header>
+</div>
+<main class="flex w-full max-w-md flex-col items-center justify-center p-4">
+<div class="w-full rounded-xl bg-white dark:bg-slate-900/50 p-6 sm:p-8 shadow-lg dark:shadow-2xl dark:shadow-slate-950">
+<div class="text-center">
+<h1 class="text-[#111418] dark:text-white tracking-tight text-2xl sm:text-3xl font-bold leading-tight">Log In to Your Account</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm sm:text-base font-normal leading-normal pt-2">Welcome back! Please enter your details.</p>
+</div>
+<div class="mt-8 space-y-6">
+<div class="space-y-4">
+<label class="flex flex-col">
+<p class="text-[#111418] dark:text-slate-200 text-sm font-medium leading-normal pb-2">Email</p>
+<input class="form-input flex h-12 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base font-normal leading-normal text-[#111418] placeholder:text-slate-400 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-primary" placeholder="Enter your email" type="email" value=""/>
+</label>
+<label class="flex flex-col">
+<div class="flex items-center justify-between pb-2">
+<p class="text-[#111418] dark:text-slate-200 text-sm font-medium leading-normal">Password</p>
+<a class="text-sm font-medium text-primary hover:underline" href="#">Forgot password?</a>
+</div>
+<div class="relative flex w-full flex-1 items-stretch">
+<input class="form-input flex h-12 w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-slate-300 bg-white pr-10 pl-3.5 py-2.5 text-base font-normal leading-normal text-[#111418] placeholder:text-slate-400 focus:border-primary focus:outline-0 focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-primary" placeholder="Enter your password" type="password" value=""/>
+<button aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300">
+<span class="material-symbols-outlined">visibility_off</span>
+</button>
+</div>
+</label>
+</div>
+<button class="flex h-12 w-full items-center justify-center rounded-lg bg-primary px-6 text-base font-semibold text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark">Log In</button>
+<div class="relative flex items-center justify-center">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-slate-200 dark:border-slate-700"></div>
+</div>
+<div class="relative bg-white dark:bg-slate-900/50 px-2 text-sm text-slate-400 dark:text-slate-500">OR</div>
+</div>
+<button class="flex h-12 w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-6 text-base font-medium text-[#111418] transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700/50 dark:focus:ring-offset-background-dark dark:focus:ring-slate-500">
+<svg class="h-5 w-5" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.578 12.28c0-.84-.07-1.65-.21-2.44H12v4.6h5.92c-.26 1.48-1.06 2.75-2.24 3.63v3h3.85c2.25-2.08 3.54-5.12 3.54-8.79z" fill="#4285F4"></path>
+<path d="M12 23c3.27 0 6.02-1.08 8.02-2.92l-3.85-3c-1.08.73-2.45 1.16-4.17 1.16-3.2 0-5.9-2.15-6.87-5.03H1.2v3.1C3.12 20.43 7.24 23 12 23z" fill="#34A853"></path>
+<path d="M5.13 14.01c-.2-.6-.31-1.25-.31-1.91s.11-1.31.31-1.91V7.1H1.2C.43 8.63 0 10.25 0 12s.43 3.37 1.2 4.9l3.93-3.89z" fill="#FBBC05"></path>
+<path d="M12 4.84c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.02 1.18 15.27 0 12 0 7.24 0 3.12 2.57 1.2 6.1l3.93 3.01c.97-2.88 3.67-5.03 6.87-5.03z" fill="#EA4335"></path>
+</svg>
+<span>Continue with Google</span>
+</button>
+</div>
+<p class="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                    Don't have an account?
+                    <a class="font-semibold text-primary hover:underline" href="#">Sign up</a>
+</p>
+</div>
+</main>
+<footer class="absolute bottom-0 w-full p-6 text-center">
+<div class="flex items-center justify-center gap-6 text-sm text-slate-500 dark:text-slate-400">
+<a class="hover:underline hover:text-primary" href="#">Terms of Service</a>
+<a class="hover:underline hover:text-primary" href="#">Privacy Policy</a>
+</div>
+</footer>
+</div>
+</body></html>

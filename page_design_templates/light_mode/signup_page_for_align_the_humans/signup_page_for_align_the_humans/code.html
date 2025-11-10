@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign Up - Align The Humans</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#135bec",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+              "neutral-background": "#F8F9FA",
+              "text-color": "#212529",
+              "subtle-gray": "#6C757D",
+              "error-color": "#DC3545",
+            },
+            fontFamily: {
+              "display": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-color dark:text-gray-200">
+<div class="relative flex min-h-screen w-full flex-col items-center justify-center p-4">
+<div class="w-full max-w-md space-y-8">
+<header class="flex flex-col items-center justify-center text-center">
+<div class="flex items-center gap-3 text-text-color dark:text-white">
+<div class="h-8 w-8 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_319)">
+<path d="M8.57829 8.57829C5.52816 11.6284 3.451 15.5145 2.60947 19.7452C1.76794 23.9758 2.19984 28.361 3.85056 32.3462C5.50128 36.3314 8.29667 39.7376 11.8832 42.134C15.4698 44.5305 19.6865 45.8096 24 45.8096C28.3135 45.8096 32.5302 44.5305 36.1168 42.134C39.7033 39.7375 42.4987 36.3314 44.1494 32.3462C45.8002 28.361 46.2321 23.9758 45.3905 19.7452C44.549 15.5145 42.4718 11.6284 39.4217 8.57829L24 24L8.57829 8.57829Z" fill="currentColor"></path>
+</g>
+<defs>
+<clippath id="clip0_6_319"><rect fill="white" height="48" width="48"></rect></clippath>
+</defs>
+</svg>
+</div>
+<h2 class="text-2xl font-bold leading-tight tracking-[-0.015em]">Align The Humans</h2>
+</div>
+</header>
+<main class="w-full">
+<div class="flex flex-col gap-3 text-center">
+<p class="text-3xl font-black leading-tight tracking-[-0.033em] text-text-color dark:text-white">Create Your Account</p>
+<p class="text-base font-normal leading-normal text-subtle-gray dark:text-gray-400">Start having more productive conversations today.</p>
+</div>
+<form class="mt-8 space-y-6">
+<div class="space-y-4 rounded-lg">
+<div>
+<label class="sr-only" for="username">Username</label>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#cfd7e7] bg-white dark:bg-background-dark dark:border-gray-700 h-14 p-4 text-base font-normal leading-normal text-text-color dark:text-white placeholder:text-subtle-gray focus:border-primary focus:ring-primary" id="username" name="username" placeholder="Username" required="" type="text"/>
+</div>
+<div>
+<label class="sr-only" for="email-address">Email address</label>
+<input autocomplete="email" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#cfd7e7] bg-white dark:bg-background-dark dark:border-gray-700 h-14 p-4 text-base font-normal leading-normal text-text-color dark:text-white placeholder:text-subtle-gray focus:border-primary focus:ring-primary" id="email-address" name="email" placeholder="Email address" required="" type="email"/>
+</div>
+<div>
+<label class="sr-only" for="password">Password</label>
+<div class="relative flex w-full flex-1 items-stretch">
+<input autocomplete="new-password" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#cfd7e7] bg-white dark:bg-background-dark dark:border-gray-700 h-14 p-4 pr-12 text-base font-normal leading-normal text-text-color dark:text-white placeholder:text-subtle-gray focus:border-primary focus:ring-primary" id="password" name="password" placeholder="Password" required="" type="password"/>
+<button class="absolute inset-y-0 right-0 flex items-center pr-4 text-subtle-gray dark:text-gray-400" type="button">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<div>
+<label class="sr-only" for="confirm-password">Confirm Password</label>
+<input autocomplete="new-password" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg border border-[#cfd7e7] bg-white dark:bg-background-dark dark:border-gray-700 h-14 p-4 text-base font-normal leading-normal text-text-color dark:text-white placeholder:text-subtle-gray focus:border-primary focus:ring-primary" id="confirm-password" name="confirm-password" placeholder="Confirm Password" required="" type="password"/>
+</div>
+</div>
+<div class="flex items-center">
+<input class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" id="terms-of-service" name="terms-of-service" type="checkbox"/>
+<label class="ml-2 block text-sm text-subtle-gray dark:text-gray-400" for="terms-of-service">
+                            I agree to the
+                            <a class="font-medium text-primary hover:text-primary/80" href="#">Terms of Service</a>
+</label>
+</div>
+<div>
+<button class="group relative flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 px-4 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" type="submit">
+                            Sign Up
+                        </button>
+</div>
+</form>
+<div class="mt-6 text-center text-sm">
+<p class="text-subtle-gray dark:text-gray-400">
+                        Already have an account?
+                        <a class="font-medium text-primary hover:text-primary/80" href="#">
+                            Log in
+                        </a>
+</p>
+</div>
+</main>
+</div>
+<footer class="absolute bottom-0 w-full p-6 text-center">
+<div class="flex justify-center gap-6 text-sm">
+<a class="text-subtle-gray dark:text-gray-400 hover:text-text-color dark:hover:text-white" href="#">Privacy Policy</a>
+<a class="text-subtle-gray dark:text-gray-400 hover:text-text-color dark:hover:text-white" href="#">Contact Us</a>
+</div>
+</footer>
+</div>
+</body></html>

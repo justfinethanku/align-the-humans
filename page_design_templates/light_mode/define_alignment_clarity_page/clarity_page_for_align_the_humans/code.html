@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Define Your Alignment - Align The Humans</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#135bec",
+            "background-light": "#f6f6f8",
+            "background-dark": "#101622",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body class="font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<div class="flex flex-1 justify-center py-5 sm:px-6 lg:px-8">
+<div class="layout-content-container flex flex-col w-full max-w-3xl flex-1 px-4">
+<!-- TopNavBar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-gray-800 px-4 sm:px-10 py-3">
+<div class="flex items-center gap-4 text-gray-900 dark:text-gray-100">
+<div class="size-6 text-primary">
+<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_319)">
+<path d="M8.57829 8.57829C5.52816 11.6284 3.451 15.5145 2.60947 19.7452C1.76794 23.9758 2.19984 28.361 3.85056 32.3462C5.50128 36.3314 8.29667 39.7376 11.8832 42.134C15.4698 44.5305 19.6865 45.8096 24 45.8096C28.3135 45.8096 32.5302 44.5305 36.1168 42.134C39.7033 39.7375 42.4987 36.3314 44.1494 32.3462C45.8002 28.361 46.2321 23.9758 45.3905 19.7452C44.549 15.5145 42.4718 11.6284 39.4217 8.57829L24 24L8.57829 8.57829Z"></path>
+</g>
+<defs>
+<clippath id="clip0_6_319"><rect fill="white" height="48" width="48"></rect></clippath>
+</defs>
+</svg>
+</div>
+<h2 class="text-gray-900 dark:text-gray-100 text-lg font-bold leading-tight tracking-[-0.015em]">Align The Humans</h2>
+</div>
+</header>
+<main class="flex-1 py-10">
+<!-- PageHeading -->
+<div class="flex flex-wrap justify-between gap-3 p-4">
+<div class="flex min-w-72 flex-col gap-2">
+<p class="text-gray-900 dark:text-gray-100 text-4xl font-black leading-tight tracking-[-0.033em]">Define Your Alignment</p>
+<p class="text-gray-500 dark:text-gray-400 text-base font-normal leading-normal">Step 1 of 3: Clarify your goals for this conversation.</p>
+</div>
+</div>
+<!-- Accordions with TextFields and Suggestions -->
+<div class="flex flex-col p-4 gap-4">
+<!-- Accordion 1 -->
+<details class="flex flex-col rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm group" open="">
+<summary class="flex cursor-pointer list-none items-center justify-between gap-6 p-4">
+<p class="text-gray-900 dark:text-gray-100 text-base font-semibold leading-normal">What are you aligning over?</p>
+<div class="text-gray-600 dark:text-gray-400 transition-transform duration-200 group-open:rotate-180">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</summary>
+<div class="px-4 pb-4">
+<label class="flex flex-col w-full">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal pb-2">Describe the topic or decision you need to align on.</p>
+<textarea class="form-input flex w-full min-w-0 flex-1 resize-y overflow-hidden rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 min-h-28 placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base font-normal leading-normal" placeholder="e.g., Deciding on our vacation destination for this summer"></textarea>
+</label>
+<div class="mt-4">
+<h3 class="text-gray-900 dark:text-gray-100 text-sm font-semibold leading-tight tracking-[-0.015em] pb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-primary">auto_awesome</span>
+                      AI Suggestions
+                    </h3>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-2 pl-3">
+<p class="text-sm text-gray-700 dark:text-gray-300">Finalizing the budget for the home renovation project</p>
+<button class="flex items-center justify-center rounded-md bg-primary/20 dark:bg-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/30 dark:hover:bg-primary/40">Use this</button>
+</div>
+<div class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-2 pl-3">
+<p class="text-sm text-gray-700 dark:text-gray-300">Choosing a new car</p>
+<button class="flex items-center justify-center rounded-md bg-primary/20 dark:bg-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/30 dark:hover:bg-primary/40">Use this</button>
+</div>
+</div>
+</div>
+</div>
+</details>
+<!-- Accordion 2 -->
+<details class="flex flex-col rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm group">
+<summary class="flex cursor-pointer list-none items-center justify-between gap-6 p-4">
+<p class="text-gray-900 dark:text-gray-100 text-base font-semibold leading-normal">Who are you aligning with?</p>
+<div class="text-gray-600 dark:text-gray-400 transition-transform duration-200 group-open:rotate-180">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</summary>
+<div class="px-4 pb-4">
+<label class="flex flex-col w-full">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal pb-2">Who is the other person in this conversation?</p>
+<textarea class="form-input flex w-full min-w-0 flex-1 resize-y overflow-hidden rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 min-h-28 placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base font-normal leading-normal" placeholder="e.g., My spouse, my business partner, my friend"></textarea>
+</label>
+<div class="mt-4">
+<h3 class="text-gray-900 dark:text-gray-100 text-sm font-semibold leading-tight tracking-[-0.015em] pb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-primary">auto_awesome</span>
+                      AI Suggestions
+                    </h3>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-2 pl-3">
+<p class="text-sm text-gray-700 dark:text-gray-300">My Partner</p>
+<button class="flex items-center justify-center rounded-md bg-primary/20 dark:bg-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/30 dark:hover:bg-primary/40">Use this</button>
+</div>
+<div class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-2 pl-3">
+<p class="text-sm text-gray-700 dark:text-gray-300">My Co-founder</p>
+<button class="flex items-center justify-center rounded-md bg-primary/20 dark:bg-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/30 dark:hover:bg-primary/40">Use this</button>
+</div>
+<div class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-2 pl-3">
+<p class="text-sm text-gray-700 dark:text-gray-300">A Family Member</p>
+<button class="flex items-center justify-center rounded-md bg-primary/20 dark:bg-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/30 dark:hover:bg-primary/40">Use this</button>
+</div>
+</div>
+</div>
+</div>
+</details>
+<!-- Accordion 3 -->
+<details class="flex flex-col rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm group">
+<summary class="flex cursor-pointer list-none items-center justify-between gap-6 p-4">
+<p class="text-gray-900 dark:text-gray-100 text-base font-semibold leading-normal">What's the desired result?</p>
+<div class="text-gray-600 dark:text-gray-400 transition-transform duration-200 group-open:rotate-180">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</summary>
+<div class="px-4 pb-4">
+<label class="flex flex-col w-full">
+<p class="text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal pb-2">What does a successful outcome look like for this conversation?</p>
+<textarea class="form-input flex w-full min-w-0 flex-1 resize-y overflow-hidden rounded-lg text-gray-900 dark:text-gray-100 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 min-h-28 placeholder:text-gray-400 dark:placeholder:text-gray-500 p-3 text-base font-normal leading-normal" placeholder="e.g., A clear, mutual decision"></textarea>
+</label>
+<div class="mt-4">
+<h3 class="text-gray-900 dark:text-gray-100 text-sm font-semibold leading-tight tracking-[-0.015em] pb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-primary">auto_awesome</span>
+                      AI Suggestions
+                    </h3>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-2 pl-3">
+<p class="text-sm text-gray-700 dark:text-gray-300">A clear, mutual decision</p>
+<button class="flex items-center justify-center rounded-md bg-primary/20 dark:bg-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/30 dark:hover:bg-primary/40">Use this</button>
+</div>
+<div class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-2 pl-3">
+<p class="text-sm text-gray-700 dark:text-gray-300">A list of actionable next steps</p>
+<button class="flex items-center justify-center rounded-md bg-primary/20 dark:bg-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/30 dark:hover:bg-primary/40">Use this</button>
+</div>
+<div class="flex items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-2 pl-3">
+<p class="text-sm text-gray-700 dark:text-gray-300">Understanding each other's perspective</p>
+<button class="flex items-center justify-center rounded-md bg-primary/20 dark:bg-primary/30 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/30 dark:hover:bg-primary/40">Use this</button>
+</div>
+</div>
+</div>
+</div>
+</details>
+</div>
+<!-- Continue Button -->
+<div class="mt-6 flex justify-end p-4">
+<button class="flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:ring-offset-background-dark disabled:cursor-not-allowed disabled:opacity-50" disabled="">
+                Continue
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</main>
+</div>
+</div>
+</div>
+</div>
+</body></html>

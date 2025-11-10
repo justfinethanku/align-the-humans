@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>PartnersList Component Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": {
+              DEFAULT: '#1d4ed8',
+              '100': '#dbeafe',
+              '300': '#93c5fd',
+              '500': '#3b82f6',
+              '600': '#2563eb',
+              '700': '#1d4ed8',
+              '900': '#1e3a8a'
+            },
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    .toggle-theme {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200">
+  <button
+    class="toggle-theme rounded-lg bg-slate-200 px-4 py-2 font-semibold dark:bg-slate-700"
+    onclick="document.documentElement.classList.toggle('dark')"
+  >
+    Toggle Theme
+  </button>
+
+  <div class="container mx-auto max-w-4xl space-y-12 p-8">
+    <!-- Populated State -->
+    <section>
+      <h1 class="mb-6 text-3xl font-bold">PartnersList Component - Populated</h1>
+
+      <div class="flex flex-col gap-3">
+        <!-- Partner 1 -->
+        <div class="flex items-center justify-between rounded-lg bg-slate-100/80 p-3 transition-colors hover:bg-slate-200/80 dark:bg-slate-800/50 dark:hover:bg-slate-700/60" role="button" tabindex="0">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+              <span class="font-semibold">JS</span>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-800 dark:text-slate-100">John Smith</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">3 alignments</p>
+            </div>
+          </div>
+          <button class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200" aria-label="More actions for John Smith">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Partner 2 -->
+        <div class="flex items-center justify-between rounded-lg bg-slate-100/80 p-3 transition-colors hover:bg-slate-200/80 dark:bg-slate-800/50 dark:hover:bg-slate-700/60" role="button" tabindex="0">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+              <span class="font-semibold">SG</span>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-800 dark:text-slate-100">Samantha Green</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">1 alignment</p>
+            </div>
+          </div>
+          <button class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200" aria-label="More actions for Samantha Green">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Partner 3 -->
+        <div class="flex items-center justify-between rounded-lg bg-slate-100/80 p-3 transition-colors hover:bg-slate-200/80 dark:bg-slate-800/50 dark:hover:bg-slate-700/60" role="button" tabindex="0">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+              <span class="font-semibold">AJ</span>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-800 dark:text-slate-100">Alex Johnson</p>
+              <p class="text-sm text-slate-500 dark:text-slate-400">5 alignments</p>
+            </div>
+          </div>
+          <button class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200" aria-label="More actions for Alex Johnson">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Empty State -->
+    <section>
+      <h1 class="mb-6 text-3xl font-bold">PartnersList Component - Empty State</h1>
+
+      <div class="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-8 text-center dark:border-slate-700 dark:bg-slate-800/30">
+        <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
+          <svg class="h-6 w-6 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <h3 class="mb-1 text-sm font-semibold text-slate-900 dark:text-slate-100">No partners yet</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Add a partner to start collaborating on alignments</p>
+      </div>
+    </section>
+
+    <!-- Mobile View Test (320px) -->
+    <section>
+      <h1 class="mb-6 text-3xl font-bold">Mobile View (320px)</h1>
+      <div style="max-width: 320px; margin: 0 auto;">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between rounded-lg bg-slate-100/80 p-3 dark:bg-slate-800/50">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
+                <span class="font-semibold">JS</span>
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-slate-800 dark:text-slate-100">John Smith</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">3 alignments</p>
+              </div>
+            </div>
+            <button class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 dark:text-slate-400">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

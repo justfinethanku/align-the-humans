@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Start New Alignment</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6", // Updated primary for better contrast on dark
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#1A1A1A",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+        .template-card.selected {
+            border-color: #3b82f6;background-color: #1e293b;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.15);
+        }
+    </style>
+</head>
+<body class="font-display bg-background-dark text-slate-200">
+<div class="relative flex min-h-screen w-full flex-col">
+<header class="sticky top-0 z-50 flex h-16 w-full items-center justify-center border-b border-slate-800/80 bg-background-dark/80 backdrop-blur-sm">
+<div class="flex w-full max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
+<div class="flex items-center gap-3">
+<svg class="text-primary size-7" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6_319)">
+<path d="M8.57829 8.57829C5.52816 11.6284 3.451 15.5145 2.60947 19.7452C1.76794 23.9758 2.19984 28.361 3.85056 32.3462C5.50128 36.3314 8.29667 39.7376 11.8832 42.134C15.4698 44.5305 19.6865 45.8096 24 45.8096C28.3135 45.8096 32.5302 44.5305 36.1168 42.134C39.7033 39.7375 42.4987 36.3314 44.1494 32.3462C45.8002 28.361 46.2321 23.9758 45.3905 19.7452C44.549 15.5145 42.4718 11.6284 39.4217 8.57829L24 24L8.57829 8.57829Z" fill="currentColor"></path>
+</g>
+<defs>
+<clipPath id="clip0_6_319">
+<rect fill="white" height="48" width="48"></rect>
+</clipPath>
+</defs>
+</svg>
+<h2 class="text-xl font-bold tracking-tight text-slate-50">Align The Humans</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex size-10 items-center justify-center rounded-full bg-slate-800/60 transition-colors hover:bg-slate-800">
+<span class="material-symbols-outlined text-slate-300">person</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex flex-1 flex-col items-center">
+<div class="flex w-full max-w-5xl flex-col gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+<div class="flex flex-col items-center gap-4 text-center">
+<div class="font-semibold text-primary">Step 1 of 5</div>
+<h1 class="text-4xl font-extrabold tracking-tight text-slate-50 sm:text-5xl">Start a New Alignment</h1>
+<p class="max-w-2xl text-lg text-slate-400">Choose a template to get started, or describe your own situation below. The AI will guide you through the process.</p>
+</div>
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+<div class="template-card flex cursor-pointer flex-col items-center gap-4 rounded-xl border border-slate-800 bg-[#2C2C2C] p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-slate-700 hover:shadow-lg">
+<div class="flex size-14 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined text-3xl text-primary">edit_document</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-50">Operating Agreement</h3>
+<p class="text-sm text-slate-400">Define roles, responsibilities, and how your business will be run.</p>
+</div>
+<div class="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-slate-300">Select</div>
+</div>
+<div class="template-card selected flex cursor-pointer flex-col items-center gap-4 rounded-xl border-2 p-6 text-center transition-all">
+<div class="flex size-14 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined text-3xl text-primary">pie_chart</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-50">Cofounder Equity Split</h3>
+<p class="text-sm text-slate-400">Fairly divide ownership based on contributions, roles, and future expectations.</p>
+</div>
+<div class="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white">Selected</div>
+</div>
+<div class="template-card flex cursor-pointer flex-col items-center gap-4 rounded-xl border border-slate-800 bg-[#2C2C2C] p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-slate-700 hover:shadow-lg">
+<div class="flex size-14 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined text-3xl text-primary">groups</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-50">Partnership Dissolution</h3>
+<p class="text-sm text-slate-400">Navigate the process of ending a business partnership amicably.</p>
+</div>
+<div class="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-slate-300">Select</div>
+</div>
+<div class="template-card flex cursor-pointer flex-col items-center gap-4 rounded-xl border border-slate-800 bg-[#2C2C2C] p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-slate-700 hover:shadow-lg">
+<div class="flex size-14 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined text-3xl text-primary">real_estate_agent</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-50">Rental Agreement</h3>
+<p class="text-sm text-slate-400">Establish clear terms for a landlord and tenant relationship.</p>
+</div>
+<div class="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-slate-300">Select</div>
+</div>
+<div class="template-card flex cursor-pointer flex-col items-center gap-4 rounded-xl border border-slate-800 bg-[#2C2C2C] p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-slate-700 hover:shadow-lg">
+<div class="flex size-14 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined text-3xl text-primary">deployed_code</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-50">Freelance Contract</h3>
+<p class="text-sm text-slate-400">Outline project scope, deliverables, and payment terms for services.</p>
+</div>
+<div class="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-slate-300">Select</div>
+</div>
+<div class="template-card flex cursor-pointer flex-col items-center gap-4 rounded-xl border border-slate-800 bg-[#2C2C2C] p-6 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-slate-700 hover:shadow-lg">
+<div class="flex size-14 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined text-3xl text-primary">favorite</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-slate-50">Marital Agreement</h3>
+<p class="text-sm text-slate-400">Jointly decide on finances, property, and other significant life matters.</p>
+</div>
+<div class="mt-auto flex h-10 w-full items-center justify-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-slate-300">Select</div>
+</div>
+</div>
+<div class="mt-8 rounded-xl border border-slate-800/80 bg-[#2C2C2C] p-6 shadow-sm sm:p-8">
+<div class="flex flex-col gap-4">
+<h3 class="text-xl font-bold text-slate-50">Or Describe Your Own</h3>
+<p class="text-slate-400">If none of the templates fit, describe your situation. Our AI will create a custom-tailored conversation flow for you.</p>
+<textarea class="min-h-[120px] w-full rounded-lg border-slate-700 bg-slate-800 p-3 text-slate-200 placeholder-slate-500 focus:border-primary focus:ring-primary" placeholder="e.g., 'My co-founder and I need to agree on a vesting schedule for our company equity...'"></textarea>
+<div class="flex justify-end">
+<button class="flex h-12 w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-6 text-base font-bold text-white transition-all hover:bg-primary/90 sm:w-auto">
+<span class="truncate">Continue with Custom</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
