@@ -74,3 +74,57 @@ export function generateInvite(): {
   const hash = hashToken(token);
   return { token, hash };
 }
+
+/**
+ * Derives a 32-byte key from INVITE_TOKEN_SECRET
+ */
+function getInviteEncryptionKey(): Buffer {
+  const secret = process.env.INVITE_TOKEN_SECRET;
+  if (!secret) {
+    throw new Error(
+      'Missing INVITE_TOKEN_SECRET environment variable. ' +
+      'Set it to enable secure invite token storage.'
+    );
+  }
+
+  return crypto.createHash('sha256').update(secret).digest(); // Always 32 bytes
+}
+
+/**
+ * Encrypts an invite token so it can be retrieved later without storing plaintext.
+ *
+ * Format: base64(iv || authTag || ciphertext)
+ */
+export function encryptInviteToken(token: string): string {
+  const key = getInviteEncryptionKey();
+  const iv = crypto.randomBytes(12); // AES-GCM recommended IV size
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  return Buffer.concat([iv, authTag, encrypted]).toString('base64');
+}
+
+/**
+ * Decrypts an encrypted invite token payload
+ */
+export function decryptInviteToken(payload: string): string {
+  if (!payload) {
+    throw new Error('Missing invite token payload');
+  }
+
+  const buffer = Buffer.from(payload, 'base64');
+  if (buffer.length < 28) {
+    throw new Error('Invalid invite token payload');
+  }
+
+  const iv = buffer.subarray(0, 12);
+  const authTag = buffer.subarray(12, 28);
+  const ciphertext = buffer.subarray(28);
+
+  const key = getInviteEncryptionKey();
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(authTag);
+  const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+
+  return decrypted.toString('utf8');
+}

@@ -177,7 +177,7 @@ export async function getAlignmentDetail(
 export async function createAlignment(
   supabase: SupabaseClientType,
   data: {
-    partnerId: string;
+    partnerId?: string | null;
     title: string;
     createdBy: string;
   }
@@ -185,7 +185,7 @@ export async function createAlignment(
   const { data: alignment, error } = await supabase
     .from('alignments')
     .insert({
-      partner_id: data.partnerId,
+      partner_id: data.partnerId ?? null,
       title: data.title,
       status: 'draft',
       created_by: data.createdBy,
@@ -220,7 +220,7 @@ export async function updateAlignmentStatus(
 export async function updateAlignment(
   supabase: SupabaseClientType,
   alignmentId: string,
-  updates: Partial<Pick<Alignment, 'title' | 'status' | 'current_round'>>
+  updates: Partial<Pick<Database['public']['Tables']['alignments']['Update'], 'title' | 'status' | 'current_round' | 'clarity_draft'>>
 ): Promise<QueryResult<Alignment>> {
   const { data, error } = await supabase
     .from('alignments')
@@ -349,7 +349,8 @@ export async function getRoundResponses(
     .select('*')
     .eq('alignment_id', alignmentId)
     .eq('round', round)
-    .not('submitted_at', 'is', null);
+    .not('submitted_at', 'is', null)
+    .order('user_id', { ascending: true });
 
   return { data: data as AlignmentResponse[] | null, error };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -23,6 +23,8 @@ interface InviteData {
   invite_url: string;
   expires_at: string;
   token: string;
+  max_uses?: number | null;
+  current_uses?: number | null;
 }
 
 export function ShareLinkButton({ alignmentId, className }: ShareLinkButtonProps) {
@@ -30,14 +32,42 @@ export function ShareLinkButton({ alignmentId, className }: ShareLinkButtonProps
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [expiresInDays, setExpiresInDays] = useState<number | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Fetch current invite on mount
-  useEffect(() => {
-    fetchInvite();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadInvite = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const response = await fetch(`/api/alignment/${alignmentId}/invite`);
+
+      if (response.status === 404) {
+        setInviteData(null);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch invite');
+      }
+
+      const data: InviteData = await response.json();
+      setInviteData(data);
+    } catch (error) {
+      console.error('Error fetching invite:', error);
+      setInviteData(null);
+      setLoadError('Failed to load share link');
+      toast.error('Failed to load share link');
+    } finally {
+      setLoading(false);
+    }
   }, [alignmentId]);
+
+  useEffect(() => {
+    void loadInvite();
+  }, [loadInvite]);
 
   // Calculate expiration countdown
   useEffect(() => {
@@ -56,27 +86,6 @@ export function ShareLinkButton({ alignmentId, className }: ShareLinkButtonProps
 
     return () => clearInterval(interval);
   }, [inviteData]);
-
-  const fetchInvite = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/alignment/${alignmentId}/generate-invite`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch invite');
-      }
-
-      const data: InviteData = await response.json();
-      setInviteData(data);
-    } catch (error) {
-      console.error('Error fetching invite:', error);
-      toast.error('Failed to load share link');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCopy = async () => {
     if (!inviteData?.invite_url) return;
@@ -114,34 +123,50 @@ export function ShareLinkButton({ alignmentId, className }: ShareLinkButtonProps
       }
     } else {
       // Fallback to copy on desktop
-      handleCopy();
+      void handleCopy();
     }
   };
 
-  const handleRegenerate = async () => {
-    setRegenerating(true);
-    setShowRegenerateDialog(false);
-
+  const createInvite = async (endpoint: string, mutation: 'generate' | 'regenerate') => {
+    mutation === 'generate' ? setIsGenerating(true) : setRegenerating(true);
     try {
-      const response = await fetch(`/api/alignment/${alignmentId}/regenerate-invite`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to regenerate invite');
+        throw new Error('Failed to create invite');
       }
 
       const data: InviteData = await response.json();
       setInviteData(data);
-      toast.success('New share link generated!', {
-        description: 'The old link will no longer work.',
-      });
+
+      toast.success(
+        mutation === 'generate' ? 'Share link created!' : 'New share link generated!',
+        mutation === 'regenerate'
+          ? { description: 'The old link will no longer work.' }
+          : undefined
+      );
     } catch (error) {
-      console.error('Error regenerating invite:', error);
-      toast.error('Failed to regenerate link');
+      console.error('Error creating invite:', error);
+      toast.error('Failed to generate link');
+      if (mutation === 'generate') {
+        setInviteData(null);
+      }
     } finally {
-      setRegenerating(false);
+      mutation === 'generate' ? setIsGenerating(false) : setRegenerating(false);
+      setLoadError(null);
     }
+  };
+
+  const handleGenerate = async () => {
+    await createInvite(`/api/alignment/${alignmentId}/generate-invite`, 'generate');
+  };
+
+  const handleRegenerate = async () => {
+    setShowRegenerateDialog(false);
+
+    await createInvite(`/api/alignment/${alignmentId}/regenerate-invite`, 'regenerate');
   };
 
   if (loading) {
@@ -155,19 +180,49 @@ export function ShareLinkButton({ alignmentId, className }: ShareLinkButtonProps
     );
   }
 
-  if (!inviteData) {
+  if (loadError) {
     return (
       <Card className={className}>
         <CardContent className="pt-6 text-center text-slate-600 dark:text-slate-400">
-          <p className="text-sm">Failed to load share link</p>
+          <p className="text-sm">{loadError}</p>
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchInvite}
+            onClick={loadInvite}
             className="mt-2"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!inviteData) {
+    return (
+      <Card className={className}>
+        <CardContent className="pt-6 space-y-4 text-center text-slate-600 dark:text-slate-400">
+          <p className="text-sm">
+            No invite link yet. Generate one to share with your partner.
+          </p>
+          <Button
+            onClick={handleGenerate}
+            size="sm"
+            disabled={isGenerating}
+            className="w-full sm:w-auto"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Link className="h-4 w-4 mr-2" />
+                Generate Link
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>

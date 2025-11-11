@@ -73,6 +73,7 @@ Edit `.env.local` and add your credentials:
 - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anon key
 - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (server-only)
+- `INVITE_TOKEN_SECRET`: Random secret used to encrypt invite tokens before storage (any strong string)
 - `AI_GATEWAY_API_KEY`: Your Vercel AI Gateway API key
 
 4. Run the development server:

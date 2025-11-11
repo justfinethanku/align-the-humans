@@ -237,6 +237,7 @@ export function QuestionnaireClient({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          alignmentId,
           question: {
             id: currentQuestion.id,
             type: currentQuestion.type,

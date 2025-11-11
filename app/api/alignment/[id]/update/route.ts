@@ -12,16 +12,26 @@ import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { updateAlignment } from '@/app/lib/db-helpers';
 import { createErrorResponse, ValidationError, AlignmentError } from '@/app/lib/errors';
+import type { Database, Json } from '@/app/lib/database.types';
 
 // ============================================================================
 // Request/Response Schema
 // ============================================================================
 
+const ClarityDraftSchema = z.object({
+  topic: z.string().optional(),
+  partner: z.string().optional(),
+  desiredOutcome: z.string().optional(),
+});
+
 const UpdateRequestSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   status: z.enum(['draft', 'active', 'analyzing', 'resolving', 'complete']).optional(),
   current_round: z.number().int().positive().optional(),
+  clarityDraft: ClarityDraftSchema.optional(),
 });
+
+type AlignmentUpdatePayload = Partial<Pick<Database['public']['Tables']['alignments']['Update'], 'title' | 'status' | 'current_round' | 'clarity_draft'>>;
 
 export async function PATCH(
   request: NextRequest,
@@ -44,7 +54,46 @@ export async function PATCH(
       );
     }
 
-    const updates = validationResult.data;
+    const { clarityDraft, ...rawUpdates } = validationResult.data;
+
+    const updatePayload: AlignmentUpdatePayload = {};
+    const trimmedTitle = rawUpdates.title?.trim();
+
+    if (trimmedTitle) {
+      updatePayload.title = trimmedTitle;
+    }
+
+    if (rawUpdates.status) {
+      updatePayload.status = rawUpdates.status;
+    }
+
+    if (typeof rawUpdates.current_round === 'number') {
+      updatePayload.current_round = rawUpdates.current_round;
+    }
+
+    if (clarityDraft) {
+      const normalize = (value?: string) => {
+        if (!value) return undefined;
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : undefined;
+      };
+
+      const normalizedClarity = {
+        topic: normalize(clarityDraft.topic ?? trimmedTitle),
+        partner: normalize(clarityDraft.partner),
+        desiredOutcome: normalize(clarityDraft.desiredOutcome),
+      };
+
+      const hasClarityValues = Object.values(normalizedClarity).some((value) => typeof value === 'string' && value.length > 0);
+
+      if (hasClarityValues) {
+        updatePayload.clarity_draft = normalizedClarity as Json;
+      }
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      throw new ValidationError('No updatable fields provided');
+    }
 
     // 3. Verify user is a participant in the alignment
     const { data: participant, error: participantError } = await supabase
@@ -62,7 +111,7 @@ export async function PATCH(
     const { data: alignment, error: updateError } = await updateAlignment(
       supabase,
       params.id,
-      updates
+      updatePayload
     );
 
     if (updateError || !alignment) {

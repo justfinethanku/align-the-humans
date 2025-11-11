@@ -157,7 +157,8 @@ export default async function AnalysisPage({ params }: PageProps) {
 
   // Require authentication
   if (!user) {
-    redirect('/auth/login');
+    const redirectParam = encodeURIComponent(`/alignment/${params.id}/analysis`);
+    redirect(`/login?redirectTo=${redirectParam}`);
   }
 
   // Fetch alignment with analysis

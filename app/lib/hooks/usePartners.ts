@@ -178,17 +178,26 @@ export function usePartners(): UsePartnersReturn {
       }
 
       // 6. Get unique partner records
-      const uniquePartnerIds = new Set(alignmentsData?.map(a => a.partner_id) || []);
-      const { data: partnersData, error: partnersError } = await supabase
-        .from('partners')
-        .select('*')
-        .in('id', Array.from(uniquePartnerIds));
+      const uniquePartnerIds = new Set(
+        (alignmentsData || [])
+          .map(a => a.partner_id)
+          .filter((id): id is string => typeof id === 'string')
+      );
+      let partnersData: Database['public']['Tables']['partners']['Row'][] = [];
+      if (uniquePartnerIds.size > 0) {
+        const { data: partnersResult, error: partnersError } = await supabase
+          .from('partners')
+          .select('*')
+          .in('id', Array.from(uniquePartnerIds));
 
-      if (partnersError) {
-        throw new DatabaseError('Failed to fetch partner records', {
-          cause: partnersError,
-          details: { userId: user.id }
-        });
+        if (partnersError) {
+          throw new DatabaseError('Failed to fetch partner records', {
+            cause: partnersError,
+            details: { userId: user.id }
+          });
+        }
+
+        partnersData = partnersResult || [];
       }
 
       // 7. Build final partner list with profiles and counts
@@ -197,13 +206,13 @@ export function usePartners(): UsePartnersReturn {
       alignmentsData?.forEach(alignment => {
         // Find the other participant in this alignment
         const otherParticipant = otherParticipants.find(p => p.alignment_id === alignment.id);
-        if (otherParticipant) {
+        if (otherParticipant && typeof alignment.partner_id === 'string') {
           partnerIdToUserId.set(alignment.partner_id, otherParticipant.user_id);
         }
       });
 
       // Build the final result
-      const partnersWithDetails: PartnerWithCount[] = (partnersData || []).map(partner => {
+      const partnersWithDetails: PartnerWithCount[] = partnersData.map(partner => {
         const partnerUserId = partnerIdToUserId.get(partner.id);
         const partnerInfo = partnerUserId ? partnerMap.get(partnerUserId) : null;
         const profile = profiles?.find(p => p.id === partnerUserId) || null;

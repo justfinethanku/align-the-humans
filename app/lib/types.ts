@@ -77,7 +77,7 @@ export interface Partner {
  */
 export interface Alignment {
   id: string;                    // UUID
-  partner_id: string;            // UUID, references partners(id)
+  partner_id: string | null;     // UUID, references partners(id)
   template_id?: string | null;   // UUID, references templates(id)
   status: AlignmentStatus;
   current_round: number;         // Default: 1
@@ -85,6 +85,7 @@ export interface Alignment {
   created_by: string;            // UUID, references auth.users(id)
   created_at: string;            // ISO 8601 timestamptz
   updated_at: string;            // ISO 8601 timestamptz
+  clarity_draft?: ClarityDraft | null;
 }
 
 /**
@@ -375,7 +376,7 @@ export function isAlignment(value: unknown): value is Alignment {
   const obj = value as Record<string, unknown>;
   return (
     typeof obj.id === 'string' &&
-    typeof obj.partner_id === 'string' &&
+    (obj.partner_id === null || typeof obj.partner_id === 'string') &&
     isAlignmentStatus(obj.status) &&
     typeof obj.current_round === 'number' &&
     (obj.title === null || typeof obj.title === 'string') &&
@@ -399,7 +400,7 @@ export type AlignmentCreate = Omit<Alignment, 'id' | 'created_at' | 'updated_at'
 /**
  * Partial alignment for updates (only modifiable fields)
  */
-export type AlignmentUpdate = Partial<Pick<Alignment, 'status' | 'current_round' | 'title'>>;
+export type AlignmentUpdate = Partial<Pick<Alignment, 'status' | 'current_round' | 'title' | 'clarity_draft'>>;
 
 /**
  * Response creation payload
@@ -429,6 +430,13 @@ export interface AlignmentDetail extends Alignment {
   user_response?: AlignmentResponse;
   partner_response?: AlignmentResponse;
   signatures?: AlignmentSignature[];
+}
+
+export interface ClarityDraft {
+  topic?: string;
+  partner?: string;
+  desiredOutcome?: string;
+  [key: string]: string | undefined;
 }
 
 /**
@@ -577,6 +585,7 @@ export interface AlignmentInvitation {
   id: string;
   alignment_id: string;
   token_hash: string;
+  token_ciphertext?: string | null;
   created_by: string;
   expires_at: string | null;
   max_uses: number;

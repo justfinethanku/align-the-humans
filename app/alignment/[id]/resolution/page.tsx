@@ -31,7 +31,8 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
 
   // 1. Require authentication
   if (!user) {
-    redirect('/auth/login');
+    const redirectParam = encodeURIComponent(`/alignment/${alignmentId}/resolution`);
+    redirect(`/login?redirectTo=${redirectParam}`);
   }
 
   // 2. Verify user is a participant

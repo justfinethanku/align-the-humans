@@ -94,6 +94,7 @@ export type Database = {
           id: string
           invalidated_at: string | null
           max_uses: number | null
+          token_ciphertext: string | null
           token_hash: string
           updated_at: string
         }
@@ -106,6 +107,7 @@ export type Database = {
           id?: string
           invalidated_at?: string | null
           max_uses?: number | null
+          token_ciphertext?: string | null
           token_hash: string
           updated_at?: string
         }
@@ -118,6 +120,7 @@ export type Database = {
           id?: string
           invalidated_at?: string | null
           max_uses?: number | null
+          token_ciphertext?: string | null
           token_hash?: string
           updated_at?: string
         }
@@ -286,12 +289,13 @@ export type Database = {
       alignments: {
         Row: {
           allow_solo_start: boolean | null
+          clarity_draft: Json
           created_at: string
           created_by: string
           current_invite_id: string | null
           current_round: number
           id: string
-          partner_id: string
+          partner_id: string | null
           status: string
           template_id: string | null
           title: string | null
@@ -299,12 +303,13 @@ export type Database = {
         }
         Insert: {
           allow_solo_start?: boolean | null
+          clarity_draft?: Json
           created_at?: string
           created_by: string
           current_invite_id?: string | null
           current_round?: number
           id?: string
-          partner_id: string
+          partner_id?: string | null
           status: string
           template_id?: string | null
           title?: string | null
@@ -312,12 +317,13 @@ export type Database = {
         }
         Update: {
           allow_solo_start?: boolean | null
+          clarity_draft?: Json
           created_at?: string
           created_by?: string
           current_invite_id?: string | null
           current_round?: number
           id?: string
-          partner_id?: string
+          partner_id?: string | null
           status?: string
           template_id?: string | null
           title?: string | null
@@ -459,7 +465,18 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      increment_invite_usage: {
+        Args: {
+          invite_id: string
+        }
+        Returns: boolean
+      }
+      decrement_invite_usage: {
+        Args: {
+          invite_id: string
+        }
+        Returns: void
+      }
     }
     Enums: {
       [_ in never]: never

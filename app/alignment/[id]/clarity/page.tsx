@@ -67,6 +67,8 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
         ? searchParams.template
         : 'custom';
 
+    const clarityDraft = (alignment.clarity_draft as any) || {};
+
     // 5. Fetch user's profile
     const { data: profile } = await supabase
       .from('profiles')
@@ -84,6 +86,11 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
           initialTitle={alignment.title || ''}
           status={alignment.status}
           templateSeed={templateSeed}
+          initialClarity={{
+            topic: (clarityDraft.topic as string) || alignment.title || '',
+            partner: (clarityDraft.partner as string) || '',
+            desiredOutcome: (clarityDraft.desiredOutcome as string) || '',
+          }}
         />
       </div>
     );

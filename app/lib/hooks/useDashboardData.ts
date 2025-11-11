@@ -18,14 +18,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/app/lib/supabase-browser';
 import { DatabaseError, logError } from '@/app/lib/errors';
-import type { UIStatus } from '@/app/lib/types';
+import type { ClarityDraft, UIStatus } from '@/app/lib/types';
 
 /**
  * Alignment with UI status from alignment_status_view
  */
 export interface AlignmentWithStatus {
   id: string;
-  partner_id: string;
+  partner_id: string | null;
   template_id: string | null;
   status: UIStatus | string;
   ui_status: UIStatus;
@@ -34,6 +34,7 @@ export interface AlignmentWithStatus {
   created_by: string;
   created_at: string;
   updated_at: string;
+  clarity_draft?: ClarityDraft | null;
   participant_count?: number;
   submitted_responses?: number;
   signed_count?: number;

@@ -19,7 +19,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
-import { generateInvite } from '@/app/lib/invite-tokens';
+import { encryptInviteToken, generateInvite } from '@/app/lib/invite-tokens';
 import { createErrorResponse, AlignmentError, AuthError, DatabaseError } from '@/app/lib/errors';
 
 // ============================================================================
@@ -80,6 +80,7 @@ export async function POST(
 
     // 4. Generate new secure token
     const { token, hash } = generateInvite();
+    const tokenCiphertext = encryptInviteToken(token);
 
     // 5. Calculate expiration (30 days from now)
     const expiresAt = new Date();
@@ -91,6 +92,7 @@ export async function POST(
       .insert({
         alignment_id: params.id,
         token_hash: hash,
+        token_ciphertext: tokenCiphertext,
         created_by: user.id,
         expires_at: expiresAt.toISOString(),
         max_uses: 1,

@@ -17,7 +17,9 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { TemplateQuestion } from '@/app/lib/types';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import { createErrorResponse, ValidationError, AIError } from '@/app/lib/errors';
+import { createErrorResponse, ValidationError, AIError, AlignmentError } from '@/app/lib/errors';
+import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
+import { isParticipant } from '@/app/lib/db-helpers';
 
 // ============================================================================
 // Request/Response Schema
@@ -33,6 +35,7 @@ type SuggestionMode = z.infer<typeof SuggestionMode>;
  * Request body schema
  */
 const RequestSchema = z.object({
+  alignmentId: z.string().uuid('Invalid alignment ID'),
   question: z.object({
     id: z.string(),
     type: z.enum(['short_text', 'long_text', 'multiple_choice', 'checkbox', 'number', 'scale']),
@@ -164,11 +167,17 @@ function calculateConfidence(
  */
 export async function POST(request: NextRequest): Promise<Response> {
   const timer = new PerformanceTimer();
-  const alignmentId = 'suggestion-request'; // No specific alignment for inline suggestions
+  const supabase = createServerClient();
   const modelName = 'claude-haiku-4.5';
   const model = anthropic(modelName);
+  let telemetryAlignmentId = 'suggestion-request';
+  let telemetryUserId: string | undefined;
 
   try {
+    // Authenticate user
+    const user = await requireAuth(supabase);
+    telemetryUserId = user.id;
+
     // Parse and validate request body
     const body = await request.json();
     const validationResult = RequestSchema.safeParse(body);
@@ -180,15 +189,23 @@ export async function POST(request: NextRequest): Promise<Response> {
       );
     }
 
-    const { question, currentAnswer, mode, alignmentContext } = validationResult.data;
+    const { alignmentId, question, currentAnswer, mode, alignmentContext } = validationResult.data;
+    telemetryAlignmentId = alignmentId;
+
+    // Ensure user is a participant in the alignment
+    const isUserParticipant = await isParticipant(supabase, alignmentId, user.id);
+    if (!isUserParticipant) {
+      throw AlignmentError.unauthorized(alignmentId, user.id);
+    }
 
     // Log telemetry start
     telemetry.logAIOperation({
       event: 'ai.suggestion.start',
-      alignmentId,
+      alignmentId: telemetryAlignmentId,
       latencyMs: 0,
       model: modelName,
       success: true,
+      userId: telemetryUserId,
     });
 
     // Build prompt based on mode
@@ -224,10 +241,11 @@ export async function POST(request: NextRequest): Promise<Response> {
     const latencyMs = timer.stop();
     telemetry.logAIOperation({
       event: 'ai.suggestion.complete',
-      alignmentId,
+      alignmentId: telemetryAlignmentId,
       latencyMs,
       model: modelName,
       success: true,
+      userId: telemetryUserId,
       tokenUsage: usage ? {
         prompt: usage.inputTokens ?? 0,
         completion: usage.outputTokens ?? 0,
@@ -259,12 +277,13 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     telemetry.logAIOperation({
       event: 'ai.suggestion.error',
-      alignmentId,
+      alignmentId: telemetryAlignmentId,
       latencyMs,
       model: modelName,
       success: false,
       errorCode,
       errorMessage,
+      userId: telemetryUserId,
     });
 
     // Return error response

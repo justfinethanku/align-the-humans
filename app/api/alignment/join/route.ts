@@ -173,7 +173,7 @@ export async function POST(
       }
     }
 
-    // Check usage limit
+    // Check usage limit proactively
     const currentUses = invitation.current_uses ?? 0;
     const maxUses = invitation.max_uses ?? 1;
     if (currentUses >= maxUses) {
@@ -205,7 +205,23 @@ export async function POST(
       );
     }
 
-    // 8. Add user as participant with role "partner"
+    // 8. Atomically claim usage slot before inserting participant
+    const { data: usageClaimed, error: usageError } = await supabase
+      .rpc('increment_invite_usage', { invite_id: invitation.id });
+
+    if (usageError) {
+      console.error('Failed to claim invite usage:', usageError);
+      throw new Error('Failed to claim invite link');
+    }
+
+    if (!usageClaimed) {
+      throw new ValidationError(
+        'This invite link has reached its usage limit',
+        { maxUses, currentUses }
+      );
+    }
+
+    // 9. Add user as participant with role "partner"
     const { error: insertError } = await supabase
       .from('alignment_participants')
       .insert({
@@ -216,18 +232,12 @@ export async function POST(
 
     if (insertError) {
       console.error('Failed to add participant:', insertError);
+      try {
+        await supabase.rpc('decrement_invite_usage', { invite_id: invitation.id });
+      } catch (rollbackError) {
+        console.error('Failed to roll back invite usage:', rollbackError);
+      }
       throw new Error('Failed to join alignment');
-    }
-
-    // 9. Increment invitation usage counter
-    const { error: updateError } = await supabase
-      .from('alignment_invitations')
-      .update({ current_uses: (invitation.current_uses ?? 0) + 1 })
-      .eq('id', invitation.id);
-
-    if (updateError) {
-      console.error('Failed to update invitation usage:', updateError);
-      // Non-fatal - user is already added as participant
     }
 
     // 10. Return success with alignment ID for redirect

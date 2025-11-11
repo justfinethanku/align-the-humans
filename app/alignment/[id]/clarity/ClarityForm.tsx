@@ -35,6 +35,11 @@ interface ClarityFormProps {
   initialTitle: string
   status: string
   templateSeed: string
+  initialClarity: {
+    topic?: string
+    partner?: string
+    desiredOutcome?: string
+  }
 }
 
 interface AISuggestion {
@@ -55,15 +60,16 @@ export function ClarityForm({
   initialTitle,
   status,
   templateSeed,
+  initialClarity,
 }: ClarityFormProps) {
   const router = useRouter()
   const supabase = React.useMemo(() => createClient(), [])
 
   // Form state
-  const [topic, setTopic] = React.useState(initialTitle)
-  const [partnerText, setPartnerText] = React.useState("")
+  const [topic, setTopic] = React.useState(initialClarity.topic || initialTitle)
+  const [partnerText, setPartnerText] = React.useState(initialClarity.partner || "")
   const [selectedPartner, setSelectedPartner] = React.useState<Partner | null>(null)
-  const [desiredOutcome, setDesiredOutcome] = React.useState("")
+  const [desiredOutcome, setDesiredOutcome] = React.useState(initialClarity.desiredOutcome || "")
 
   // UI state
   const [openSections, setOpenSections] = React.useState({
@@ -104,40 +110,42 @@ export function ClarityForm({
   const autoSaveTimerRef = React.useRef<NodeJS.Timeout>()
 
   /**
-   * Auto-save form progress when topic or desiredOutcome changes
+   * Saves form progress to database (updates alignment clarity draft)
    */
-  React.useEffect(() => {
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current)
+  const saveProgress = React.useCallback(async () => {
+    const trimmedTopic = topic.trim()
+    const trimmedPartner = partnerText.trim()
+    const trimmedOutcome = desiredOutcome.trim()
+
+    if (!trimmedTopic && !trimmedPartner && !trimmedOutcome) {
+      return
     }
 
-    // Only auto-save if there's content
-    if (topic.trim()) {
-      autoSaveTimerRef.current = setTimeout(() => {
-        saveProgress()
-      }, 1000) // Debounce 1 second
+    const payload: Record<string, unknown> = {}
+    if (trimmedTopic) {
+      payload.title = trimmedTopic
     }
 
-    return () => {
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current)
-      }
+    const clarityDraft = {
+      topic: trimmedTopic || undefined,
+      partner: trimmedPartner || undefined,
+      desiredOutcome: trimmedOutcome || undefined,
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [topic])
 
-  /**
-   * Saves form progress to database (updates alignment title)
-   */
-  async function saveProgress() {
-    if (!topic.trim()) return
+    if (clarityDraft.topic || clarityDraft.partner || clarityDraft.desiredOutcome) {
+      payload.clarityDraft = clarityDraft
+    }
+
+    if (Object.keys(payload).length === 0) {
+      return
+    }
 
     try {
       setIsSaving(true)
       const response = await fetch(`/api/alignment/${alignmentId}/update`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: topic.trim() }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -149,7 +157,28 @@ export function ClarityForm({
     } finally {
       setIsSaving(false)
     }
-  }
+  }, [alignmentId, topic, partnerText, desiredOutcome])
+
+  /**
+   * Auto-save form progress when topic, partner, or desired outcome changes
+   */
+  React.useEffect(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+    }
+
+    if (topic.trim() || partnerText.trim() || desiredOutcome.trim()) {
+      autoSaveTimerRef.current = setTimeout(() => {
+        void saveProgress()
+      }, 1000)
+    }
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current)
+      }
+    }
+  }, [topic, partnerText, desiredOutcome, saveProgress])
 
   /**
    * Fetches AI suggestions for a given section

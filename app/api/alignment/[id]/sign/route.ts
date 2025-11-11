@@ -208,6 +208,13 @@ export async function POST(
       user.id
     );
 
+    if (round !== alignment.current_round) {
+      throw new ValidationError(
+        `Round mismatch. Current round is ${alignment.current_round}, but attempted to sign round ${round}.`,
+        { currentRound: alignment.current_round, requestedRound: round }
+      );
+    }
+
     // 4. Check if user already signed
     const alreadySigned = await checkExistingSignature(
       supabase,

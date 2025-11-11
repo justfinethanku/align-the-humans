@@ -88,7 +88,7 @@ export function NewAlignmentClient({ userId }: NewAlignmentClientProps) {
           title: templates.find((t) => t.id === templateId)?.title || 'New Alignment',
           status: 'draft',
           created_by: userId,
-          partner_id: null as any, // Nullable after migration
+          partner_id: null,
         })
         .select()
         .single();
@@ -142,7 +142,7 @@ export function NewAlignmentClient({ userId }: NewAlignmentClientProps) {
           title: customDescription.slice(0, 100), // Use first 100 chars as title
           status: 'draft',
           created_by: userId,
-          partner_id: null as any, // Nullable after migration
+          partner_id: null,
         })
         .select()
         .single();

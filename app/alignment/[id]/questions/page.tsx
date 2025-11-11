@@ -31,7 +31,8 @@ export default async function QuestionsPage({
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    redirect('/auth/login');
+    const redirectParam = encodeURIComponent(`/alignment/${params.id}/questions`);
+    redirect(`/login?redirectTo=${redirectParam}`);
   }
 
   // Load alignment with full details

@@ -15,8 +15,9 @@
  * - https://nextjs.org/docs/app/building-your-application/routing/middleware
  */
 
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from '@/app/lib/database.types';
 
 /**
  * Public routes that don't require authentication
@@ -80,31 +81,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // Create response object that we can mutate
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  // Create Supabase server client with proper cookie handling
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          // Set cookies on both request and response
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
+  // Create Supabase client optimized for Edge runtime
+  const supabase = createMiddlewareClient<Database>({ req: request, res: response });
 
   // Get user session (this also refreshes the session if needed)
   const {
