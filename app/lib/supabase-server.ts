@@ -29,6 +29,7 @@
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from './database.types';
+import { AuthError } from './errors';
 
 /**
  * Creates a Supabase client for server-side usage
@@ -182,13 +183,13 @@ export async function getCurrentSession(supabase: SupabaseServerClient) {
  *
  * @param supabase Supabase client instance
  * @returns Authenticated user object
- * @throws Error if user is not authenticated
+ * @throws AuthError if user is not authenticated
  */
 export async function requireAuth(supabase: SupabaseServerClient) {
   const user = await getCurrentUser(supabase);
 
   if (!user) {
-    throw new Error('Authentication required');
+    throw new AuthError('Authentication required', 401);
   }
 
   return user;
