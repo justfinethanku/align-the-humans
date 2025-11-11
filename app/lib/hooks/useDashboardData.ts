@@ -103,9 +103,9 @@ export function useDashboardData(): UseDashboardDataReturn {
         return;
       }
 
-      // Fetch alignments with derived status from view
+      // Fetch alignments directly from alignments table
       const { data: alignmentsData, error: queryError } = await supabase
-        .from('alignment_status_view')
+        .from('alignments')
         .select(`
           *,
           participants:alignment_participants(
@@ -127,7 +127,7 @@ export function useDashboardData(): UseDashboardDataReturn {
 
       const alignmentsWithStatus = (alignmentsData || []).map((alignment) => ({
         ...alignment,
-        ui_status: (alignment.ui_status as UIStatus) || (alignment.status as UIStatus),
+        ui_status: alignment.status as UIStatus,
       }));
 
       setAlignments(alignmentsWithStatus as AlignmentWithStatus[]);
