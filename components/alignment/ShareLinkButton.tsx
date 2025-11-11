@@ -36,6 +36,7 @@ export function ShareLinkButton({ alignmentId, className }: ShareLinkButtonProps
   // Fetch current invite on mount
   useEffect(() => {
     fetchInvite();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alignmentId]);
 
   // Calculate expiration countdown

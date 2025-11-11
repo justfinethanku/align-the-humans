@@ -22,7 +22,7 @@ export function CTASection() {
 
           {/* Subtext */}
           <p className="text-lg sm:text-xl text-text-muted dark:text-text-muted mb-10 max-w-2xl mx-auto leading-relaxed">
-            Build the habit with small decisions. Trust it when everything's on the line. Start your first alignment in under 5 minutes.
+            Build the habit with small decisions. Trust it when everything&apos;s on the line. Start your first alignment in under 5 minutes.
           </p>
 
           {/* CTA Buttons */}

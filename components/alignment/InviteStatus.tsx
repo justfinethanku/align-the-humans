@@ -30,6 +30,7 @@ export function InviteStatus({ alignmentId, showRegenerateButton = true }: Invit
 
   useEffect(() => {
     fetchParticipants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alignmentId]);
 
   const fetchParticipants = async () => {
@@ -162,7 +163,7 @@ export function InviteStatus({ alignmentId, showRegenerateButton = true }: Invit
 
           <div className="text-sm text-warning-800 dark:text-warning-200">
             <p>
-              Your partner hasn't joined yet. Share the link below so they can start thinking through this decision with you.
+              Your partner hasn&apos;t joined yet. Share the link below so they can start thinking through this decision with you.
             </p>
           </div>
         </CardContent>

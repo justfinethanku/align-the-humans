@@ -265,7 +265,7 @@ export default function JoinAlignmentClient({
 
         {/* Info Text */}
         <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          By joining, you'll think through this decision independently, then collaborate to discover solutions together.
+          By joining, you&apos;ll think through this decision independently, then collaborate to discover solutions together.
         </p>
       </div>
     </div>
