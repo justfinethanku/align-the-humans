@@ -296,7 +296,7 @@ async function generateQuestionsWithAI(
 function buildGenerationPrompt(request: GenerateQuestionsRequest): string {
   const { clarity, templateSeed } = request;
 
-  const baseContext = `You are an expert facilitator helping two parties reach mutual agreement. Generate a thoughtful set of 5-10 questions that will help clarify positions and facilitate alignment.
+  const baseContext = `You are an expert facilitator helping two people think through a decision together. Generate a thoughtful set of 5-10 questions that will help each person articulate what matters to them before collaborative synthesis begins.
 
 Context:
 - Topic: ${clarity.topic}
@@ -333,7 +333,7 @@ Focus Areas Based on Template:`;
 - Decision-making processes
 - Time commitment and compensation
 - Intellectual property
-- Conflict resolution
+- Disagreement resolution frameworks
 - Exit scenarios
 - Vesting schedules
 

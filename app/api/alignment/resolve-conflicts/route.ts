@@ -1,9 +1,9 @@
 /**
- * Conflict Resolution API Endpoint
+ * Solution Discovery API Endpoint
  *
- * Generates AI-powered compromise suggestions for conflicts between partners.
- * Uses Claude Sonnet 4.5 via Vercel AI SDK to analyze positions and suggest
- * practical middle-ground options with pros/cons and next steps.
+ * Generates AI-powered solution suggestions by synthesizing both perspectives.
+ * Uses Claude Sonnet 4.5 via Vercel AI SDK to analyze independent thinking and discover
+ * new options that emerge from collaborative intelligence - not simple compromise.
  *
  * POST /api/alignment/resolve-conflicts
  */
@@ -68,47 +68,48 @@ type CompromiseOption = z.infer<typeof CompromiseOptionSchema>;
 // ============================================================================
 
 /**
- * Creates a detailed prompt for conflict resolution with compromise generation
+ * Creates a detailed prompt for solution discovery through synthesis
  */
 function createResolutionPrompt(conflict: RequestBody['conflict']): string {
   const constraintsSection = conflict.constraints && conflict.constraints.length > 0
     ? `\n\nConstraints to consider:\n${conflict.constraints.map(c => `- ${c}`).join('\n')}`
     : '';
 
-  return `You are an expert mediator helping two partners reach a compromise on a disagreement.
+  return `You are an expert facilitator helping two people discover new solutions by synthesizing their independent thinking.
 
-CONFLICT DETAILS:
+DECISION DETAILS:
 Topic: ${conflict.topic}
-Person A's Position: ${conflict.personA}
-Person B's Position: ${conflict.personB}${constraintsSection}
+Person A's Perspective: ${conflict.personA}
+Person B's Perspective: ${conflict.personB}${constraintsSection}
 
 YOUR TASK:
-Generate 3-4 practical compromise options that balance both positions fairly. Each option should:
-1. Find genuine middle ground (not just "try harder" or "talk more")
-2. Be specific and actionable (include concrete details)
-3. Consider both parties' core needs and concerns
-4. Be realistic and implementable
-5. Include clear next steps for execution
+Analyze both perspectives deeply to discover 3-4 solutions that neither person may have considered alone. These should NOT be simple compromises - look for:
 
-For each compromise option, provide:
-- A clear summary of the compromise approach
-- Specific pros (benefits, what this achieves)
+1. Synthesis opportunities: Where both perspectives reveal a third option neither suggested
+2. Hidden shared values: What both people actually want underneath their stated positions
+3. False dichotomies: Are they treating this as either/or when it could be both/and?
+4. Unstated assumptions: What are they each assuming that might not be true?
+5. Creative reframes: Is there a different way to think about this decision entirely?
+
+For each discovered solution, provide:
+- A clear summary of the solution (what makes it different from simple compromise)
+- Specific pros (benefits, what this achieves for both people)
 - Specific cons (trade-offs, potential challenges)
 - Actionable next steps (3-5 concrete actions to implement this)
 
 Additionally, provide:
-- 2-3 implications: What choosing any of these compromises means for their relationship/project
-- 2-3 examples: Real-world precedents or similar situations where comparable compromises worked
+- 2-3 implications: What discovering any of these solutions reveals about their shared priorities
+- 2-3 examples: Real-world precedents where similar synthesis approaches worked
 
 IMPORTANT GUIDELINES:
-- Be balanced: Don't favor one position over the other
-- Be practical: Focus on what can actually be done
+- Seek discovery, not compromise: Don't just split the difference
+- Look beneath positions: What do they each actually need/value?
 - Be specific: Avoid vague suggestions like "communicate better"
-- Be empathetic: Acknowledge the difficulty of compromising
+- Honor both perspectives: Show how each person's thinking contributed to the discovery
 - Consider context: Account for constraints if provided
-- Think long-term: Consider sustainability of each option
+- Think generatively: What new possibilities emerge from combining their insights?
 
-Generate options that show respect for both positions while finding creative solutions.`;
+Generate solutions that demonstrate collaborative intelligence - options better than either person imagined alone.`;
 }
 
 // ============================================================================

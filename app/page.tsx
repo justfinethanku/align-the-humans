@@ -6,6 +6,8 @@ import { UseCases } from '@/components/homepage/UseCases';
 import Testimonials from '@/components/homepage/Testimonials';
 import { CTASection } from '@/components/homepage/CTASection';
 import { Header } from '@/components/layout/Header';
+import { WebApplicationSchema } from '@/components/seo/WebApplicationSchema';
+import { HowToSchema } from '@/components/seo/HowToSchema';
 
 export const metadata: Metadata = {
   title: 'Human Alignment - Structure for Every Decision That Matters',
@@ -21,6 +23,8 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
+      <WebApplicationSchema />
+      <HowToSchema />
       <Header />
       <main className="flex min-h-screen flex-col">
         {/* Hero Section */}
@@ -35,13 +39,14 @@ export default function Home() {
               What is Human Alignment?
             </h2>
             <p className="text-lg text-slate-400 leading-relaxed mb-4">
-              Human Alignment uses AI to facilitate structured conversations between partners,
-              helping you work through disagreements systematically and reach mutual understanding.
+              Human Alignment is infrastructure for collaborative thinking at any scale.
+              From splitting chores to splitting equity, the same structure enables partners
+              to think independently, then discover solutions together through AI synthesis.
             </p>
             <p className="text-lg text-slate-400 leading-relaxed">
-              Whether you&apos;re cofounders negotiating equity, partners making business decisions,
-              or couples navigating life choices, our 5-step process guides you from conflict
-              to consensus with AI-powered analysis and suggestions.
+              This isn&apos;t conflict resolution - it&apos;s proactive alignment architecture.
+              Use it BEFORE disagreement exists. Build the habit with small decisions.
+              Trust it when everything&apos;s on the line. Practice compounds trust.
             </p>
           </div>
         </section>
