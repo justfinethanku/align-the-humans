@@ -87,19 +87,33 @@ export function AddPartnerModal({
     }
   }
 
+  // Email validation regex
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
   const handleAddPartner = async () => {
+    setError(null)
+
     if (mode === "search" && !selectedUser) {
-      setError("Please select a user to add as partner")
+      setError("Please select a user from the search results to add as your partner.")
       return
     }
 
-    if (mode === "manual" && !manualEmail.trim()) {
-      setError("Please enter an email address")
-      return
+    if (mode === "manual") {
+      const trimmedEmail = manualEmail.trim()
+      if (!trimmedEmail) {
+        setError("Please enter an email address for your partner.")
+        return
+      }
+      if (!isValidEmail(trimmedEmail)) {
+        setError("Please enter a valid email address (e.g., partner@example.com).")
+        return
+      }
     }
 
     setIsAdding(true)
-    setError(null)
 
     try {
       const response = await fetch("/api/partners/add", {
@@ -116,7 +130,18 @@ export function AddPartnerModal({
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to add partner")
+        const errorMessage = errorData.error || "Failed to add partner"
+
+        // Provide more helpful error messages based on common cases
+        if (errorMessage.toLowerCase().includes("already")) {
+          throw new Error("This person is already in your partners list.")
+        } else if (errorMessage.toLowerCase().includes("not found")) {
+          throw new Error("No account found with this email. They may need to sign up first.")
+        } else if (errorMessage.toLowerCase().includes("yourself")) {
+          throw new Error("You cannot add yourself as a partner.")
+        } else {
+          throw new Error(errorMessage)
+        }
       }
 
       const data = await response.json()
@@ -128,7 +153,7 @@ export function AddPartnerModal({
       setError(
         err instanceof Error
           ? err.message
-          : "An error occurred while adding partner"
+          : "Something went wrong. Please try again or contact support if the issue persists."
       )
     } finally {
       setIsAdding(false)

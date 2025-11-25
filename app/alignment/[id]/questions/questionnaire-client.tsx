@@ -368,83 +368,141 @@ export function QuestionnaireClient({
       <div className="flex w-full flex-1 flex-col items-center">
         <div className="w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
           {/* Progress Indicator */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Question {currentQuestionIndex + 1} of {totalQuestions}
-              </p>
-              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                {saveStatus === 'saving' && (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <p>Saving...</p>
-                  </>
-                )}
-                {saveStatus === 'saved' && (
-                  <>
-                    <CloudCheck className="h-4 w-4" />
-                    <p>Saved</p>
-                  </>
-                )}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center justify-between sm:justify-start gap-4">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Question {currentQuestionIndex + 1} of {totalQuestions}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 sm:hidden">
+                  {answeredCount}/{totalQuestions} answered
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                {/* Always show save status indicator */}
+                <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all duration-300 ${
+                  saveStatus === 'saving'
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                    : saveStatus === 'saved'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                }`}>
+                  {saveStatus === 'saving' ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span className="text-xs font-medium">Saving...</span>
+                    </>
+                  ) : saveStatus === 'saved' ? (
+                    <>
+                      <CloudCheck className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium">Draft saved</span>
+                    </>
+                  ) : (
+                    <>
+                      <CloudCheck className="h-3.5 w-3.5 opacity-50" />
+                      <span className="text-xs font-medium">Auto-save on</span>
+                    </>
+                  )}
+                </div>
+                <span className="hidden sm:inline text-xs text-slate-500 dark:text-slate-400">
+                  {answeredCount}/{totalQuestions} answered
+                </span>
               </div>
             </div>
-            <Progress value={progressPercentage} className="mt-2" />
+            <Progress value={progressPercentage} className="mt-3" />
           </div>
 
           {/* Question Card */}
           <main className="flex flex-1 flex-col gap-8">
             <div className="flex flex-col gap-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-4">
-                  {currentQuestion.metadata?.category && typeof currentQuestion.metadata.category === 'string' ? (
-                    <Badge
+              <div className="flex flex-col gap-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 flex-1 min-w-0">
+                    {currentQuestion.metadata?.category && typeof currentQuestion.metadata.category === 'string' ? (
+                      <Badge
+                        variant="outline"
+                        className="self-start rounded-full bg-primary/10 px-3 py-1 text-xs sm:text-sm font-medium text-primary dark:bg-primary/20"
+                      >
+                        {currentQuestion.metadata.category}
+                      </Badge>
+                    ) : null}
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                      {currentQuestion.prompt}
+                    </h1>
+                    {currentQuestion.description && (
+                      <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+                        {currentQuestion.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* AI Assistance Buttons - Desktop */}
+                  <div className="hidden sm:flex flex-col gap-2 pt-1 shrink-0">
+                    <Button
                       variant="outline"
-                      className="self-start rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary dark:bg-primary/20"
+                      size="icon"
+                      className="h-9 w-9"
+                      onClick={() => getAIAssistance('explain')}
+                      disabled={aiLoading}
+                      title="Explain this question"
                     >
-                      {currentQuestion.metadata.category}
-                    </Badge>
-                  ) : null}
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">
-                    {currentQuestion.prompt}
-                  </h1>
-                  {currentQuestion.description && (
-                    <p className="text-base text-slate-600 dark:text-slate-400">
-                      {currentQuestion.description}
-                    </p>
-                  )}
+                      <HelpCircle className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9"
+                      onClick={() => getAIAssistance('examples')}
+                      disabled={aiLoading}
+                      title="Show examples"
+                    >
+                      <Lightbulb className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9"
+                      onClick={() => getAIAssistance('suggest')}
+                      disabled={aiLoading}
+                      title="Get suggestions"
+                    >
+                      <Sparkles className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
 
-                {/* AI Assistance Buttons */}
-                <div className="flex flex-col gap-2 pt-2">
+                {/* AI Assistance Buttons - Mobile */}
+                <div className="flex sm:hidden items-center gap-2">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 mr-1">AI Help:</span>
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
+                    size="sm"
+                    className="h-8 px-2.5 gap-1.5"
                     onClick={() => getAIAssistance('explain')}
                     disabled={aiLoading}
-                    title="Explain this question"
                   >
-                    <HelpCircle className="h-5 w-5" />
+                    <HelpCircle className="h-3.5 w-3.5" />
+                    <span className="text-xs">Explain</span>
                   </Button>
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
+                    size="sm"
+                    className="h-8 px-2.5 gap-1.5"
                     onClick={() => getAIAssistance('examples')}
                     disabled={aiLoading}
-                    title="Show examples"
                   >
-                    <Lightbulb className="h-5 w-5" />
+                    <Lightbulb className="h-3.5 w-3.5" />
+                    <span className="text-xs">Examples</span>
                   </Button>
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
+                    size="sm"
+                    className="h-8 px-2.5 gap-1.5"
                     onClick={() => getAIAssistance('suggest')}
                     disabled={aiLoading}
-                    title="Get suggestions"
                   >
-                    <Sparkles className="h-5 w-5" />
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="text-xs">Suggest</span>
                   </Button>
                 </div>
               </div>
@@ -484,40 +542,79 @@ export function QuestionnaireClient({
             </div>
 
             {/* Navigation */}
-            <div className="flex w-full items-center justify-between border-t border-slate-200 pt-6 dark:border-slate-800">
-              <Button
-                variant="ghost"
-                onClick={handlePrevious}
-                disabled={currentQuestionIndex === 0}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Previous
-              </Button>
+            <div className="flex w-full flex-col gap-4 border-t border-slate-200 pt-6 dark:border-slate-800">
+              {/* Question Dots - Quick Navigation */}
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {questions.map((_, idx) => {
+                  const isAnswered = answers[questions[idx].id]?.value !== undefined &&
+                    answers[questions[idx].id]?.value !== null &&
+                    answers[questions[idx].id]?.value !== '';
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setCurrentQuestionIndex(idx);
+                        setShowValidation(false);
+                        setAiAssistance(null);
+                      }}
+                      className={cn(
+                        "h-2.5 w-2.5 rounded-full transition-all",
+                        idx === currentQuestionIndex
+                          ? "bg-primary scale-125"
+                          : isAnswered
+                          ? "bg-green-500 hover:scale-110"
+                          : "bg-slate-300 dark:bg-slate-600 hover:scale-110"
+                      )}
+                      title={`Question ${idx + 1}${isAnswered ? ' (answered)' : ''}`}
+                      aria-label={`Go to question ${idx + 1}`}
+                    />
+                  );
+                })}
+              </div>
 
-              {currentQuestionIndex === totalQuestions - 1 ? (
+              {/* Navigation Buttons */}
+              <div className="flex items-center justify-between">
                 <Button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="gap-2"
+                  variant="ghost"
+                  onClick={handlePrevious}
+                  disabled={currentQuestionIndex === 0}
+                  className="gap-1.5"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      Submit Responses
-                      <CheckCircle2 className="h-4 w-4" />
-                    </>
-                  )}
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
-              ) : (
-                <Button onClick={handleNext}>
-                  Next
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              )}
+
+                {/* Question Counter - Mobile */}
+                <span className="text-xs text-slate-500 dark:text-slate-400 sm:hidden">
+                  {currentQuestionIndex + 1} / {totalQuestions}
+                </span>
+
+                {currentQuestionIndex === totalQuestions - 1 ? (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="gap-1.5"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="hidden sm:inline">Submitting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="hidden sm:inline">Submit Responses</span>
+                        <span className="sm:hidden">Submit</span>
+                        <CheckCircle2 className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button onClick={handleNext} className="gap-1.5">
+                    <span className="hidden sm:inline">Next</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </main>
         </div>

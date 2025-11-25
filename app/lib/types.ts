@@ -536,8 +536,15 @@ export interface AlignmentQuestion {
 
 /**
  * Template seed types for AI generation
+ * Must match templates in NewAlignmentClient.tsx and TemplateSeedSchema in schemas.ts
  */
-export type TemplateSeed = 'operating_agreement' | 'custom';
+export type TemplateSeed =
+  | 'operating_agreement'
+  | 'cofounder_equity'
+  | 'roommate_agreement'
+  | 'marketing_strategy'
+  | 'business_operations'
+  | 'custom';
 
 /**
  * Clarity context for AI question generation

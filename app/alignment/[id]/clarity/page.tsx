@@ -14,7 +14,11 @@ import { ClarityForm } from './ClarityForm';
 
 interface ClarityPageProps {
   params: { id: string };
-  searchParams?: { template?: string };
+  searchParams?: {
+    template?: string;
+    partnerId?: string;
+    partnerName?: string;
+  };
 }
 
 export default async function ClarityPage({ params, searchParams }: ClarityPageProps) {
@@ -67,6 +71,14 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
         ? searchParams.template
         : 'custom';
 
+    // Extract preselected partner from URL params
+    const preselectedPartner = searchParams?.partnerId && searchParams?.partnerName
+      ? {
+          id: searchParams.partnerId,
+          name: decodeURIComponent(searchParams.partnerName),
+        }
+      : null;
+
     const clarityDraft = (alignment.clarity_draft as any) || {};
 
     // 5. Fetch user's profile
@@ -88,9 +100,10 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
           templateSeed={templateSeed}
           initialClarity={{
             topic: (clarityDraft.topic as string) || alignment.title || '',
-            partner: (clarityDraft.partner as string) || '',
+            partner: (clarityDraft.partner as string) || preselectedPartner?.name || '',
             desiredOutcome: (clarityDraft.desiredOutcome as string) || '',
           }}
+          preselectedPartner={preselectedPartner}
         />
       </div>
     );

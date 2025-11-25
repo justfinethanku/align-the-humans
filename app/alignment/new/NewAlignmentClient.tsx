@@ -15,8 +15,14 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase-browser';
 
+interface PreselectedPartner {
+  id: string;
+  name: string;
+}
+
 interface NewAlignmentClientProps {
   userId: string;
+  preselectedPartner?: PreselectedPartner | null;
 }
 
 interface Template {
@@ -65,7 +71,7 @@ const templates: Template[] = [
   },
 ];
 
-export function NewAlignmentClient({ userId }: NewAlignmentClientProps) {
+export function NewAlignmentClient({ userId, preselectedPartner }: NewAlignmentClientProps) {
   const router = useRouter();
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [customDescription, setCustomDescription] = useState('');
@@ -114,8 +120,11 @@ export function NewAlignmentClient({ userId }: NewAlignmentClientProps) {
         throw new Error(participantError.message);
       }
 
-      // Navigate to clarity page with template in query params
-      router.push(`/alignment/${alignment.id}/clarity?template=${templateId}`);
+      // Navigate to clarity page with template and partner in query params
+      const partnerParams = preselectedPartner
+        ? `&partnerId=${preselectedPartner.id}&partnerName=${encodeURIComponent(preselectedPartner.name)}`
+        : '';
+      router.push(`/alignment/${alignment.id}/clarity?template=${templateId}${partnerParams}`);
     } catch (err) {
       console.error('Error creating alignment:', err);
       setError(err instanceof Error ? err.message : 'Failed to create alignment');
@@ -168,10 +177,13 @@ export function NewAlignmentClient({ userId }: NewAlignmentClientProps) {
         throw new Error(participantError.message);
       }
 
-      // Navigate to clarity page with custom template and description
+      // Navigate to clarity page with custom template, description, and partner
       const encodedDescription = encodeURIComponent(customDescription);
+      const partnerParams = preselectedPartner
+        ? `&partnerId=${preselectedPartner.id}&partnerName=${encodeURIComponent(preselectedPartner.name)}`
+        : '';
       router.push(
-        `/alignment/${alignment.id}/clarity?template=custom&description=${encodedDescription}`
+        `/alignment/${alignment.id}/clarity?template=custom&description=${encodedDescription}${partnerParams}`
       );
     } catch (err) {
       console.error('Error creating alignment:', err);

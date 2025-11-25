@@ -76,11 +76,23 @@ export const ClarityContextSchema = z.object({
 });
 
 /**
+ * Valid template seed types - must match templates in NewAlignmentClient.tsx
+ */
+export const TemplateSeedSchema = z.enum([
+  'operating_agreement',
+  'cofounder_equity',
+  'roommate_agreement',
+  'marketing_strategy',
+  'business_operations',
+  'custom',
+]);
+
+/**
  * Generate questions request schema
  */
 export const GenerateQuestionsRequestSchema = z.object({
   alignmentId: z.string().uuid('Invalid alignment ID'),
-  templateSeed: z.enum(['operating_agreement', 'custom']),
+  templateSeed: TemplateSeedSchema,
   clarity: ClarityContextSchema,
   seedTemplateId: z.string().uuid().optional(),
 });

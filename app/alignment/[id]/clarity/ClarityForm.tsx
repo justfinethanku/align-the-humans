@@ -28,6 +28,11 @@ import { cn } from "@/lib/utils"
 import { createClient } from "@/app/lib/supabase-browser"
 
 // Types
+interface PreselectedPartner {
+  id: string
+  name: string
+}
+
 interface ClarityFormProps {
   alignmentId: string
   userId: string
@@ -40,6 +45,7 @@ interface ClarityFormProps {
     partner?: string
     desiredOutcome?: string
   }
+  preselectedPartner?: PreselectedPartner | null
 }
 
 interface AISuggestion {
@@ -61,14 +67,19 @@ export function ClarityForm({
   status,
   templateSeed,
   initialClarity,
+  preselectedPartner,
 }: ClarityFormProps) {
   const router = useRouter()
   const supabase = React.useMemo(() => createClient(), [])
 
-  // Form state
+  // Form state - initialize with preselected partner if provided
   const [topic, setTopic] = React.useState(initialClarity.topic || initialTitle)
   const [partnerText, setPartnerText] = React.useState(initialClarity.partner || "")
-  const [selectedPartner, setSelectedPartner] = React.useState<Partner | null>(null)
+  const [selectedPartner, setSelectedPartner] = React.useState<Partner | null>(
+    preselectedPartner
+      ? { id: preselectedPartner.id, display_name: preselectedPartner.name }
+      : null
+  )
   const [desiredOutcome, setDesiredOutcome] = React.useState(initialClarity.desiredOutcome || "")
 
   // UI state

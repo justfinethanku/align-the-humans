@@ -16,7 +16,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import type { Database } from '@/app/lib/database.types';
 
 /**
@@ -81,14 +81,35 @@ export async function middleware(request: NextRequest) {
   }
 
   // Create response object that we can mutate
-  const response = NextResponse.next({
+  let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  // Create Supabase client optimized for Edge runtime
-  const supabase = createMiddlewareClient<Database>({ req: request, res: response });
+  // Create Supabase client using @supabase/ssr for proper cookie handling
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
   // Get user session (this also refreshes the session if needed)
   const {

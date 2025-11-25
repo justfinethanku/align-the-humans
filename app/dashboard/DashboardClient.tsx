@@ -11,7 +11,16 @@ import { AddPartnerModal } from '@/components/dashboard/AddPartnerModal';
 import { useDashboardData } from '@/app/lib/hooks/useDashboardData';
 import { usePartners } from '@/app/lib/hooks/usePartners';
 import { useAlignmentUpdates } from '@/app/lib/hooks/useAlignmentUpdates';
-import { Bell, Plus, Search, UserPlus, Loader2, HeartHandshake } from 'lucide-react';
+import { Bell, Plus, Search, UserPlus, Loader2, HeartHandshake, LogOut, User, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { createClient } from '@/app/lib/supabase-browser';
 import { cn } from '@/app/lib/utils';
 
 interface DashboardClientProps {
@@ -37,8 +46,24 @@ interface DashboardClientProps {
  */
 export function DashboardClient({ userId, userEmail, displayName }: DashboardClientProps) {
   const router = useRouter();
+  const supabase = createClient();
   const [partnerSearchQuery, setPartnerSearchQuery] = React.useState('');
   const [isAddPartnerModalOpen, setIsAddPartnerModalOpen] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await supabase.auth.signOut();
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   // Fetch alignments data
   const {
@@ -129,7 +154,7 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
             </h2>
           </div>
 
-          {/* Right side: Notifications + Avatar */}
+          {/* Right side: Notifications + User Menu */}
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -139,12 +164,55 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
             >
               <Bell className="size-5" />
             </Button>
-            <Avatar className="size-10">
-              <AvatarImage src={undefined} alt={`Avatar for ${displayName || userEmail}`} />
-              <AvatarFallback className="bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
-                {userInitials}
-              </AvatarFallback>
-            </Avatar>
+
+            {/* User Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 rounded-full p-1 pr-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <Avatar className="size-8">
+                    <AvatarImage src={undefined} alt={`Avatar for ${displayName || userEmail}`} />
+                    <AvatarFallback className="bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 text-sm">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <ChevronDown className="size-4 text-slate-500" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{displayName || 'User'}</p>
+                    <p className="text-xs leading-none text-slate-500 dark:text-slate-400">
+                      {userEmail}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => router.push('/profile')}
+                  className="cursor-pointer"
+                >
+                  <User className="mr-2 size-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                >
+                  {isLoggingOut ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <LogOut className="mr-2 size-4" />
+                  )}
+                  {isLoggingOut ? 'Signing out...' : 'Sign out'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -182,35 +250,63 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
                 <p className="mt-1">{alignmentsError.message}</p>
               </div>
             ) : alignments.length === 0 ? (
-              // Empty State
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-12 text-center dark:border-slate-700 dark:bg-slate-800/30">
-                <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
-                  <svg
-                    className="size-8 text-slate-400 dark:text-slate-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
+              // Enhanced Empty State
+              <div className="flex flex-col rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-8 dark:border-slate-800 dark:from-slate-900/50 dark:to-slate-900/30">
+                <div className="mb-6 flex items-center gap-4">
+                  <div className="flex size-14 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
+                    <HeartHandshake className="size-7 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                      Welcome to Human Alignment
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Let&apos;s get you started with your first alignment
+                    </p>
+                  </div>
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Start Your First Alignment
-                </h3>
-                <p className="mb-6 max-w-sm text-sm text-slate-500 dark:text-slate-400">
-                  Try it with something simple - a chore schedule, project kickoff, or weekend plans. Build trust in the structure with low-stakes decisions.
-                </p>
+
+                <div className="mb-6 space-y-4">
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Human Alignment helps you and a partner reach clear agreements through structured AI-guided conversations. Here&apos;s how it works:
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="flex items-start gap-3 rounded-lg bg-white p-3 shadow-sm dark:bg-slate-800/50">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">1</span>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Define</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Clarify what you need to decide together</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-lg bg-white p-3 shadow-sm dark:bg-slate-800/50">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">2</span>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Answer</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Each person answers questions privately</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 rounded-lg bg-white p-3 shadow-sm dark:bg-slate-800/50">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">3</span>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Align</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">AI helps find common ground and resolve conflicts</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-6 rounded-lg bg-amber-50 p-4 dark:bg-amber-900/20">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <strong>Pro tip:</strong> Start with something simple like a chore schedule or weekend plans. Build trust in the process before tackling bigger decisions.
+                  </p>
+                </div>
+
                 <Button
                   onClick={handleNewAlignment}
-                  className="bg-primary-600 hover:bg-primary-700 text-white"
+                  size="lg"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white sm:w-auto"
                 >
-                  <Plus className="mr-2 size-4" />
+                  <Plus className="mr-2 size-5" />
                   Start Your First Alignment
                 </Button>
               </div>
@@ -273,8 +369,14 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
               <PartnersList
                 partners={filteredPartners}
                 onPartnerClick={(partnerId) => {
-                  // TODO: Navigate to partner detail page or filter alignments
-                  console.log('Partner clicked:', partnerId);
+                  // Find the partner to get their profile info
+                  const partner = filteredPartners.find(p => p.id === partnerId);
+                  if (partner?.profile) {
+                    // Navigate to new alignment with partner pre-selected
+                    const partnerName = encodeURIComponent(partner.profile.display_name || '');
+                    const partnerUserId = partner.profile.id;
+                    router.push(`/alignment/new?partnerId=${partnerUserId}&partnerName=${partnerName}`);
+                  }
                 }}
               />
             )}

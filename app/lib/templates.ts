@@ -243,10 +243,242 @@ export const customTemplate: AlignmentQuestion[] = [
 ];
 
 /**
+ * Cofounder Equity template
+ */
+export const cofounderEquityTemplate: AlignmentQuestion[] = [
+  {
+    id: 'equity_ratio',
+    prompt: 'What equity split do you believe is fair for this partnership?',
+    description: 'Consider contributions like capital, time, skills, network, and risk tolerance.',
+    type: 'long_text',
+    required: true,
+    aiHints: {
+      explainPrompt: 'Explain factors that typically influence equity splits',
+      examplePrompt: 'Show examples of common equity arrangements',
+      suggestionPrompt: 'Suggest an equitable split based on contributions',
+    },
+    metadata: { category: 'equity', importance: 'critical' },
+  },
+  {
+    id: 'contribution_types',
+    prompt: 'What are you contributing to this partnership?',
+    description: 'List your contributions: capital, skills, time, network, IP, etc.',
+    type: 'long_text',
+    required: true,
+    aiHints: {
+      explainPrompt: 'Explain different types of contributions and their value',
+      examplePrompt: 'Show examples of contribution lists',
+      suggestionPrompt: 'Help identify contributions you might have overlooked',
+    },
+    metadata: { category: 'contributions', importance: 'critical' },
+  },
+  {
+    id: 'vesting_preference',
+    prompt: 'What vesting arrangement feels fair to you?',
+    type: 'multiple_choice',
+    required: true,
+    options: [
+      { id: 'standard_4yr', label: '4-year vesting with 1-year cliff' },
+      { id: 'no_vesting', label: 'No vesting (immediate full ownership)' },
+      { id: 'custom_vesting', label: 'Custom vesting schedule' },
+      { id: 'milestone_based', label: 'Milestone-based vesting' },
+    ],
+    metadata: { category: 'equity', importance: 'high' },
+  },
+  {
+    id: 'dilution_expectations',
+    prompt: 'How should future dilution be handled?',
+    description: 'When raising capital or adding partners, how should existing equity be affected?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'equity', importance: 'high' },
+  },
+  {
+    id: 'sweat_equity_value',
+    prompt: 'How do you value time/work contributions vs. capital contributions?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'contributions', importance: 'high' },
+  },
+];
+
+/**
+ * Roommate Agreement template
+ */
+export const roommateAgreementTemplate: AlignmentQuestion[] = [
+  {
+    id: 'chore_division',
+    prompt: 'How should household chores be divided?',
+    description: 'Consider cleaning, dishes, taking out trash, groceries, etc.',
+    type: 'long_text',
+    required: true,
+    aiHints: {
+      explainPrompt: 'Explain different approaches to dividing household responsibilities',
+      examplePrompt: 'Show examples of chore schedules',
+      suggestionPrompt: 'Suggest a fair chore division approach',
+    },
+    metadata: { category: 'responsibilities', importance: 'high' },
+  },
+  {
+    id: 'expense_sharing',
+    prompt: 'How should shared expenses be split?',
+    description: 'Rent, utilities, internet, household supplies, etc.',
+    type: 'multiple_choice',
+    required: true,
+    options: [
+      { id: 'equal_split', label: 'Split everything 50/50' },
+      { id: 'proportional', label: 'Proportional to income' },
+      { id: 'by_usage', label: 'Based on usage/space' },
+      { id: 'custom', label: 'Custom arrangement' },
+    ],
+    metadata: { category: 'financial', importance: 'critical' },
+  },
+  {
+    id: 'guest_policy',
+    prompt: 'What are your expectations around having guests over?',
+    description: 'Overnight guests, parties, advance notice, etc.',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'boundaries', importance: 'high' },
+  },
+  {
+    id: 'quiet_hours',
+    prompt: 'What quiet hours or noise boundaries do you need?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'boundaries', importance: 'high' },
+  },
+  {
+    id: 'shared_spaces',
+    prompt: 'How should shared spaces (kitchen, living room, bathroom) be used?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'shared_spaces', importance: 'medium' },
+  },
+];
+
+/**
+ * Marketing Strategy template
+ */
+export const marketingStrategyTemplate: AlignmentQuestion[] = [
+  {
+    id: 'target_audience',
+    prompt: 'Who is your primary target audience?',
+    description: 'Describe demographics, psychographics, and behavior patterns.',
+    type: 'long_text',
+    required: true,
+    aiHints: {
+      explainPrompt: 'Explain how to define a target audience',
+      examplePrompt: 'Show examples of target audience profiles',
+      suggestionPrompt: 'Help refine audience definition',
+    },
+    metadata: { category: 'audience', importance: 'critical' },
+  },
+  {
+    id: 'key_channels',
+    prompt: 'Which marketing channels should be prioritized?',
+    type: 'checkbox',
+    required: true,
+    options: [
+      { id: 'social_media', label: 'Social media (organic)' },
+      { id: 'paid_ads', label: 'Paid advertising' },
+      { id: 'content_marketing', label: 'Content marketing/SEO' },
+      { id: 'email', label: 'Email marketing' },
+      { id: 'events', label: 'Events/conferences' },
+      { id: 'partnerships', label: 'Partnerships/affiliates' },
+    ],
+    metadata: { category: 'channels', importance: 'high' },
+  },
+  {
+    id: 'budget_allocation',
+    prompt: 'How should the marketing budget be allocated?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'budget', importance: 'high' },
+  },
+  {
+    id: 'brand_voice',
+    prompt: 'What should our brand voice and tone be?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'brand', importance: 'medium' },
+  },
+  {
+    id: 'success_metrics',
+    prompt: 'How will we measure marketing success?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'metrics', importance: 'high' },
+  },
+];
+
+/**
+ * Business Operations template
+ */
+export const businessOperationsTemplate: AlignmentQuestion[] = [
+  {
+    id: 'decision_authority',
+    prompt: 'How should operational decisions be made and who has final authority?',
+    description: 'Consider day-to-day decisions vs. major strategic choices.',
+    type: 'long_text',
+    required: true,
+    aiHints: {
+      explainPrompt: 'Explain different decision-making frameworks',
+      examplePrompt: 'Show examples of authority structures',
+      suggestionPrompt: 'Suggest a decision framework based on your context',
+    },
+    metadata: { category: 'governance', importance: 'critical' },
+  },
+  {
+    id: 'communication_cadence',
+    prompt: 'How often and through what channels should we communicate about operations?',
+    type: 'multiple_choice',
+    required: true,
+    options: [
+      { id: 'daily_standup', label: 'Daily standups' },
+      { id: 'weekly_sync', label: 'Weekly sync meetings' },
+      { id: 'async_tools', label: 'Primarily async (Slack/email)' },
+      { id: 'as_needed', label: 'As-needed basis' },
+    ],
+    metadata: { category: 'communication', importance: 'high' },
+  },
+  {
+    id: 'resource_allocation',
+    prompt: 'How should resources (budget, people, time) be prioritized?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'resources', importance: 'high' },
+  },
+  {
+    id: 'process_documentation',
+    prompt: 'How important is documenting processes and creating SOPs?',
+    type: 'scale',
+    required: true,
+    options: [
+      { id: '1', label: 'Not important' },
+      { id: '5', label: 'Moderately important' },
+      { id: '10', label: 'Extremely important' },
+    ],
+    metadata: { category: 'operations', importance: 'medium', min: 1, max: 10 },
+  },
+  {
+    id: 'vendor_selection',
+    prompt: 'What criteria should guide vendor and tool selection?',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'procurement', importance: 'medium' },
+  },
+];
+
+/**
  * Template registry mapping seed types to templates
  */
 export const templateRegistry: Record<string, AlignmentQuestion[]> = {
   operating_agreement: operatingAgreementTemplate,
+  cofounder_equity: cofounderEquityTemplate,
+  roommate_agreement: roommateAgreementTemplate,
+  marketing_strategy: marketingStrategyTemplate,
+  business_operations: businessOperationsTemplate,
   custom: customTemplate,
 };
 
