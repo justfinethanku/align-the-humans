@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
+import { createServerClient, createAdminClient, requireAuth } from '@/app/lib/supabase-server';
 import { createSignature, updateAlignmentStatus, getSignatures } from '@/app/lib/db-helpers';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import {
@@ -294,6 +294,7 @@ export async function POST(
       // Fire-and-forget: don't block the response on email delivery
       (async () => {
         try {
+          const adminClient = createAdminClient();
           const { data: participants } = await supabase
             .from('alignment_participants')
             .select('user_id')
@@ -308,7 +309,7 @@ export async function POST(
               .eq('id', p.user_id)
               .single();
 
-            const { data: authUser } = await supabase.auth.admin.getUserById(p.user_id);
+            const { data: authUser } = await adminClient.auth.admin.getUserById(p.user_id);
             const email = authUser?.user?.email;
             if (!email) continue;
 

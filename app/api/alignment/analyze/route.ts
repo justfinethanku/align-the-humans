@@ -20,7 +20,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { generateObject } from 'ai';
 import { models, AI_MODELS } from '@/app/lib/ai-config';
-import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
+import { createServerClient, createAdminClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, updateAlignmentStatus, isParticipant } from '@/app/lib/db-helpers';
 import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
 import { sendAnalysisCompleteEmail } from '@/app/lib/email-service';
@@ -307,6 +307,7 @@ export async function POST(request: NextRequest) {
     // Send analysis complete emails (fire-and-forget)
     (async () => {
       try {
+        const adminClient = createAdminClient();
         const { data: participants } = await supabase
           .from('alignment_participants')
           .select('user_id')
@@ -321,7 +322,7 @@ export async function POST(request: NextRequest) {
             .eq('id', p.user_id)
             .single();
 
-          const { data: authUser } = await supabase.auth.admin.getUserById(p.user_id);
+          const { data: authUser } = await adminClient.auth.admin.getUserById(p.user_id);
           const email = authUser?.user?.email;
           if (!email) continue;
 

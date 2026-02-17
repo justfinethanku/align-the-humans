@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { encryptInviteToken, generateInvite } from '@/app/lib/invite-tokens';
 import { createErrorResponse, AlignmentError, AuthError, DatabaseError } from '@/app/lib/errors';
+import { sendInviteEmail } from '@/app/lib/email-service';
 
 // ============================================================================
 // Types
@@ -28,6 +29,7 @@ interface GenerateInviteResponse {
   token: string;
   invite_url: string;
   expires_at: string;
+  email_sent: boolean;
 }
 
 // ============================================================================
@@ -45,10 +47,21 @@ export async function POST(
     // 1. Authenticate user
     const user = await requireAuth(supabase);
 
+    // Parse optional request body for partner email
+    let partnerEmail: string | undefined;
+    try {
+      const body = await request.json();
+      if (body.partnerEmail && typeof body.partnerEmail === 'string') {
+        partnerEmail = body.partnerEmail.trim().toLowerCase();
+      }
+    } catch {
+      // No body or invalid JSON - that's fine, email is optional
+    }
+
     // 2. Verify alignment exists and user is the creator
     const { data: alignment, error: alignmentError } = await supabase
       .from('alignments')
-      .select('id, created_by')
+      .select('id, created_by, title')
       .eq('id', id)
       .single();
 
@@ -110,12 +123,44 @@ export async function POST(
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const inviteUrl = `${appUrl}/join/${token}`;
 
-    // 8. Return response with raw token (only time it's exposed)
+    // 8. Send invite email if partner email provided (fire-and-forget)
+    let emailSent = false;
+    if (partnerEmail) {
+      try {
+        // Fetch creator's display name for the email
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', user.id)
+          .single();
+
+        const inviterName = profile?.display_name || 'Your partner';
+        const alignmentTitle = alignment.title || 'an alignment';
+
+        const emailResult = await sendInviteEmail({
+          to: partnerEmail,
+          inviterName,
+          alignmentTitle,
+          inviteUrl,
+        });
+
+        emailSent = emailResult.success;
+        if (!emailResult.success) {
+          console.error('[Email] Failed to send invite email:', emailResult.error);
+        }
+      } catch (emailErr) {
+        console.error('[Email] Invite email error:', emailErr);
+        // Non-fatal - invite link still works without email
+      }
+    }
+
+    // 9. Return response with raw token (only time it's exposed)
     return NextResponse.json(
       {
         token,
         invite_url: inviteUrl,
         expires_at: invitation.expires_at || expiresAt.toISOString(),
+        email_sent: emailSent,
       },
       { status: 201 }
     );
