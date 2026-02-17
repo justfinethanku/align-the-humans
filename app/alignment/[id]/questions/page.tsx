@@ -23,22 +23,23 @@ import { customTemplate } from '@/app/lib/templates';
 export default async function QuestionsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const supabase = createServerClient();
 
   // Get current user
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    const redirectParam = encodeURIComponent(`/alignment/${params.id}/questions`);
+    const redirectParam = encodeURIComponent(`/alignment/${id}/questions`);
     redirect(`/login?redirectTo=${redirectParam}`);
   }
 
   // Load alignment with full details
   const { data: alignment, error: alignmentError } = await getAlignmentDetail(
     supabase,
-    params.id,
+    id,
     user.id
   );
 
@@ -93,7 +94,7 @@ export default async function QuestionsPage({
   return (
     <Suspense fallback={<QuestionnaireSkeleton />}>
       <QuestionnaireClient
-        alignmentId={params.id}
+        alignmentId={id}
         questions={questions}
         existingAnswers={existingAnswers}
         alignmentTitle={alignment.title || 'Untitled Alignment'}

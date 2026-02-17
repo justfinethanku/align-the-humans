@@ -22,8 +22,9 @@ interface InviteResponse {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
+  const { id } = await params;
   const supabase = createServerClient();
 
   try {
@@ -33,18 +34,18 @@ export async function GET(
     const { data: alignment, error: alignmentError } = await supabase
       .from('alignments')
       .select('id, created_by, current_invite_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (alignmentError || !alignment) {
-      throw AlignmentError.notFound(params.id);
+      throw AlignmentError.notFound(id);
     }
 
     if (alignment.created_by !== user.id) {
       throw new AuthError(
         'Only the alignment creator can view invite links',
         403,
-        { alignmentId: params.id, userId: user.id }
+        { alignmentId: id, userId: user.id }
       );
     }
 
@@ -63,7 +64,7 @@ export async function GET(
       .single();
 
     if (inviteError || !invitation) {
-      throw AlignmentError.notFound(params.id);
+      throw AlignmentError.notFound(id);
     }
 
     const now = new Date();

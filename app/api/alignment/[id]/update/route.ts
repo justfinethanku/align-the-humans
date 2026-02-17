@@ -35,8 +35,9 @@ type AlignmentUpdatePayload = Partial<Pick<Database['public']['Tables']['alignme
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const { id } = await params;
   const supabase = createServerClient();
 
   try {
@@ -99,18 +100,18 @@ export async function PATCH(
     const { data: participant, error: participantError } = await supabase
       .from('alignment_participants')
       .select('id')
-      .eq('alignment_id', params.id)
+      .eq('alignment_id', id)
       .eq('user_id', user.id)
       .single();
 
     if (participantError || !participant) {
-      throw AlignmentError.unauthorized(params.id, user.id);
+      throw AlignmentError.unauthorized(id, user.id);
     }
 
     // 4. Update alignment
     const { data: alignment, error: updateError } = await updateAlignment(
       supabase,
-      params.id,
+      id,
       updatePayload
     );
 

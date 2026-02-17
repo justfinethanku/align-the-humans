@@ -13,15 +13,17 @@ import { getAlignmentDetail } from '@/app/lib/db-helpers';
 import { ClarityForm } from './ClarityForm';
 
 interface ClarityPageProps {
-  params: { id: string };
-  searchParams?: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{
     template?: string;
     partnerId?: string;
     partnerName?: string;
-  };
+  }>;
 }
 
 export default async function ClarityPage({ params, searchParams }: ClarityPageProps) {
+  const { id } = await params;
+  const resolvedSearchParams = await searchParams;
   const supabase = createServerClient();
 
   try {
@@ -31,7 +33,7 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
     // 2. Fetch alignment with full details
     const { data: alignment, error } = await getAlignmentDetail(
       supabase,
-      params.id,
+      id,
       user.id
     );
 
@@ -54,28 +56,28 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
     if (alignment.status !== 'draft') {
       switch (alignment.status) {
         case 'active':
-          redirect(`/alignment/${params.id}/questions`);
+          redirect(`/alignment/${id}/questions`);
         case 'analyzing':
-          redirect(`/alignment/${params.id}/analysis`);
+          redirect(`/alignment/${id}/analysis`);
         case 'resolving':
-          redirect(`/alignment/${params.id}/resolution`);
+          redirect(`/alignment/${id}/resolution`);
         case 'complete':
-          redirect(`/alignment/${params.id}/document`);
+          redirect(`/alignment/${id}/document`);
         default:
-          redirect(`/alignment/${params.id}`);
+          redirect(`/alignment/${id}`);
       }
     }
 
     const templateSeed =
-      typeof searchParams?.template === 'string' && searchParams.template.length > 0
-        ? searchParams.template
+      typeof resolvedSearchParams?.template === 'string' && resolvedSearchParams.template.length > 0
+        ? resolvedSearchParams.template
         : 'custom';
 
     // Extract preselected partner from URL params
-    const preselectedPartner = searchParams?.partnerId && searchParams?.partnerName
+    const preselectedPartner = resolvedSearchParams?.partnerId && resolvedSearchParams?.partnerName
       ? {
-          id: searchParams.partnerId,
-          name: decodeURIComponent(searchParams.partnerName),
+          id: resolvedSearchParams.partnerId,
+          name: decodeURIComponent(resolvedSearchParams.partnerName),
         }
       : null;
 
@@ -92,7 +94,7 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <ClarityForm
-          alignmentId={params.id}
+          alignmentId={id}
           userId={user.id}
           userDisplayName={profile?.display_name || 'User'}
           initialTitle={alignment.title || ''}

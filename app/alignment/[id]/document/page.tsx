@@ -20,9 +20,9 @@ import { DocumentActions } from './components/document-actions';
 // ============================================================================
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 async function getDocumentData(alignmentId: string, userId: string) {
@@ -77,10 +77,11 @@ async function getDocumentData(alignmentId: string, userId: string) {
 // ============================================================================
 
 export default async function DocumentPage({ params }: PageProps) {
+  const { id } = await params;
   const supabase = createServerClient();
   const user = await requireAuth(supabase);
 
-  const data = await getDocumentData(params.id, user.id);
+  const data = await getDocumentData(id, user.id);
 
   if (!data) {
     notFound();
@@ -90,7 +91,7 @@ export default async function DocumentPage({ params }: PageProps) {
 
   // Redirect if not in resolving or complete status
   if (alignment.status !== 'resolving' && alignment.status !== 'complete') {
-    redirect(`/alignment/${params.id}/resolution`);
+    redirect(`/alignment/${id}/resolution`);
   }
 
   // Find current user and partner

@@ -17,6 +17,7 @@ import {
   AlignmentError,
   logError
 } from '@/app/lib/errors';
+import { sendAlignmentCompleteEmail } from '@/app/lib/email-service';
 import { z } from 'zod';
 import { createHash } from 'crypto';
 
@@ -186,11 +187,11 @@ function generateSignature(userId: string, snapshotHash: string): string {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   const timer = new PerformanceTimer();
+  const { id: alignmentId } = await params;
   const supabase = createServerClient();
-  const alignmentId = params.id;
 
   try {
     // 1. Authenticate user
@@ -288,9 +289,50 @@ export async function POST(
       }
     }
 
-    // 10. Log success
+    // 10. Send completion emails if all signed
+    if (allSigned) {
+      // Fire-and-forget: don't block the response on email delivery
+      (async () => {
+        try {
+          const { data: participants } = await supabase
+            .from('alignment_participants')
+            .select('user_id')
+            .eq('alignment_id', alignmentId);
+
+          if (!participants) return;
+
+          for (const p of participants) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('id', p.user_id)
+              .single();
+
+            const { data: authUser } = await supabase.auth.admin.getUserById(p.user_id);
+            const email = authUser?.user?.email;
+            if (!email) continue;
+
+            const partnerProfile = participants.find(pp => pp.user_id !== p.user_id);
+            const { data: partnerData } = partnerProfile
+              ? await supabase.from('profiles').select('display_name').eq('id', partnerProfile.user_id).single()
+              : { data: null };
+
+            await sendAlignmentCompleteEmail({
+              to: email,
+              recipientName: profile?.display_name || 'there',
+              partnerName: partnerData?.display_name || 'Your partner',
+              alignmentTitle: alignment.title || 'your alignment',
+              alignmentId,
+            });
+          }
+        } catch (emailErr) {
+          console.error('[Email] Failed to send completion emails:', emailErr);
+        }
+      })();
+    }
+
+    // 11. Log success
     const latencyMs = timer.stop();
-    // Note: Using generic ai.operation event type since signature.created isn't in TelemetryEventType
     console.log('Signature created:', {
       alignmentId,
       userId: user.id,

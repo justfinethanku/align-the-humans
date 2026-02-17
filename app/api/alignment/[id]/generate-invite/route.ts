@@ -36,8 +36,9 @@ interface GenerateInviteResponse {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<GenerateInviteResponse | { error: unknown }>> {
+  const { id } = await params;
   const supabase = createServerClient();
 
   try {
@@ -48,18 +49,18 @@ export async function POST(
     const { data: alignment, error: alignmentError } = await supabase
       .from('alignments')
       .select('id, created_by')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (alignmentError || !alignment) {
-      throw AlignmentError.notFound(params.id);
+      throw AlignmentError.notFound(id);
     }
 
     if (alignment.created_by !== user.id) {
       throw new AuthError(
         'Only the alignment creator can generate invite links',
         403,
-        { alignmentId: params.id, userId: user.id }
+        { alignmentId: id, userId: user.id }
       );
     }
 
@@ -75,7 +76,7 @@ export async function POST(
     const { data: invitation, error: insertError } = await supabase
       .from('alignment_invitations')
       .insert({
-        alignment_id: params.id,
+        alignment_id: id,
         token_hash: hash,
         token_ciphertext: tokenCiphertext,
         created_by: user.id,
@@ -90,7 +91,7 @@ export async function POST(
       console.error('Failed to insert invitation:', insertError);
       throw new DatabaseError(
         'Failed to generate invite link',
-        { alignmentId: params.id, error: insertError }
+        { alignmentId: id, error: insertError }
       );
     }
 
@@ -98,7 +99,7 @@ export async function POST(
     const { error: updateError } = await supabase
       .from('alignments')
       .update({ current_invite_id: invitation.id })
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (updateError) {
       console.error('Failed to update alignment current_invite_id:', updateError);

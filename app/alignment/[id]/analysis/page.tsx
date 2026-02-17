@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 /**
@@ -152,19 +152,20 @@ function ConflictItem({
 }
 
 export default async function AnalysisPage({ params }: PageProps) {
+  const { id } = await params;
   const supabase = createServerClient();
   const user = await getCurrentUser(supabase);
 
   // Require authentication
   if (!user) {
-    const redirectParam = encodeURIComponent(`/alignment/${params.id}/analysis`);
+    const redirectParam = encodeURIComponent(`/alignment/${id}/analysis`);
     redirect(`/login?redirectTo=${redirectParam}`);
   }
 
   // Fetch alignment with analysis
   const { data: alignment, error } = await getAlignmentDetail(
     supabase,
-    params.id,
+    id,
     user.id
   );
 
@@ -179,19 +180,19 @@ export default async function AnalysisPage({ params }: PageProps) {
     const { data: responses } = await supabase
       .from('alignment_responses')
       .select('id')
-      .eq('alignment_id', params.id)
+      .eq('alignment_id', id)
       .eq('round', alignmentDetail.current_round)
       .not('submitted_at', 'is', null);
 
     if (!responses || responses.length < 2) {
-      redirect(`/alignment/${params.id}/questions`);
+      redirect(`/alignment/${id}/questions`);
     }
 
-    await triggerServerAnalysis(params.id, alignmentDetail.current_round);
+    await triggerServerAnalysis(id, alignmentDetail.current_round);
 
     const { data: refreshedAlignment } = await getAlignmentDetail(
       supabase,
-      params.id,
+      id,
       user.id
     );
 
@@ -215,8 +216,8 @@ export default async function AnalysisPage({ params }: PageProps) {
   // Determine action button
   const hasConflicts = conflicts.length > 0;
   const nextRoute = hasConflicts
-    ? `/alignment/${params.id}/resolution`
-    : `/alignment/${params.id}/document`;
+    ? `/alignment/${id}/resolution`
+    : `/alignment/${id}/document`;
   const buttonText = hasConflicts
     ? 'Resolve Conflicts'
     : 'Generate Final Document';
@@ -482,7 +483,7 @@ export default async function AnalysisPage({ params }: PageProps) {
 
 async function triggerServerAnalysis(alignmentId: string, round: number) {
   const baseUrl = getBaseUrl();
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cookieHeader = cookieStore
     .getAll()
     .map(({ name, value }) => `${name}=${value}`)
