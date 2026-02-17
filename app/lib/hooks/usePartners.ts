@@ -42,6 +42,7 @@ export interface PartnerWithCount {
   profile: {
     id: string;
     display_name: string | null;
+    is_admin: boolean;
     created_at: string;
     updated_at: string;
   } | null;
@@ -153,7 +154,7 @@ export function usePartners(): UsePartnersReturn {
       const partnerUserIds = Array.from(partnerMap.keys());
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, display_name, created_at, updated_at')
+        .select('id, display_name, is_admin, created_at, updated_at')
         .in('id', partnerUserIds);
 
       if (profilesError) {

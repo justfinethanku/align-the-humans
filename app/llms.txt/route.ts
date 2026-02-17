@@ -133,9 +133,9 @@ For detailed information:
 
 ## Contact & Support
 
-- Platform URL: https://humanalignment.app
-- Documentation: https://humanalignment.app/docs (when available)
-- Support: support@humanalignment.app (when configured)
+- Platform URL: https://alignthehumans.com
+- Documentation: https://alignthehumans.com/docs (when available)
+- Support: support@alignthehumans.com (when configured)
 
 ## About This File
 

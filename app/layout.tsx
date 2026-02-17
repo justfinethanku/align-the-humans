@@ -10,7 +10,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://humanalignment.app'),
+  metadataBase: new URL('https://alignthehumans.com'),
   title: {
     default: 'Human Alignment - Structure for Every Decision That Matters',
     template: '%s | Human Alignment'
@@ -85,8 +85,8 @@ export default function RootLayout({
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'Human Alignment',
-    url: 'https://humanalignment.app',
-    logo: 'https://humanalignment.app/logo.png',
+    url: 'https://alignthehumans.com',
+    logo: 'https://alignthehumans.com/logo.png',
     description: 'Infrastructure for collaborative decision-making at any scale - from household chores to cofounder equity',
     foundingDate: '2025',
   }

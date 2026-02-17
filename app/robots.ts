@@ -70,6 +70,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/dashboard', '/alignment/', '/api/', '/auth/', '/join/'],
       },
     ],
-    sitemap: 'https://humanalignment.app/sitemap.xml',
+    sitemap: 'https://alignthehumans.com/sitemap.xml',
   }
 }

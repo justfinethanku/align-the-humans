@@ -56,6 +56,7 @@ export type ParticipantRole = 'owner' | 'partner';
 export interface Profile {
   id: string;                    // UUID, references auth.users(id)
   display_name: string | null;
+  is_admin: boolean;             // Admin role flag (default: false)
   created_at: string;            // ISO 8601 timestamptz
   updated_at: string;            // ISO 8601 timestamptz
 }
@@ -363,6 +364,7 @@ export function isProfile(value: unknown): value is Profile {
   return (
     typeof obj.id === 'string' &&
     (obj.display_name === null || typeof obj.display_name === 'string') &&
+    typeof obj.is_admin === 'boolean' &&
     typeof obj.created_at === 'string' &&
     typeof obj.updated_at === 'string'
   );

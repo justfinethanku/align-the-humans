@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://humanalignment.app'
+  const baseUrl = 'https://alignthehumans.com'
 
   // Static routes that should be indexed
   const routes = [

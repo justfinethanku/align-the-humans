@@ -16,6 +16,7 @@ const mockPartners: PartnerWithDetails[] = [
     profile: {
       id: "profile-1",
       display_name: "John Smith",
+      is_admin: false,
       created_at: "2025-01-01T10:00:00Z",
       updated_at: "2025-01-01T10:00:00Z",
     },
@@ -30,6 +31,7 @@ const mockPartners: PartnerWithDetails[] = [
     profile: {
       id: "profile-2",
       display_name: "Samantha Green",
+      is_admin: false,
       created_at: "2025-01-05T09:00:00Z",
       updated_at: "2025-01-05T09:00:00Z",
     },
@@ -44,6 +46,7 @@ const mockPartners: PartnerWithDetails[] = [
     profile: {
       id: "profile-3",
       display_name: "Alex Johnson",
+      is_admin: false,
       created_at: "2025-01-03T11:00:00Z",
       updated_at: "2025-01-03T11:00:00Z",
     },

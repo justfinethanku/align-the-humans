@@ -3,7 +3,7 @@ export function WebApplicationSchema() {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     name: 'Human Alignment',
-    url: 'https://humanalignment.app',
+    url: 'https://alignthehumans.com',
     description:
       'Infrastructure for collaborative decision-making at any scale. From household chores to cofounder equity, structured collaboration that turns any decision into clarity.',
     applicationCategory: 'BusinessApplication',
@@ -24,7 +24,7 @@ export function WebApplicationSchema() {
     author: {
       '@type': 'Organization',
       name: 'Human Alignment',
-      url: 'https://humanalignment.app',
+      url: 'https://alignthehumans.com',
     },
   }
 
