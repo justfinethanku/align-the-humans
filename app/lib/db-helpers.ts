@@ -11,8 +11,10 @@ import type {
   AlignmentResponse,
   AlignmentAnalysis,
   AlignmentDetail,
+  AlignmentStatus,
   QueryResult,
 } from './types';
+import { isValidStatusTransition } from './types';
 
 type SupabaseClientType = SupabaseClient<Database>;
 
@@ -197,16 +199,40 @@ export async function createAlignment(
 }
 
 /**
- * Updates alignment status
+ * Updates alignment status with transition validation.
+ * Fetches current status and validates the transition is allowed
+ * before performing the update.
  */
 export async function updateAlignmentStatus(
   supabase: SupabaseClientType,
   alignmentId: string,
-  status: Alignment['status']
+  newStatus: AlignmentStatus
 ): Promise<QueryResult<Alignment>> {
-  const { data, error} = await supabase
+  // Fetch current status to validate transition
+  const { data: current, error: fetchError } = await supabase
     .from('alignments')
-    .update({ status })
+    .select('status')
+    .eq('id', alignmentId)
+    .single();
+
+  if (fetchError || !current) {
+    return { data: null, error: fetchError || new Error('Alignment not found') as any };
+  }
+
+  const currentStatus = current.status as AlignmentStatus;
+  if (!isValidStatusTransition(currentStatus, newStatus)) {
+    return {
+      data: null,
+      error: {
+        message: `Invalid status transition: ${currentStatus} → ${newStatus}`,
+        code: 'INVALID_STATUS_TRANSITION',
+      } as any,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('alignments')
+    .update({ status: newStatus })
     .eq('id', alignmentId)
     .select()
     .single();
@@ -222,6 +248,30 @@ export async function updateAlignment(
   alignmentId: string,
   updates: Partial<Pick<Database['public']['Tables']['alignments']['Update'], 'title' | 'status' | 'current_round' | 'clarity_draft'>>
 ): Promise<QueryResult<Alignment>> {
+  // Validate status transition if status is being updated
+  if (updates.status) {
+    const { data: current, error: fetchError } = await supabase
+      .from('alignments')
+      .select('status')
+      .eq('id', alignmentId)
+      .single();
+
+    if (fetchError || !current) {
+      return { data: null, error: fetchError || new Error('Alignment not found') as any };
+    }
+
+    const currentStatus = current.status as AlignmentStatus;
+    if (!isValidStatusTransition(currentStatus, updates.status as AlignmentStatus)) {
+      return {
+        data: null,
+        error: {
+          message: `Invalid status transition: ${currentStatus} → ${updates.status}`,
+          code: 'INVALID_STATUS_TRANSITION',
+        } as any,
+      };
+    }
+  }
+
   const { data, error } = await supabase
     .from('alignments')
     .update(updates)
