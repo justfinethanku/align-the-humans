@@ -10,7 +10,7 @@
  * - Requesting AI assistance
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,9 +60,26 @@ export function ResolutionForm({
   const [error, setError] = useState<string | null>(null);
 
   const currentConflict = conflicts[currentConflictIndex];
+  const storageKey = `resolution-draft-${alignmentId}-${currentRound}`;
 
-  // Initialize resolutions state
+  // Load saved resolutions from localStorage, or initialize fresh
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.resolutions && typeof parsed.resolutions === 'object') {
+          setResolutions(parsed.resolutions);
+          if (typeof parsed.currentIndex === 'number') {
+            setCurrentConflictIndex(parsed.currentIndex);
+          }
+          return;
+        }
+      }
+    } catch {
+      // Ignore parse errors, fall through to defaults
+    }
+
     const initialResolutions: Record<string, ConflictResolution> = {};
     conflicts.forEach(conflict => {
       initialResolutions[conflict.question_id] = {
@@ -71,7 +88,26 @@ export function ResolutionForm({
       };
     });
     setResolutions(initialResolutions);
-  }, [conflicts]);
+  }, [conflicts, storageKey]);
+
+  // Auto-save resolutions to localStorage on change
+  const persistDraft = useCallback(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({
+        resolutions,
+        currentIndex: currentConflictIndex,
+        savedAt: new Date().toISOString(),
+      }));
+    } catch {
+      // localStorage full or unavailable - non-critical
+    }
+  }, [resolutions, currentConflictIndex, storageKey]);
+
+  useEffect(() => {
+    if (Object.keys(resolutions).length === 0) return;
+    const timer = setTimeout(persistDraft, 500);
+    return () => clearTimeout(timer);
+  }, [resolutions, currentConflictIndex, persistDraft]);
 
   // Handle resolution selection
   const handleResolutionChange = (conflictId: string, value: string) => {
@@ -246,6 +282,9 @@ export function ResolutionForm({
         const errorData = await response.json();
         throw new Error(errorData.error?.message || 'Failed to submit resolutions');
       }
+
+      // Clear saved draft on successful submit
+      try { localStorage.removeItem(storageKey); } catch {}
 
       // Redirect based on partner status
       if (hasPartnerSubmitted) {
