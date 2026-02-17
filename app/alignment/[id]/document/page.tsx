@@ -89,9 +89,21 @@ export default async function DocumentPage({ params }: PageProps) {
 
   const { alignment, templateId, profiles, analysis, signatures } = data;
 
-  // Redirect if not in resolving or complete status
+  // Redirect to appropriate phase if not ready for document
   if (alignment.status !== 'resolving' && alignment.status !== 'complete') {
-    redirect(`/alignment/${id}/resolution`);
+    switch (alignment.status) {
+      case 'draft':
+        redirect(`/alignment/${id}/clarity`);
+        break;
+      case 'active':
+        redirect(`/alignment/${id}/waiting`);
+        break;
+      case 'analyzing':
+        redirect(`/alignment/${id}/analysis`);
+        break;
+      default:
+        redirect('/dashboard');
+    }
   }
 
   // Find current user and partner
