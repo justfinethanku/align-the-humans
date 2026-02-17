@@ -7,7 +7,7 @@
  * Implements all 6 question types with validation.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlignmentQuestion, ResponseAnswers, AnswerValue, AlignmentStatus } from '@/app/lib/types';
 import { createClient } from '@/app/lib/supabase-browser';
@@ -73,6 +73,7 @@ export function QuestionnaireClient({
   // AI assistance state
   const [aiAssistance, setAiAssistance] = useState<AIAssistance | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const aiRequestInFlight = useRef(false);
 
   // Validation
   const [showValidation, setShowValidation] = useState(false);
@@ -229,6 +230,8 @@ export function QuestionnaireClient({
    * Get AI assistance
    */
   const getAIAssistance = async (mode: 'explain' | 'examples' | 'suggest') => {
+    if (aiRequestInFlight.current) return;
+    aiRequestInFlight.current = true;
     try {
       setAiLoading(true);
       setAiAssistance(null);
@@ -270,6 +273,7 @@ export function QuestionnaireClient({
       console.error('AI assistance error:', error);
     } finally {
       setAiLoading(false);
+      aiRequestInFlight.current = false;
     }
   };
 
