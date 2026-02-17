@@ -12,7 +12,8 @@
  */
 
 import { generateText } from 'ai';
-import { models, AI_MODELS } from '@/app/lib/ai-config';
+import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { getPrompt } from '@/app/lib/prompts';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { TemplateQuestion } from '@/app/lib/types';
@@ -222,12 +223,16 @@ export async function POST(request: NextRequest): Promise<Response> {
         break;
     }
 
+    // Load prompt config based on mode (model, temperature, maxTokens from DB/seeds)
+    const promptSlug = `suggestion-${mode}`;
+    const promptConfig = await getPrompt(promptSlug);
+
     // Generate AI response using Vercel AI SDK
     const { text, usage } = await generateText({
-      model: model as any, // Type cast to handle duplicate @ai-sdk/provider dependencies
+      model: resolveModel(promptConfig.model) as any,
       prompt,
-      maxOutputTokens: 300, // Keep responses concise
-      temperature: mode === 'suggest' ? 0.7 : 0.5, // More creative for suggestions
+      maxOutputTokens: promptConfig.maxTokens,
+      temperature: promptConfig.temperature,
     });
 
     if (!text || text.trim().length === 0) {

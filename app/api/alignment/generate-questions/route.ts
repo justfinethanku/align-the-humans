@@ -11,7 +11,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
-import { models, AI_MODELS } from '@/app/lib/ai-config';
+import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { getPrompt } from '@/app/lib/prompts';
 import { z } from 'zod';
 
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -241,9 +242,11 @@ async function generateQuestionsWithAI(
     userId,
   });
 
+  const promptConfig = await getPrompt('generate-questions');
+
   try {
     const { object } = await generateObject({
-      model: models.sonnet as any,
+      model: resolveModel(promptConfig.model) as any,
       schema: z.object({
         questions: z.array(
           z.object({
@@ -269,7 +272,7 @@ async function generateQuestionsWithAI(
         ),
       }),
       prompt: buildGenerationPrompt(request),
-      temperature: 0.7, // Higher temperature for creative question generation
+      temperature: promptConfig.temperature,
     });
 
     // Validate that all questions are valid

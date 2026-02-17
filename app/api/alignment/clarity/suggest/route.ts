@@ -12,7 +12,8 @@
  */
 
 import { generateText } from 'ai';
-import { models, AI_MODELS } from '@/app/lib/ai-config';
+import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { getPrompt } from '@/app/lib/prompts';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -152,11 +153,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       alignmentContext
     );
 
-    // 5. Generate AI response
+    // 5. Generate AI response (config from prompt system)
+    const promptConfig = await getPrompt(`clarity-suggest-${section}`);
     const { text, usage } = await generateText({
-      model: model as any,
+      model: resolveModel(promptConfig.model) as any,
       prompt: aiPrompt,
-      temperature: 0.7, // Creative but focused
+      temperature: promptConfig.temperature,
     });
 
     if (!text || text.trim().length === 0) {

@@ -19,7 +19,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { generateObject } from 'ai';
-import { models, AI_MODELS } from '@/app/lib/ai-config';
+import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { getPrompt } from '@/app/lib/prompts';
 import { createServerClient, createAdminClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, updateAlignmentStatus, isParticipant } from '@/app/lib/db-helpers';
 import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
@@ -386,7 +387,10 @@ async function analyzeResponses(
 ): Promise<AnalysisResult> {
   const [responseA, responseB] = responses;
 
-  // Build comprehensive prompt
+  // Load prompt config from DB/seeds (model, temperature, maxTokens are admin-configurable)
+  const promptConfig = await getPrompt('analyze-responses');
+
+  // Build comprehensive prompt with response data
   const prompt = `You are analyzing two people's responses to alignment questions. Your goal is to identify areas of agreement, conflicts, hidden assumptions, gaps, and power imbalances.
 
 **Person A's Responses:**
@@ -430,10 +434,10 @@ Be thorough, specific, and actionable in your analysis. Focus on helping both pa
 
   try {
     const result = await generateObject({
-      model: models.sonnet as any,
+      model: resolveModel(promptConfig.model) as any,
       schema: analysisSchema,
       prompt,
-      temperature: 0.3, // Lower temperature for analytical consistency
+      temperature: promptConfig.temperature,
     });
 
     return result.object;

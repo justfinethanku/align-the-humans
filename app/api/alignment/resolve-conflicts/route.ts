@@ -9,7 +9,8 @@
  */
 
 import { generateObject } from 'ai';
-import { models, AI_MODELS } from '@/app/lib/ai-config';
+import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { getPrompt } from '@/app/lib/prompts';
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -164,15 +165,16 @@ export async function POST(request: NextRequest) {
 
     // 5. Generate compromise suggestions using Claude
     const prompt = createResolutionPrompt(conflict);
+    const promptConfig = await getPrompt('resolve-conflicts');
 
     let resolution: ConflictResolution;
 
     try {
       const { object } = await generateObject({
-        model: models.sonnet as any,
+        model: resolveModel(promptConfig.model) as any,
         schema: ConflictResolutionSchema,
         prompt,
-        temperature: 0.7, // Higher temperature for creative compromise generation
+        temperature: promptConfig.temperature,
       });
 
       resolution = object;

@@ -10,7 +10,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateText } from 'ai';
-import { models, AI_MODELS } from '@/app/lib/ai-config';
+import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { getPrompt } from '@/app/lib/prompts';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import {
@@ -251,12 +252,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       summary
     );
 
-    // 7. Generate document with Claude
+    // 7. Generate document with Claude (config from prompt system)
+    const promptConfig = await getPrompt('generate-document');
     const result = await generateText({
-      model: models.sonnet as any,
+      model: resolveModel(promptConfig.model) as any,
       prompt,
-      temperature: 0.5, // Balanced: creative but consistent
-      maxOutputTokens: 4000, // Allow for comprehensive documents
+      temperature: promptConfig.temperature,
+      maxOutputTokens: promptConfig.maxTokens,
     });
 
     const documentHtml = result.text;

@@ -28,3 +28,11 @@ export const AI_DEFAULTS = {
   suggestion: { temperature: 0.7, maxTokens: 1024 },
   clarify: { temperature: 0.7, maxTokens: 1024 },
 } as const;
+
+/**
+ * Resolves a model ID string to an Anthropic provider instance.
+ * Used by the prompt management system to dynamically select models.
+ */
+export function resolveModel(modelId: string) {
+  return anthropic(modelId);
+}
