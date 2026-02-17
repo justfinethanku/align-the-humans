@@ -9,7 +9,7 @@
  */
 
 import { generateObject } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { models, AI_MODELS } from '@/app/lib/ai-config';
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.resolve.start',
       alignmentId,
       latencyMs: 0,
-      model: 'claude-sonnet-4.5',
+      model: AI_MODELS.SONNET,
       success: true,
       userId: user.id,
     });
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const { object } = await generateObject({
-        model: anthropic('claude-sonnet-4-5-20250929'),
+        model: models.sonnet as any,
         schema: ConflictResolutionSchema,
         prompt,
         temperature: 0.7, // Higher temperature for creative compromise generation
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.resolve.complete',
       alignmentId,
       latencyMs,
-      model: 'claude-sonnet-4.5',
+      model: AI_MODELS.SONNET,
       success: true,
       userId: user.id,
     });
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
         event: 'ai.resolve.error',
         alignmentId: 'unknown',
         latencyMs,
-        model: 'claude-sonnet-4.5',
+        model: AI_MODELS.SONNET,
         success: false,
         errorCode: error.code,
         errorMessage: error.message,

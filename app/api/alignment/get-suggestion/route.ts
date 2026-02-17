@@ -12,7 +12,7 @@
  */
 
 import { generateText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { models, AI_MODELS } from '@/app/lib/ai-config';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { TemplateQuestion } from '@/app/lib/types';
@@ -168,8 +168,8 @@ function calculateConfidence(
 export async function POST(request: NextRequest): Promise<Response> {
   const timer = new PerformanceTimer();
   const supabase = createServerClient();
-  const modelName = 'claude-haiku-4.5';
-  const model = anthropic(modelName);
+  const modelName = AI_MODELS.HAIKU;
+  const model = models.haiku;
   let telemetryAlignmentId = 'suggestion-request';
   let telemetryUserId: string | undefined;
 

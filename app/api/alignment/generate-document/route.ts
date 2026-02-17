@@ -9,8 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
+import { models, AI_MODELS } from '@/app/lib/ai-config';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import {
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       event: 'ai.document.start',
       alignmentId,
       latencyMs: 0,
-      model: 'claude-sonnet-4-5-20250929',
+      model: AI_MODELS.SONNET,
       success: true,
       userId: user.id,
     });
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 7. Generate document with Claude
     const result = await generateText({
-      model: anthropic('claude-sonnet-4-5-20250929') as any, // Type assertion to work around AI SDK version mismatch
+      model: models.sonnet as any,
       prompt,
       temperature: 0.5, // Balanced: creative but consistent
       maxOutputTokens: 4000, // Allow for comprehensive documents
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       event: 'ai.document.complete',
       alignmentId,
       latencyMs,
-      model: 'claude-sonnet-4-5-20250929',
+      model: AI_MODELS.SONNET,
       success: true,
       userId: user.id,
     });
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           event: 'ai.document.error',
           alignmentId: bodyData.alignmentId,
           latencyMs: timer.getLatency(),
-          model: 'claude-sonnet-4-5-20250929',
+          model: AI_MODELS.SONNET,
           success: false,
           errorCode: (error as any).code || 'UNKNOWN',
           errorMessage: error instanceof Error ? error.message : 'Unknown error',

@@ -19,7 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { generateObject } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { models, AI_MODELS } from '@/app/lib/ai-config';
 import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, updateAlignmentStatus, isParticipant } from '@/app/lib/db-helpers';
 import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.analysis.start',
       alignmentId,
       latencyMs: 0,
-      model: 'claude-sonnet-4-5-20250929',
+      model: AI_MODELS.SONNET,
       success: true,
       userId: user.id,
     });
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
         ],
       },
       details: {
-        model: 'claude-sonnet-4-5-20250929',
+        model: AI_MODELS.SONNET,
         prompt_tokens: 0, // Will be populated from usage if available
         completion_tokens: 0,
         raw_output: JSON.stringify(analysis),
@@ -299,7 +299,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.analysis.complete',
       alignmentId,
       latencyMs,
-      model: 'claude-sonnet-4-5-20250929',
+      model: AI_MODELS.SONNET,
       success: true,
       userId: user.id,
     });
@@ -429,7 +429,7 @@ Be thorough, specific, and actionable in your analysis. Focus on helping both pa
 
   try {
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-5-20250929') as any,
+      model: models.sonnet as any,
       schema: analysisSchema,
       prompt,
       temperature: 0.3, // Lower temperature for analytical consistency
@@ -442,7 +442,7 @@ Be thorough, specific, and actionable in your analysis. Focus on helping both pa
       event: 'ai.analysis.error',
       alignmentId,
       latencyMs: 0,
-      model: 'claude-sonnet-4-5-20250929',
+      model: AI_MODELS.SONNET,
       success: false,
       errorCode: error instanceof Error ? error.name : 'UNKNOWN',
       errorMessage: error instanceof Error ? error.message : 'AI analysis failed',

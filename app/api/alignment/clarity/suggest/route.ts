@@ -12,7 +12,7 @@
  */
 
 import { generateText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { models, AI_MODELS } from '@/app/lib/ai-config';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -112,8 +112,8 @@ Return only the outcome descriptions, one per line, without numbering or explana
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const timer = new PerformanceTimer();
   const supabase = createServerClient();
-  const modelName = 'claude-haiku-4.5';
-  const model = anthropic(modelName);
+  const modelName = AI_MODELS.HAIKU;
+  const model = models.haiku;
 
   let userId: string | undefined;
 

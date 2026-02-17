@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
+import { models, AI_MODELS } from '@/app/lib/ai-config';
 import { z } from 'zod';
 
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       questions = generatedQuestions.questions;
       source = {
         type: 'ai',
-        model: 'anthropic/claude-sonnet-4.5',
+        model: AI_MODELS.SONNET,
       };
 
       // Validate generated questions
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.error',
         alignmentId: validatedRequest.alignmentId,
         latencyMs: timer.getLatency(),
-        model: 'anthropic/claude-sonnet-4.5',
+        model: AI_MODELS.SONNET,
         success: false,
         userId,
         errorCode: 'AI_GENERATION_FALLBACK',
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.complete',
         alignmentId: validatedRequest.alignmentId,
         latencyMs: timer.stop(),
-        model: 'anthropic/claude-sonnet-4.5',
+        model: AI_MODELS.SONNET,
         success: true,
         userId,
       });
@@ -209,7 +210,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.error',
         alignmentId,
         latencyMs: timer.stop(),
-        model: 'anthropic/claude-sonnet-4.5',
+        model: AI_MODELS.SONNET,
         success: false,
         userId,
         errorCode: (error as any).code || 'UNKNOWN',
@@ -235,14 +236,14 @@ async function generateQuestionsWithAI(
     event: 'ai.generation.start',
     alignmentId: request.alignmentId,
     latencyMs: 0,
-    model: 'anthropic/claude-sonnet-4.5',
+    model: AI_MODELS.SONNET,
     success: true,
     userId,
   });
 
   try {
     const { object } = await generateObject({
-      model: 'anthropic/claude-sonnet-4.5' as any, // Model string format for AI Gateway
+      model: models.sonnet as any,
       schema: z.object({
         questions: z.array(
           z.object({
