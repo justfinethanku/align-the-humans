@@ -23,6 +23,7 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, updateAlignmentStatus, isParticipant } from '@/app/lib/db-helpers';
 import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
+import { sendAnalysisCompleteEmail } from '@/app/lib/email-service';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import type { AlignmentResponse } from '@/app/lib/types';
 
@@ -117,11 +118,58 @@ export async function POST(request: NextRequest) {
 
     // Verify alignment is in correct status
     if (alignment.status !== 'active') {
+      // If already analyzing or beyond, check for existing analysis
+      if (alignment.status === 'analyzing' || alignment.status === 'resolving' || alignment.status === 'complete') {
+        const { data: existingAnalysis } = await supabase
+          .from('alignment_analyses')
+          .select('*')
+          .eq('alignment_id', alignmentId)
+          .eq('round', round)
+          .single();
+
+        if (existingAnalysis) {
+          return NextResponse.json({
+            data: { analysis: existingAnalysis.details },
+          }, { status: 200 });
+        }
+      }
       throw new AlignmentError(
         `Cannot analyze alignment in '${alignment.status}' status. Must be 'active'.`,
         'INVALID_STATUS',
         409,
         { currentStatus: alignment.status, expectedStatus: 'active' }
+      );
+    }
+
+    // Atomically transition to 'analyzing' to prevent duplicate analyses
+    const { data: lockResult, error: lockError } = await supabase
+      .from('alignments')
+      .update({ status: 'analyzing' })
+      .eq('id', alignmentId)
+      .eq('status', 'active')
+      .select('id')
+      .single();
+
+    if (lockError || !lockResult) {
+      // Another process already started analysis - return existing if available
+      const { data: existingAnalysis } = await supabase
+        .from('alignment_analyses')
+        .select('*')
+        .eq('alignment_id', alignmentId)
+        .eq('round', round)
+        .single();
+
+      if (existingAnalysis) {
+        return NextResponse.json({
+          data: { analysis: existingAnalysis.details },
+        }, { status: 200 });
+      }
+
+      throw new AlignmentError(
+        'Analysis is already in progress',
+        'ANALYSIS_IN_PROGRESS',
+        409,
+        { alignmentId }
       );
     }
 
@@ -229,24 +277,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 10. Update alignment status to 'analyzing'
+    // 10. Update alignment status to 'resolving' now that analysis is complete
     const { error: statusError } = await updateAlignmentStatus(
       supabase,
       alignmentId,
-      'analyzing'
+      'resolving'
     );
 
     if (statusError) {
-      // Non-critical - log but don't fail
       telemetry.logError({
         errorCode: 'STATUS_UPDATE_FAILED',
-        errorMessage: 'Failed to update alignment status to analyzing',
+        errorMessage: 'Failed to update alignment status to resolving',
         userId: user.id,
         context: { alignmentId, statusError },
       });
     }
 
-    // 11. Log successful completion
+    // 11. Log successful completion and send email notifications
     const latencyMs = timer.stop();
     telemetry.logAIOperation({
       event: 'ai.analysis.complete',
@@ -256,6 +303,42 @@ export async function POST(request: NextRequest) {
       success: true,
       userId: user.id,
     });
+
+    // Send analysis complete emails (fire-and-forget)
+    (async () => {
+      try {
+        const { data: participants } = await supabase
+          .from('alignment_participants')
+          .select('user_id')
+          .eq('alignment_id', alignmentId);
+
+        if (!participants) return;
+
+        for (const p of participants) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', p.user_id)
+            .single();
+
+          const { data: authUser } = await supabase.auth.admin.getUserById(p.user_id);
+          const email = authUser?.user?.email;
+          if (!email) continue;
+
+          await sendAnalysisCompleteEmail({
+            to: email,
+            recipientName: profile?.display_name || 'there',
+            alignmentTitle: alignment.title || 'your alignment',
+            alignmentId,
+            alignmentScore: analysis.overall_alignment_score,
+            conflictCount: analysis.conflicts.length,
+            agreementCount: analysis.alignedItems.length,
+          });
+        }
+      } catch (emailErr) {
+        console.error('[Email] Failed to send analysis emails:', emailErr);
+      }
+    })();
 
     // 12. Return analysis results
     return NextResponse.json({
