@@ -4,223 +4,175 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Human Alignment** is a Next.js web application designed to facilitate mutual agreement between partners through AI-guided structured conversations. The application enables two parties to independently answer questions about a topic, then uses Claude AI to analyze responses, identify conflicts, and guide iterative resolution toward consensus.
+**Human Alignment** is a Next.js 14 web application that facilitates mutual agreement between partners through AI-guided structured conversations. Two parties independently answer questions about a topic, then Claude AI analyzes responses, identifies conflicts, and guides iterative resolution toward consensus.
 
-**Current Status:** Pre-implementation planning phase. All architectural documentation exists, but no source code has been written yet.
-
-## Project Architecture
-
-### Planned Tech Stack
-- **Framework:** Next.js 14+ (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **UI Components:** shadcn/ui
-- **Backend:** Supabase (PostgreSQL with Row-Level Security)
-- **AI Integration:** Vercel AI SDK with Anthropic Claude (Sonnet 4.5)
-- **Hosting:** Vercel
-
-### Database Schema
-The application is designed around 8 core tables:
-- `profiles` - User accounts and metadata
-- `alignments` - Main alignment sessions with status tracking
-- `alignment_participants` - Links users to alignments with roles
-- `alignment_responses` - Individual answers to questions
-- `alignment_analyses` - AI analysis results for each alignment round
-- `alignment_signatures` - Digital signatures for finalized agreements
-- `partners` - Ongoing partner relationships
-- `templates` - Pre-configured alignment question sets
-
-### Application Flow (5-Phase Workflow)
-1. **Setup** - Partner selection and template choice
-2. **Clarification** - AI-assisted form customization
-3. **Answering** - Independent question responses
-4. **Analysis** - AI comparison and conflict detection
-5. **Resolution** - Iterative negotiation with AI guidance
-
-### Key Directories
-
-**`/` (Project Root)** - Main specification
-- **`plan_a.md`** - **PRIMARY SPECIFICATION** (1471 lines) - Lives in ROOT directory, NOT in /context/
-  - Complete technical specification with implementation strategy
-  - Feature-builder delegation patterns and workflows
-  - Chrome DevTools validation requirements
-  - Detailed page/component/API specifications
-  - **ALWAYS read this file from the root directory when starting implementation**
-
-**`/context/`** - Supporting documentation
-- `supabase_cli.md` - Complete database schema and CLI documentation
-- `model-integrations.md` - Claude API reference and pricing
-- `claude-web-capabilities.md` - Guide for using Claude Code Web
-- `examples/realtime-example.md` - Production-ready Next.js realtime patterns
-
-**`/changelog/`** - Session-based development logs
-- Each session gets its own markdown file: `YYYY-MM-DD-HHMM-descriptive-keywords.md`
-- See `changelog.md` for format requirements
-
-### Page Structure (Planned)
-```
-/app
-├── page.tsx                      # Homepage with hero, use cases, stats
-├── auth/
-│   ├── login/page.tsx
-│   └── signup/page.tsx
-├── dashboard/page.tsx            # User dashboard showing alignments
-├── alignment/
-│   ├── new/page.tsx              # Create new alignment
-│   └── [id]/
-│       ├── setup/page.tsx        # Phase 1: Configuration
-│       ├── clarify/page.tsx      # Phase 2: AI clarification
-│       ├── answer/page.tsx       # Phase 3: Question responses
-│       ├── analyze/page.tsx      # Phase 4: AI analysis
-│       ├── resolve/page.tsx      # Phase 5: Conflict resolution
-│       └── complete/page.tsx     # Final agreement + signatures
-└── api/
-    └── ai/
-        ├── clarify/route.ts      # AI form customization
-        ├── analyze/route.ts      # AI response comparison
-        ├── suggest/route.ts      # AI compromise suggestions
-        └── generate/route.ts     # AI document generation
-```
+**Domain:** https://alignthehumans.com
 
 ## Development Commands
 
-**Note:** Project is not yet initialized. Once implemented, standard Next.js commands will apply:
-
 ```bash
-# Install dependencies
-npm install
-
-# Development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Run production build
-npm start
-
-# Type checking
-npm run type-check  # (if configured)
-
-# Linting
-npm run lint
+npm run dev          # Start dev server (localhost:3000)
+npm run build        # Production build
+npm run lint         # ESLint
+npm run type-check   # TypeScript check (tsc --noEmit)
+npm start            # Run production build
 ```
 
-## AI Integration Points
+## Environment Variables
 
-The application uses Vercel AI SDK (`ai` package) to integrate with Claude:
+Copy `.env.example` to `.env.local`. Required:
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key (client-safe)
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server-only)
+- `AI_GATEWAY_API_KEY` - Vercel AI Gateway key (optional for local dev)
+- `INVITE_TOKEN_SECRET` - Secret for encrypting invite tokens (AES-256-GCM)
 
-**Primary Model:** `claude-sonnet-4-5-20250929`
-- Context window: 200K tokens (1M with extended beta)
-- Supports streaming responses
-- Prompt caching enabled for cost optimization
+## Tech Stack
 
-**Key AI Capabilities Required:**
-1. **Question Generation** - Create follow-up questions based on user context
-2. **Response Analysis** - Compare partner answers and detect conflicts
-3. **Conflict Resolution** - Suggest compromises and guide negotiation
-4. **Document Generation** - Synthesize final agreements from resolved responses
+- **Framework:** Next.js 14 (App Router, `app/` directory)
+- **Language:** TypeScript (strict mode, `@/*` path alias maps to project root)
+- **Styling:** Tailwind CSS, dark mode by default (`<html class="dark">`)
+- **UI Components:** shadcn/ui in `components/ui/`
+- **Backend:** Supabase (PostgreSQL + RLS + Realtime)
+- **AI:** Vercel AI SDK v5 (`ai` + `@ai-sdk/anthropic`) with Claude Sonnet 4.5
+- **Forms:** react-hook-form + zod validation
+- **Notifications:** sonner (toast)
+- **Icons:** lucide-react
 
-Reference `/context/model-integrations.md` for complete API details and pricing.
+## Architecture
 
-## Implementation Guidelines
+### Supabase Client Pattern
 
-### Starting Development
-1. Initialize Next.js project with TypeScript template
-2. Install core dependencies: `@supabase/supabase-js`, `ai`, `@ai-sdk/anthropic`, `tailwindcss`, `shadcn/ui`
-3. Create Supabase project and run schema from `/context/plan_a.md` (lines 200-400)
-4. Configure environment variables for Supabase and Anthropic API
-5. Set up authentication pages first (login/signup)
-6. Build homepage, then dashboard
-7. Implement alignment flow phases sequentially
+Two client factories, never use raw `@supabase/ssr` directly:
+- **Server** (`app/lib/supabase-server.ts`): `createServerClient()` for Server Components, Route Handlers, Server Actions. Also `createAdminClient()` to bypass RLS. Auth helpers: `getCurrentUser()`, `requireAuth()`.
+- **Browser** (`app/lib/supabase-browser.ts`): `createClient()` for Client Components and realtime subscriptions.
 
-### Database Conventions
-- Use Supabase client for all database operations
-- Enable Row-Level Security (RLS) policies on all tables
-- Use `auth.uid()` in RLS policies to enforce user permissions
-- Store timestamps in `timestamptz` format
+Both are typed via `Database` type from `app/lib/database.types.ts` (generated from Supabase schema).
 
-### AI API Best Practices
-- Always use streaming responses for better UX (`streamText` from Vercel AI SDK)
-- Implement prompt caching for repeated contexts
-- Structure prompts with clear roles: system, user, assistant
-- Include conversation history for context in multi-round resolutions
-- Set temperature low (0.3-0.5) for analytical tasks, higher (0.7-0.9) for creative suggestions
+### Database Helpers
 
-### Component Architecture
-- Use Server Components by default
-- Client Components only when needed (forms, interactive UI)
-- Implement loading.tsx and error.tsx for each route segment
-- Use shadcn/ui components consistently
+`app/lib/db-helpers.ts` provides type-safe wrappers for all CRUD: `getUserAlignments()`, `getAlignmentDetail()`, `createAlignment()`, `saveResponse()`, `submitResponse()`, `saveAnalysis()`, `createSignature()`, etc. Always use these instead of raw Supabase queries when a helper exists.
 
-## Changelog Requirements
+### Error Hierarchy
 
-Every development session must create a changelog entry in `/changelog/` following this format:
+`app/lib/errors.ts` defines a structured error system:
+- `AppError` (base) → `ApiError`, `ValidationError`, `AuthError`, `AlignmentError`, `DatabaseError`, `AIError`
+- All errors have `code`, `statusCode`, `details` and serialize to JSON via `toJSON()`
+- `AlignmentError` has static factories: `.invalidTransition()`, `.incompleteParticipation()`, `.unauthorized()`, `.notFound()`
+- Use `createErrorResponse(error)` in API routes to return standardized error responses
 
-**Filename:** `YYYY-MM-DD-HHMM-descriptive-keywords.md`
+### Middleware
 
-**Required Sections:**
-- What Changed
-- Why
-- How
-- Issues Encountered
-- Dependencies Added/Changed
-- Testing Performed
-- Next Steps
-- Keywords (for searchability)
+`middleware.ts` handles auth routing:
+- Public routes: `/`, `/login`, `/signup`, `/auth/*`, `/join/*`
+- Authenticated users hitting `/login` or `/signup` redirect to `/dashboard`
+- Unauthenticated users hitting protected routes redirect to `/login?redirectTo=...`
+- API routes (`/api/*`) and static files are skipped
 
-See `/changelog.md` for complete format specification.
+### AI Integration
+
+All AI endpoints use Vercel AI SDK with `generateObject()` (structured output with Zod schemas) rather than `streamText()`:
+- `POST /api/alignment/analyze` - Compare responses, detect conflicts (uses `analysisSchema`)
+- `POST /api/alignment/generate-questions` - AI-generate questions from clarity context
+- `POST /api/alignment/resolve-conflicts` - Suggest compromises
+- `POST /api/alignment/generate-document` - Generate agreement document
+- `POST /api/alignment/get-suggestion` - Get AI suggestion for a specific topic
+- `POST /api/alignment/clarity/suggest` - AI-assisted form customization
+
+Model: `anthropic('claude-sonnet-4-5-20250929')`, temperature 0.3 for analysis, higher for creative suggestions.
+
+### Invite System
+
+Partners join via shareable invite links (`/join/[token]`). Security model:
+- Tokens are 256-bit random, base64url-encoded
+- Only SHA-256 hashes stored in database (plus optional AES-256-GCM encrypted ciphertext for retrieval)
+- Raw tokens returned only once at generation time
+- Token utilities in `app/lib/invite-tokens.ts`
+
+### Validation
+
+`app/lib/schemas.ts` contains Zod schemas for all API contracts. `AlignmentQuestionSchema` is recursive (supports `followUps`). Template seeds validated via `TemplateSeedSchema`.
+
+### Templates
+
+`app/lib/templates.ts` has curated fallback templates (operating agreement, cofounder equity, roommate, marketing, business ops, custom). Used when AI generation fails. `templateRegistry` maps seed types to question arrays.
+
+## Alignment Workflow
+
+### Status State Machine
+```
+draft → active → analyzing → resolving → complete
+```
+Transitions enforced by `VALID_STATUS_TRANSITIONS` in `app/lib/types.ts`. Use `isValidStatusTransition()` to validate.
+
+### 5-Phase Flow (Route Structure)
+1. **New** (`/alignment/new`) - Create alignment, select template, invite partner
+2. **Clarity** (`/alignment/[id]/clarity`) - AI-assisted topic refinement with `ClarityForm`
+3. **Questions** (`/alignment/[id]/questions`) - Independent answering via `questionnaire-client`
+4. **Analysis** (`/alignment/[id]/analysis`) - AI comparison and conflict detection
+5. **Resolution** (`/alignment/[id]/resolution`) - Iterative conflict resolution with `resolution-form`
+6. **Document** (`/alignment/[id]/document`) - Final agreement with signatures and PDF export
+
+### Component Organization
+
+```
+components/
+├── ui/              # shadcn/ui primitives (button, card, input, dialog, etc.)
+├── homepage/        # Hero, FlowVisualization, StatsSection, UseCases, Testimonials, CTASection
+├── dashboard/       # AlignmentCard, StatusBadge, PartnersList, AddPartnerModal
+├── alignment/       # ShareLinkButton, InviteStatus
+├── layout/          # Header
+└── seo/             # HowToSchema, WebApplicationSchema (JSON-LD)
+```
+
+Page-specific client components live next to their pages (e.g., `app/alignment/[id]/resolution/resolution-form.tsx`).
+
+### Custom Hooks
+
+- `useDashboardData` - Fetches user's alignments, profiles
+- `usePartners` - Partner list management
+- `useAlignmentUpdates` - Supabase Realtime subscription for live alignment changes
+
+## Database
+
+### Core Tables (8 + invitations)
+`profiles`, `alignments`, `alignment_participants`, `alignment_responses`, `alignment_analyses`, `alignment_signatures`, `partners`, `templates`, `alignment_invitations`
+
+### Migrations
+Located in `supabase/migrations/`. Key migrations:
+- `20251110051815_init_human_alignment.sql` - Base schema with RLS
+- `20251110133651_add_alignment_invitations.sql` - Invite system
+- `20250120120000_add_clarity_draft_and_invite_usage.sql` - Clarity draft + invite tracking
+
+All tables have RLS enabled. Policies use `auth.uid()` to scope access.
+
+### JSONB Fields
+- `alignment_responses.answers` → `ResponseAnswers` (versioned, keyed by question ID)
+- `alignment_analyses.summary` → `AnalysisSummary` (score, conflicts, agreements)
+- `alignment_analyses.details` → `AnalysisDetails` (full AI output, token counts)
+- `alignment_signatures.canonical_snapshot` → `CanonicalSnapshot` (frozen signed content with SHA-256 hash)
+- `templates.content` → `TemplateContent` (questions array with AI hints)
 
 ## Critical References
 
-When implementing features, **always consult** `/plan_a.md` (in the ROOT directory) first. It contains:
-- Complete database schema with field types
-- Detailed UI descriptions for every page
-- State management specifications
-- API endpoint contracts
-- Security considerations
-- Error handling patterns
+- **`/plan_a.md`** (root) - Primary specification with complete UI descriptions, API contracts, and implementation strategy
+- **`/context/supabase_cli.md`** - Database schema docs and CLI reference
+- **`/context/model-integrations.md`** - Claude API reference and pricing
 
-## Authentication & Security
+## Changelog Requirements
 
-- Use Supabase Auth with email/password (email verification required)
-- Implement RLS policies to ensure users can only access their own data
-- Validate alignment participation before showing sensitive responses
-- Never expose one partner's responses to the other before "analyze" phase
-- Sanitize AI-generated content before rendering to prevent XSS
+Every development session must create a changelog in `/changelog/`:
+- **Filename:** `YYYY-MM-DD-HHMM-descriptive-keywords.md`
+- **Sections:** What Changed, Why, How, Issues Encountered, Dependencies, Testing, Next Steps
+- Also add a summary entry to `/changelog/README`
+- See `/changelog.md` for full format spec
 
-## Testing Strategy (When Implemented)
+## Key Conventions
 
-- Unit tests for utility functions and AI prompt builders
-- Integration tests for API routes
-- End-to-end tests for critical flows (alignment creation → completion)
-- Test AI responses with mock data to avoid API costs during testing
-
-## Common Pitfalls to Avoid
-
-1. **Don't expose partner responses prematurely** - Responses should only be shared after both partners complete answering
-2. **Handle AI streaming errors gracefully** - Network issues or rate limits can interrupt streams
-3. **Validate alignment status transitions** - Enforce state machine rules (can't skip from "answering" to "complete")
-4. **Implement proper loading states** - AI operations can take 5-30 seconds
-5. **Cache expensive AI operations** - Use Vercel KV or similar for analysis results
-
-## Status Tracking
-
-Alignments use a strict status state machine:
-```
-draft → active → answering → analyzing → resolving → complete → cancelled
-```
-
-Only valid transitions are allowed. See database schema for status enum definition.
-
-## Template System
-
-Pre-configured templates in the `templates` table define question sets for common scenarios:
-- Operating Agreement
-- Cofounder Equity
-- Relationship Boundaries
-- Parenting Plan
-- Business Partnership
-- Living Arrangements
-
-Templates include question text, types (text, scale, choice, ranking), and AI prompts for context-aware follow-ups.
+- Auth routes use route group: `app/(auth)/login`, `app/(auth)/signup` with shared layout
+- Server Actions in `actions.ts` files next to pages (e.g., `app/(auth)/login/actions.ts`)
+- Auth callback handled at `app/auth/callback/route.ts`
+- `app/lib/telemetry.ts` provides `PerformanceTimer` and structured logging for AI operations
+- XSS protection: `isomorphic-dompurify` for sanitizing AI-generated HTML content
+- SEO: `robots.ts`, `sitemap.ts`, `llms.txt/route.ts` for machine-readable site info
+- Partner responses are never exposed to the other party until both have submitted and analysis is complete

@@ -2,8 +2,16 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 13**
+**Total Changelogs: 15**
 
+
+### [2026-02-17-1600 - admin-drizzle-prompts-gateway](./2026-02-17-1600-admin-drizzle-prompts-gateway.md)
+**Keywords:** [ADMIN] [DRIZZLE] [ORM] [PROMPTS] [AI-GATEWAY] [MODEL-DISCOVERY] [DATABASE]
+Admin dashboard with auth, Drizzle ORM integration (schema + queries + migration), prompt management system with 10 extracted prompts and cached loader, Vercel AI Gateway dynamic model discovery, and domain fix to alignthehumans.com.
+
+### [2026-02-17-1400 - eslint-apostrophe-fixes](./2026-02-17-1400-eslint-apostrophe-fixes.md)
+**Keywords:** [BUGFIX] [LINTING] [EMAIL-TEMPLATES] [CODE-QUALITY]
+Fixed all unescaped apostrophe ESLint errors in 6 email template files by replacing single quotes with &apos; HTML entity in JSX text content.
 
 ### [2025-01-11-0300 - qa-testing-migration-fix](./2025-01-11-0300-qa-testing-migration-fix.md)
 **Keywords:** [QA-TESTING] [MIGRATION] [SUPABASE] [DATABASE] [CHROME-DEVTOOLS] [BUG-REPORT] [TEMPLATE-VALIDATION]
@@ -79,8 +87,10 @@ High-level non-verbose succinct description of that's in the session summary.
 
 - **[ACCESSIBILITY]** (1): 2025-11-10-0218-use-cases-component
 - **[AI]** (2): 2025-11-10-0111-ai-template-api-contracts, 2025-11-10-0407-alignment-flow-stabilization
+- **[BUGFIX]** (1): 2026-02-17-1400-eslint-apostrophe-fixes
 - **[BUG-REPORT]** (1): 2025-01-11-0300-qa-testing-migration-fix
 - **[CHROME-DEVTOOLS]** (1): 2025-01-11-0300-qa-testing-migration-fix
+- **[CODE-QUALITY]** (1): 2026-02-17-1400-eslint-apostrophe-fixes
 - **[ALIGNMENT]** (1): 2025-11-10-0407-alignment-flow-stabilization
 - **[API]** (1): 2025-11-10-0111-ai-template-api-contracts
 - **[AUTH]** (1): 2025-11-10-0212-authentication-pages
@@ -94,12 +104,14 @@ High-level non-verbose succinct description of that's in the session summary.
 - **[DESIGN-SYSTEM]** (1): 2025-11-10-0202-shadcn-ui-design-system
 - **[DEVTOOLS]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
 - **[DOCS]** (2): 2025-11-10-0116-status-mapping-plan-update, 2025-11-10-0122-design-source-sync
+- **[EMAIL-TEMPLATES]** (1): 2026-02-17-1400-eslint-apostrophe-fixes
 - **[ERROR-HANDLING]** (1): 2025-11-10-0204-config-utilities-error-handling
 - **[FORMS]** (1): 2025-11-10-0212-authentication-pages
 - **[HERO]** (1): 2025-11-10-0217-hero-section-component
 - **[HOMEPAGE]** (3): 2025-11-10-0217-hero-section-component, 2025-11-10-0218-testimonials-component, 2025-11-10-0218-use-cases-component
 - **[INFRASTRUCTURE]** (1): 2025-11-10-0032-supabase-database-setup
 - **[INITIALIZATION]** (1): 2025-11-10-0204-nextjs-project-initialization
+- **[LINTING]** (1): 2026-02-17-1400-eslint-apostrophe-fixes
 - **[MIGRATION]** (1): 2025-01-11-0300-qa-testing-migration-fix
 - **[MIGRATIONS]** (1): 2025-11-10-0032-supabase-database-setup
 - **[QA-TESTING]** (1): 2025-01-11-0300-qa-testing-migration-fix
@@ -127,4 +139,4 @@ High-level non-verbose succinct description of that's in the session summary.
 
 ---
 
-*Last updated: 2025-01-11 
+*Last updated: 2026-02-17 
