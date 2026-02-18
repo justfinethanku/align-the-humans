@@ -6,7 +6,6 @@
  * analytics services later (e.g., Vercel Analytics, PostHog, etc.).
  */
 
-import { isDevelopment } from './env';
 
 /**
  * Event types for telemetry tracking
@@ -283,70 +282,3 @@ export class PerformanceTimer {
   }
 }
 
-/**
- * Wraps async function with AI operation telemetry
- */
-export function withAITelemetry<T>(
-  operation: string,
-  model: string,
-  alignmentId: string,
-  userId?: string
-) {
-  return async (fn: () => Promise<T>): Promise<T> => {
-    const timer = new PerformanceTimer();
-    const startEvent = `ai.${operation}.start` as TelemetryEventType;
-    const completeEvent = `ai.${operation}.complete` as TelemetryEventType;
-    const errorEvent = `ai.${operation}.error` as TelemetryEventType;
-
-    telemetry.logAIOperation({
-      event: startEvent,
-      alignmentId,
-      latencyMs: 0,
-      model,
-      success: true,
-      userId,
-    });
-
-    try {
-      const result = await fn();
-      const latencyMs = timer.stop();
-
-      telemetry.logAIOperation({
-        event: completeEvent,
-        alignmentId,
-        latencyMs,
-        model,
-        success: true,
-        userId,
-      });
-
-      return result;
-    } catch (error) {
-      const latencyMs = timer.stop();
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const errorCode = (error as any).code || 'UNKNOWN';
-
-      telemetry.logAIOperation({
-        event: errorEvent,
-        alignmentId,
-        latencyMs,
-        model,
-        success: false,
-        userId,
-        errorCode,
-        errorMessage,
-      });
-
-      throw error;
-    }
-  };
-}
-
-/**
- * Development-only telemetry logging
- */
-export function devLog(message: string, data?: Record<string, unknown>): void {
-  if (isDevelopment()) {
-    console.log(`[DEV] ${message}`, data || '');
-  }
-}

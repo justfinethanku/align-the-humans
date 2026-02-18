@@ -29,8 +29,6 @@ export function getResendClient(): Resend {
 /** Default sender address */
 export const FROM_EMAIL = 'Human Alignment <noreply@alignthehumans.com>';
 
-/** Support sender address */
-export const SUPPORT_EMAIL = 'Human Alignment <support@alignthehumans.com>';
 
 /**
  * Gets the app base URL for email links

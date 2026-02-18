@@ -34,14 +34,14 @@ const preset = {
         warning: createScale('color-warning'),
         danger: createScale('color-danger'),
         background: {
-          light: 'rgb(var(--color-background-light) / 1)',
-          dark: 'rgb(var(--color-background-dark) / 1)',
-          muted: 'rgb(var(--color-background-muted) / 1)',
+          light: 'rgb(var(--color-background-light) / <alpha-value>)',
+          dark: 'rgb(var(--color-background-dark) / <alpha-value>)',
+          muted: 'rgb(var(--color-background-muted) / <alpha-value>)',
         },
         surface: {
-          DEFAULT: 'rgb(var(--color-surface-default) / 1)',
-          dark: 'rgb(var(--color-surface-dark) / 1)',
-          contrast: 'rgb(var(--color-surface-contrast) / 1)',
+          DEFAULT: 'rgb(var(--color-surface-default) / <alpha-value>)',
+          dark: 'rgb(var(--color-surface-dark) / <alpha-value>)',
+          contrast: 'rgb(var(--color-surface-contrast) / <alpha-value>)',
         },
         border: {
           subtle: 'rgba(var(--color-border-subtle), 0.5)',

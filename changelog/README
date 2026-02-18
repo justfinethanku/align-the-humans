@@ -2,8 +2,12 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 15**
+**Total Changelogs: 16**
 
+
+### [2026-02-17-1800 - dead-code-cleanup-and-flicker-fix](./2026-02-17-1800-dead-code-cleanup-and-flicker-fix.md)
+**Keywords:** [CLEANUP] [DEAD-CODE] [UI-FLICKER] [PERFORMANCE] [TAILWIND] [LOADING-STATES]
+Removed ~2,000 lines of dead code (unused files, utils, test fixtures, 3 npm packages). Fixed UI flickering via font display:optional, Tailwind alpha-value fix, skeleton loading states, and scoped CSS transitions.
 
 ### [2026-02-17-1600 - admin-drizzle-prompts-gateway](./2026-02-17-1600-admin-drizzle-prompts-gateway.md)
 **Keywords:** [ADMIN] [DRIZZLE] [ORM] [PROMPTS] [AI-GATEWAY] [MODEL-DISCOVERY] [DATABASE]
@@ -95,11 +99,13 @@ High-level non-verbose succinct description of that's in the session summary.
 - **[API]** (1): 2025-11-10-0111-ai-template-api-contracts
 - **[AUTH]** (1): 2025-11-10-0212-authentication-pages
 - **[AUTOMATION]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
+- **[CLEANUP]** (1): 2026-02-17-1800-dead-code-cleanup-and-flicker-fix
 - **[CLIENTS]** (1): 2025-11-10-0205-typescript-types-supabase-clients
 - **[COMPONENT]** (3): 2025-11-10-0217-hero-section-component, 2025-11-10-0218-testimonials-component, 2025-11-10-0218-use-cases-component
 - **[COMPONENTS]** (1): 2025-11-10-0202-shadcn-ui-design-system
 - **[CONFIG]** (1): 2025-11-10-0204-config-utilities-error-handling
 - **[DATABASE]** (2): 2025-11-10-0032-supabase-database-setup, 2025-01-11-0300-qa-testing-migration-fix
+- **[DEAD-CODE]** (1): 2026-02-17-1800-dead-code-cleanup-and-flicker-fix
 - **[DESIGN]** (2): 2025-11-10-0122-design-source-sync, 2025-11-10-0127-design-system-assets
 - **[DESIGN-SYSTEM]** (1): 2025-11-10-0202-shadcn-ui-design-system
 - **[DEVTOOLS]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
@@ -110,6 +116,7 @@ High-level non-verbose succinct description of that's in the session summary.
 - **[HERO]** (1): 2025-11-10-0217-hero-section-component
 - **[HOMEPAGE]** (3): 2025-11-10-0217-hero-section-component, 2025-11-10-0218-testimonials-component, 2025-11-10-0218-use-cases-component
 - **[INFRASTRUCTURE]** (1): 2025-11-10-0032-supabase-database-setup
+- **[LOADING-STATES]** (1): 2026-02-17-1800-dead-code-cleanup-and-flicker-fix
 - **[INITIALIZATION]** (1): 2025-11-10-0204-nextjs-project-initialization
 - **[LINTING]** (1): 2026-02-17-1400-eslint-apostrophe-fixes
 - **[MIGRATION]** (1): 2025-01-11-0300-qa-testing-migration-fix
@@ -118,6 +125,7 @@ High-level non-verbose succinct description of that's in the session summary.
 - **[NEXTJS]** (2): 2025-11-10-0111-ai-template-api-contracts, 2025-11-10-0204-nextjs-project-initialization
 - **[ORCHESTRATION]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
 - **[PDF]** (1): 2025-11-10-0407-alignment-flow-stabilization
+- **[PERFORMANCE]** (1): 2026-02-17-1800-dead-code-cleanup-and-flicker-fix
 - **[PAGES]** (1): 2025-11-10-0212-authentication-pages
 - **[PLANNING]** (5): 2025-11-10-0111-ai-template-api-contracts, 2025-11-10-0116-status-mapping-plan-update, 2025-11-10-0122-design-source-sync, 2025-11-10-0127-design-system-assets, 2025-11-10-0156-feature-builder-subagent-devtools-integration
 - **[REALTIME]** (1): 2025-11-10-0032-supabase-database-setup
@@ -130,13 +138,14 @@ High-level non-verbose succinct description of that's in the session summary.
 - **[SUBAGENT]** (1): 2025-11-10-0156-feature-builder-subagent-devtools-integration
 - **[SUPABASE]** (5): 2025-11-10-0032-supabase-database-setup, 2025-11-10-0116-status-mapping-plan-update, 2025-11-10-0212-authentication-pages, 2025-11-10-0407-alignment-flow-stabilization, 2025-01-11-0300-qa-testing-migration-fix
 - **[TEMPLATE-VALIDATION]** (1): 2025-01-11-0300-qa-testing-migration-fix
-- **[TAILWIND]** (2): 2025-11-10-0122-design-source-sync, 2025-11-10-0127-design-system-assets
+- **[TAILWIND]** (3): 2025-11-10-0122-design-source-sync, 2025-11-10-0127-design-system-assets, 2026-02-17-1800-dead-code-cleanup-and-flicker-fix
 - **[TESTIMONIALS]** (1): 2025-11-10-0218-testimonials-component
 - **[TYPES]** (1): 2025-11-10-0205-typescript-types-supabase-clients
 - **[TYPESCRIPT]** (1): 2025-11-10-0205-typescript-types-supabase-clients
 - **[UI]** (5): 2025-11-10-0202-shadcn-ui-design-system, 2025-11-10-0217-hero-section-component, 2025-11-10-0218-testimonials-component, 2025-11-10-0218-use-cases-component, 2025-11-10-0407-alignment-flow-stabilization
+- **[UI-FLICKER]** (1): 2026-02-17-1800-dead-code-cleanup-and-flicker-fix
 - **[UTILITIES]** (1): 2025-11-10-0204-config-utilities-error-handling
 
 ---
 
-*Last updated: 2026-02-17 
+*Last updated: 2026-02-17 18:00

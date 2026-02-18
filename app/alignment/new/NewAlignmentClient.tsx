@@ -245,7 +245,7 @@ export function NewAlignmentClient({ userId, preselectedPartner }: NewAlignmentC
               return (
                 <Card
                   key={template.id}
-                  className={`cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 ${
+                  className={`cursor-pointer transition-[box-shadow,transform] duration-200 hover:shadow-lg hover:-translate-y-1 ${
                     isSelected
                       ? 'border-2 border-primary-500 bg-primary-50 dark:bg-primary-950/30'
                       : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50'
