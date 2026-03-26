@@ -2,8 +2,12 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 16**
+**Total Changelogs: 17**
 
+
+### [2026-03-26-0900 - fix-ui-visibility-audit](./2026-03-26-0900-fix-ui-visibility-audit.md)
+**Keywords:** [UI] [BUGFIX] [DESIGN-SYSTEM] [SHADCN] [TAILWIND] [CSS-VARIABLES] [DARK-MODE] [NAVIGATION]
+Full UI visibility audit: added missing shadcn/ui CSS variables and Tailwind color tokens (~100 broken references across 35 files), created alignment detail router page, fixed hsl→rgb format mismatch in document styles, replaced fragile dynamic color generation in analysis page.
 
 ### [2026-02-17-1800 - dead-code-cleanup-and-flicker-fix](./2026-02-17-1800-dead-code-cleanup-and-flicker-fix.md)
 **Keywords:** [CLEANUP] [DEAD-CODE] [UI-FLICKER] [PERFORMANCE] [TAILWIND] [LOADING-STATES]

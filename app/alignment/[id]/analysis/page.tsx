@@ -46,23 +46,60 @@ const severityColors: Record<ConflictSeverity, string> = {
 };
 
 /**
+ * Section color presets mapping border color keys to icon bg/text colors
+ */
+const sectionColorMap: Record<string, { border: string; iconBg: string; iconText: string }> = {
+  green: {
+    border: 'border-green-200 dark:border-green-800/50',
+    iconBg: 'bg-green-200/50 dark:bg-green-800/20',
+    iconText: 'text-green-700 dark:text-green-400',
+  },
+  orange: {
+    border: 'border-orange-200 dark:border-orange-800/50',
+    iconBg: 'bg-orange-200/50 dark:bg-orange-800/20',
+    iconText: 'text-orange-700 dark:text-orange-400',
+  },
+  purple: {
+    border: 'border-purple-200 dark:border-purple-800/50',
+    iconBg: 'bg-purple-200/50 dark:bg-purple-800/20',
+    iconText: 'text-purple-700 dark:text-purple-400',
+  },
+  blue: {
+    border: 'border-blue-200 dark:border-blue-800/50',
+    iconBg: 'bg-blue-200/50 dark:bg-blue-800/20',
+    iconText: 'text-blue-700 dark:text-blue-400',
+  },
+  red: {
+    border: 'border-red-200 dark:border-red-800/50',
+    iconBg: 'bg-red-200/50 dark:bg-red-800/20',
+    iconText: 'text-red-700 dark:text-red-400',
+  },
+  slate: {
+    border: 'border-slate-300 dark:border-slate-700',
+    iconBg: 'bg-slate-200/50 dark:bg-slate-700/30',
+    iconText: 'text-slate-600 dark:text-slate-400',
+  },
+};
+
+/**
  * Section header component with icon
  */
 function SectionHeader({
   icon: Icon,
   title,
   count,
-  color,
+  colorKey,
 }: {
   icon: any;
   title: string;
   count?: number;
-  color: string;
+  colorKey: string;
 }) {
+  const colors = sectionColorMap[colorKey] || sectionColorMap.blue;
   return (
-    <div className={`flex items-center gap-4 border-b ${color} pb-3`}>
+    <div className={`flex items-center gap-4 border-b ${colors.border} pb-3`}>
       <div
-        className={`flex size-10 items-center justify-center rounded-full ${color.replace('border-', 'bg-').replace('/50', '/10').replace('/30', '/10')} ${color.replace('border-', 'text-').replace('dark:', '').replace('/50', '').replace('/30', '')}`}
+        className={`flex size-10 items-center justify-center rounded-full ${colors.iconBg} ${colors.iconText}`}
       >
         <Icon className="size-5" />
       </div>
@@ -272,7 +309,7 @@ export default async function AnalysisPage({ params }: PageProps) {
                   icon={CheckCircle2}
                   title="Aligned Items"
                   count={alignedItems.length}
-                  color="border-green-200 dark:border-green-800/50"
+                  colorKey="green"
                 />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {alignedItems.map((item: any, index: number) => (
@@ -302,7 +339,7 @@ export default async function AnalysisPage({ params }: PageProps) {
                   icon={AlertTriangle}
                   title="Conflicts Requiring Resolution"
                   count={conflicts.length}
-                  color="border-orange-200 dark:border-orange-800/50"
+                  colorKey="orange"
                 />
                 <div className="flex flex-col gap-4">
                   {conflicts
@@ -330,7 +367,7 @@ export default async function AnalysisPage({ params }: PageProps) {
                   icon={Brain}
                   title="Hidden Assumptions"
                   count={hiddenAssumptions.length}
-                  color="border-purple-200 dark:border-purple-800/50"
+                  colorKey="purple"
                 />
                 <div className="flex flex-col gap-4">
                   {hiddenAssumptions.map((assumption: any, index: number) => (
@@ -360,7 +397,7 @@ export default async function AnalysisPage({ params }: PageProps) {
                   icon={HelpCircle}
                   title="Gaps to Address"
                   count={gaps.length}
-                  color="border-slate-300 dark:border-slate-700"
+                  colorKey="slate"
                 />
                 <div className="flex flex-col gap-4">
                   {gaps.map((gap: any, index: number) => {
@@ -416,7 +453,7 @@ export default async function AnalysisPage({ params }: PageProps) {
                   icon={Scale}
                   title="Imbalances Detected"
                   count={imbalances.length}
-                  color="border-slate-300 dark:border-slate-700"
+                  colorKey="slate"
                 />
                 <div className="flex flex-col gap-4">
                   {imbalances.map((imbalance: any, index: number) => {

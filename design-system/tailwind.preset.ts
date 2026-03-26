@@ -27,16 +27,38 @@ const preset = {
     },
     extend: {
       colors: {
-        primary: createScale('color-primary'),
-        accent: createScale('color-accent'),
+        primary: { ...createScale('color-primary'), foreground: 'rgb(var(--primary-fg) / <alpha-value>)' },
+        accent: { ...createScale('color-accent'), foreground: 'rgb(var(--accent-fg) / <alpha-value>)' },
         info: createScale('color-info'),
         success: createScale('color-success'),
         warning: createScale('color-warning'),
         danger: createScale('color-danger'),
         background: {
+          DEFAULT: 'rgb(var(--background) / <alpha-value>)',
           light: 'rgb(var(--color-background-light) / <alpha-value>)',
           dark: 'rgb(var(--color-background-dark) / <alpha-value>)',
           muted: 'rgb(var(--color-background-muted) / <alpha-value>)',
+        },
+        foreground: 'rgb(var(--foreground) / <alpha-value>)',
+        card: {
+          DEFAULT: 'rgb(var(--card) / <alpha-value>)',
+          foreground: 'rgb(var(--card-foreground) / <alpha-value>)',
+        },
+        popover: {
+          DEFAULT: 'rgb(var(--popover) / <alpha-value>)',
+          foreground: 'rgb(var(--popover-foreground) / <alpha-value>)',
+        },
+        muted: {
+          DEFAULT: 'rgb(var(--muted) / <alpha-value>)',
+          foreground: 'rgb(var(--muted-foreground) / <alpha-value>)',
+        },
+        secondary: {
+          DEFAULT: 'rgb(var(--secondary) / <alpha-value>)',
+          foreground: 'rgb(var(--secondary-foreground) / <alpha-value>)',
+        },
+        destructive: {
+          DEFAULT: 'rgb(var(--destructive) / <alpha-value>)',
+          foreground: 'rgb(var(--destructive-foreground) / <alpha-value>)',
         },
         surface: {
           DEFAULT: 'rgb(var(--color-surface-default) / <alpha-value>)',
@@ -44,9 +66,12 @@ const preset = {
           contrast: 'rgb(var(--color-surface-contrast) / <alpha-value>)',
         },
         border: {
+          DEFAULT: 'rgb(var(--shadcn-border) / <alpha-value>)',
           subtle: 'rgba(var(--color-border-subtle), 0.5)',
           strong: 'rgba(var(--color-border-strong), 0.7)',
         },
+        input: 'rgb(var(--input) / <alpha-value>)',
+        ring: 'rgb(var(--ring) / <alpha-value>)',
         text: {
           DEFAULT: 'rgb(var(--color-text-primary) / 1)',
           muted: 'rgb(var(--color-text-muted) / 1)',
