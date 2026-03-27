@@ -91,12 +91,50 @@
     --color-text-primary: 15 23 42;
     --color-text-muted: 148 163 184;
     --color-text-inverted: 248 250 252;
+
+    /* shadcn/ui compatibility tokens (light mode) */
+    --background: 248 250 252;
+    --foreground: 15 23 42;
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+    --primary-fg: 255 255 255;
+    --secondary: 241 245 249;
+    --secondary-foreground: 15 23 42;
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
+    --accent-fg: 255 255 255;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --shadcn-border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 16 185 129;
   }
 
   .dark {
     --color-text-primary: 248 250 252;
     --color-text-muted: 148 163 184;
     --color-text-inverted: 15 23 42;
+
+    /* shadcn/ui compatibility tokens (dark mode) */
+    --background: 10 14 26;
+    --foreground: 248 250 252;
+    --card: 26 31 53;
+    --card-foreground: 248 250 252;
+    --popover: 26 31 53;
+    --popover-foreground: 248 250 252;
+    --primary-fg: 255 255 255;
+    --secondary: 20 24 41;
+    --secondary-foreground: 248 250 252;
+    --muted: 20 24 41;
+    --muted-foreground: 148 163 184;
+    --accent-fg: 248 250 252;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --shadcn-border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 16 185 129;
   }
 
   .theme-emerald {
