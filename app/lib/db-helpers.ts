@@ -132,9 +132,10 @@ export async function getAlignmentDetail(
     .from('alignment_analyses')
     .select('*')
     .eq('alignment_id', alignmentId)
+    .eq('round', alignment.current_round)
     .order('round', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   // Get user's response
   const { data: userResponse } = await supabase

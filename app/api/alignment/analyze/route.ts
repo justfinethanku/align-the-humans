@@ -130,9 +130,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify alignment is in correct status
-    if (alignment.status !== 'active') {
+    if (alignment.status !== 'active' && alignment.status !== 'resolving') {
       // If already analyzing or beyond, check for existing analysis
-      if (alignment.status === 'analyzing' || alignment.status === 'resolving' || alignment.status === 'complete') {
+      if (alignment.status === 'analyzing' || alignment.status === 'complete') {
         const { data: existingAnalysis } = await supabase
           .from('alignment_analyses')
           .select('*')
@@ -147,10 +147,10 @@ export async function POST(request: NextRequest) {
         }
       }
       throw new AlignmentError(
-        `Cannot analyze alignment in '${alignment.status}' status. Must be 'active'.`,
+        `Cannot analyze alignment in '${alignment.status}' status. Must be 'active' or 'resolving'.`,
         'INVALID_STATUS',
         409,
-        { currentStatus: alignment.status, expectedStatus: 'active' }
+        { currentStatus: alignment.status, expectedStatus: 'active_or_resolving' }
       );
     }
 
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
       .from('alignments')
       .update({ status: 'analyzing' })
       .eq('id', alignmentId)
-      .eq('status', 'active')
+      .in('status', ['active', 'resolving'])
       .select('id')
       .single();
 

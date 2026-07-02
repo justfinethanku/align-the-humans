@@ -31,6 +31,7 @@ interface PromptRow {
   user_prompt_template: string;
   output_schema: unknown;
   is_active: boolean;
+  updated_at: string;
 }
 
 function untypedTable(client: ReturnType<typeof createAdminClient>, table: string): any {
@@ -126,6 +127,30 @@ export async function updatePromptAction(
   const nextVersion = ((maxVersionRow?.version as number | undefined) ?? 0) + 1;
   const changedFields = getChangedFields(currentRow, data);
 
+  const { data: updatedPrompt, error: updateError } = await untypedTable(admin, 'prompts')
+    .update({
+      name: data.name,
+      description: data.description?.trim() || null,
+      model: data.model,
+      temperature: data.temperature,
+      max_tokens: data.maxTokens,
+      system_prompt: data.systemPrompt,
+      user_prompt_template: data.userPromptTemplate,
+      is_active: data.isActive,
+    })
+    .eq('id', currentRow.id)
+    .eq('updated_at', currentRow.updated_at)
+    .select('id')
+    .maybeSingle();
+
+  if (updateError) {
+    return { ok: false, error: updateError.message };
+  }
+
+  if (!updatedPrompt) {
+    return { ok: false, error: 'This prompt was changed by someone else — reload and retry.' };
+  }
+
   const { error: versionInsertError } = await untypedTable(admin, 'prompt_versions').insert({
     prompt_id: currentRow.id,
     version: nextVersion,
@@ -143,24 +168,7 @@ export async function updatePromptAction(
     return { ok: false, error: versionInsertError.message };
   }
 
-  const { error: updateError } = await untypedTable(admin, 'prompts')
-    .update({
-      name: data.name,
-      description: data.description?.trim() || null,
-      model: data.model,
-      temperature: data.temperature,
-      max_tokens: data.maxTokens,
-      system_prompt: data.systemPrompt,
-      user_prompt_template: data.userPromptTemplate,
-      is_active: data.isActive,
-    })
-    .eq('id', currentRow.id);
-
-  if (updateError) {
-    return { ok: false, error: updateError.message };
-  }
-
-  await untypedTable(admin, 'admin_audit_log').insert({
+  const { error: auditInsertError } = await untypedTable(admin, 'admin_audit_log').insert({
     admin_id: auth.userId,
     action: 'prompt.update',
     target_type: 'prompt',
@@ -171,6 +179,10 @@ export async function updatePromptAction(
       changedFields,
     },
   });
+
+  if (auditInsertError) {
+    console.error('Failed to write admin audit log for prompt update:', auditInsertError);
+  }
 
   clearPromptCache();
   revalidatePath('/admin/prompts');

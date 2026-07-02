@@ -162,20 +162,70 @@ function humanizeKey(key: string): string {
     .trim();
 }
 
+const MAX_POSITION_RENDER_DEPTH = 4;
+
+function stringifyForDepthLimit(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? '';
+  } catch {
+    return String(value);
+  }
+}
+
+function renderPositionValue(value: unknown, depth: number): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (depth >= MAX_POSITION_RENDER_DEPTH) {
+    return escapeHtml(stringifyForDepthLimit(value));
+  }
+
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return escapeHtml(String(value));
+  }
+
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => renderPositionValue(item, depth + 1))
+      .filter((item) => item.length > 0);
+
+    return items.length > 0
+      ? `<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`
+      : '';
+  }
+
+  if (typeof value === 'object') {
+    const items = Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => {
+        const renderedItem = renderPositionValue(item, depth + 1);
+        if (!renderedItem) {
+          return '';
+        }
+        return `<li><strong>${escapeHtml(humanizeKey(key))}:</strong> ${renderedItem}</li>`;
+      })
+      .filter((item) => item.length > 0);
+
+    return items.length > 0 ? `<ul>${items.join('')}</ul>` : '';
+  }
+
+  return escapeHtml(String(value));
+}
+
 /** Renders one aligned-position value as escaped HTML. */
 function renderPositionBody(value: unknown): string {
-  if (typeof value === 'string') {
-    return `<p>${escapeHtml(value)}</p>`;
+  if (value === null || value === undefined) {
+    return '';
   }
-  if (Array.isArray(value)) {
-    return `<ul>${value.map((v) => `<li>${escapeHtml(String(v))}</li>`).join('')}</ul>`;
+
+  const renderedValue = renderPositionValue(value, 0);
+  if (!renderedValue) {
+    return '';
   }
-  if (value && typeof value === 'object') {
-    return `<ul>${Object.entries(value as Record<string, unknown>)
-      .map(([k, v]) => `<li><strong>${escapeHtml(humanizeKey(k))}:</strong> ${escapeHtml(String(v))}</li>`)
-      .join('')}</ul>`;
-  }
-  return `<p>${escapeHtml(String(value))}</p>`;
+
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? `<p>${renderedValue}</p>`
+    : renderedValue;
 }
 
 // ============================================================================

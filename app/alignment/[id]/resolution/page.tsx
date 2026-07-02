@@ -23,6 +23,18 @@ interface ResolutionPageProps {
   }>;
 }
 
+function isResolutionSubmissionForRound(
+  response: { metadata: unknown; submitted_at: string | null },
+  round: number
+): boolean {
+  const metadata = response.metadata as Record<string, unknown> | null;
+  return (
+    Boolean(response.submitted_at) &&
+    metadata?.resolution_submission === true &&
+    metadata?.resolution_round === round
+  );
+}
+
 export default async function ResolutionPage({ params }: ResolutionPageProps) {
   const resolvedParams = await params;
   const alignmentId = resolvedParams.id;
@@ -101,27 +113,28 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
 
   const partnerName = partnerProfile?.display_name || 'Your partner';
 
-  // 8. Check if user has already submitted resolution for this round
-  //
-  // NOTE: `!== null` here is deliberately NOT used -- `alignment.user_response`
-  // and `alignment.partner_response` are `undefined` (not `null`) whenever no
-  // response row exists yet for this round (see getAlignmentDetail() in
-  // app/lib/db-helpers.ts, which does `userResponse || undefined`). Since
-  // `undefined !== null` is `true` in JS, a naive `!== null` check would make
-  // both flags incorrectly evaluate to `true` on every fresh round before
-  // anyone has submitted anything -- which would immediately show the
-  // "waiting for partner" screen instead of the resolution form, and would
-  // make the round-cap detection below misfire after only one partner
-  // submits. Boolean(...) correctly treats "no response row yet" as false.
-  const hasUserSubmitted = Boolean(alignment.user_response?.submitted_at);
-  const hasPartnerSubmitted = Boolean(alignment.partner_response?.submitted_at);
+  // 8. Check if user has already submitted resolution picks for this analysis round.
+  // Resolution picks are stored as the next round's analysis input so they do not
+  // overwrite the questionnaire answers that produced the current analysis.
+  const resolutionResponseRound = alignment.current_round + 1;
+  const { data: resolutionResponses } = await supabase
+    .from('alignment_responses')
+    .select('user_id, submitted_at, metadata')
+    .eq('alignment_id', alignmentId)
+    .eq('round', resolutionResponseRound);
+
+  const submittedResolutionResponses = (resolutionResponses || []).filter((response) =>
+    isResolutionSubmissionForRound(response, alignment.current_round)
+  );
+  const hasUserSubmitted = submittedResolutionResponses.some((response) => response.user_id === user.id);
+  const hasPartnerSubmitted = submittedResolutionResponses.some((response) => response.user_id === partnerId);
 
   // 9. Detect the round-cap terminal state.
   // submit-resolution/route.ts never transitions status to 'analyzing' once
   // both partners have submitted at MAX_RESOLUTION_ROUNDS -- it leaves
   // current_round and status untouched. So reaching this page with status
   // still 'resolving', current_round already at the cap, and both partners
-  // submitted for that round is the durable, derivable signal that this
+  // submitted for that analysis round is the durable, derivable signal that this
   // alignment has exhausted its resolution rounds.
   const maxRoundsReached =
     hasUserSubmitted &&

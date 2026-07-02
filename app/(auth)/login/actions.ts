@@ -6,8 +6,10 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createServerClient } from '@/app/lib/supabase-server';
 import { AuthError, formatErrorMessage, logError } from '@/app/lib/errors';
+import { checkRateLimit } from '@/app/lib/rate-limit';
 
 /**
  * Login form state type
@@ -16,6 +18,17 @@ export type LoginState = {
   error?: string;
   success?: boolean;
 };
+
+const RATE_LIMIT_MESSAGE = 'Too many attempts, please wait a minute.';
+
+function getClientIp(): string {
+  const forwardedFor = headers().get('x-forwarded-for');
+  return forwardedFor?.split(',')[0]?.trim() || 'unknown';
+}
+
+function authRateLimitKey(scope: string, email: string): string {
+  return `auth:${scope}:${email.toLowerCase()}:ip:${getClientIp()}`;
+}
 
 /**
  * Validates that a redirect destination is a same-site relative path.
@@ -44,7 +57,7 @@ export async function loginAction(
 ): Promise<LoginState> {
   try {
     // Extract form data
-    const email = formData.get('email') as string;
+    const email = ((formData.get('email') as string) || '').trim();
     const password = formData.get('password') as string;
     const redirectTo = formData.get('redirectTo') as string | null;
 
@@ -61,6 +74,18 @@ export async function loginAction(
     if (!emailRegex.test(email)) {
       return {
         error: 'Please enter a valid email address',
+        success: false,
+      };
+    }
+
+    // In-memory limiter; production should back this with Vercel KV / Upstash.
+    const rateLimitResult = await checkRateLimit(
+      authRateLimitKey('login', email),
+      { limit: 10, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      return {
+        error: RATE_LIMIT_MESSAGE,
         success: false,
       };
     }
@@ -131,25 +156,36 @@ export async function forgotPasswordAction(
   email: string
 ): Promise<{ error?: string; success?: boolean }> {
   try {
+    const normalizedEmail = email.trim();
+
     // Validate email
-    if (!email) {
+    if (!normalizedEmail) {
       return { error: 'Email is required', success: false };
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return { error: 'Please enter a valid email address', success: false };
+    }
+
+    // In-memory limiter; production should back this with Vercel KV / Upstash.
+    const rateLimitResult = await checkRateLimit(
+      authRateLimitKey('forgot-password', normalizedEmail),
+      { limit: 5, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      return { error: RATE_LIMIT_MESSAGE, success: false };
     }
 
     // Create Supabase client and send reset email
     const supabase = createServerClient();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: `${appUrl}/auth/callback?next=/auth/reset-password`,
     });
 
     if (error) {
-      logError(error, { context: 'forgotPassword', email });
+      logError(error, { context: 'forgotPassword', email: normalizedEmail });
       return {
         error: 'Failed to send password reset email. Please try again.',
         success: false,
