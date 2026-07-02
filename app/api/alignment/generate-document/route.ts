@@ -2,22 +2,20 @@
  * API Route: Generate Final Alignment Document
  * POST /api/alignment/generate-document
  *
- * Generates a professional agreement document from aligned positions using Claude AI.
- * Returns HTML-formatted document with executive summary and detailed terms.
- *
- * Reference: plan_a.md lines 1147-1172, 1027-1044, 961-1008
+ * Renders the final agreement document deterministically ("fill in the
+ * blank"): a DB-managed HTML skeleton (prompt slug 'document-skeleton',
+ * editable in the admin dashboard) is filled with the aligned positions,
+ * executive summary, participants, and date. All interpolated content is
+ * HTML-escaped; no AI call and no model-generated markup is involved.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateText } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
-import { getPrompt } from '@/app/lib/prompts';
+import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import {
   createErrorResponse,
   ValidationError,
-  AIError,
   AlignmentError,
   RateLimitError,
   logError
@@ -145,70 +143,39 @@ async function getTemplateDetails(
 }
 
 /**
- * Generates AI prompt for document creation
+ * Escapes user-supplied text for safe interpolation into document HTML.
  */
-function buildDocumentPrompt(
-  templateName: string,
-  templateCategory: string,
-  participants: string[],
-  finalPositions: Record<string, unknown>,
-  summary: string[]
-): string {
-  const participantList = participants.join(' and ');
-  const positionsJson = JSON.stringify(finalPositions, null, 2);
-  const summaryBullets = summary.map(item => `- ${item}`).join('\n');
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-  return `Generate a professional alignment agreement document.
+/** Converts a snake_case/kebab-case position key into a readable heading. */
+function humanizeKey(key: string): string {
+  return key
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
 
-Context:
-- Template type: ${templateName}
-- Category: ${templateCategory}
-- Participants: ${participantList}
-- Aligned positions:
-${positionsJson}
-
-Executive Summary Points:
-${summaryBullets}
-
-Create a well-structured HTML document with:
-1. An executive summary section with 3-5 bullet points highlighting key agreements
-2. Detailed terms organized by logical categories (e.g., Equity & Ownership, Decision Making, Operations, etc.)
-3. Professional but readable language suitable for a legally-binding agreement
-4. Include reasoning and context where helpful to clarify decisions
-5. Use proper HTML semantic structure (article, section, h1, h2, h3, p, ul, li)
-
-Format requirements:
-- Use <article> as the root element
-- Use <section> tags for major divisions
-- Use <h2> for category headings and <h3> for subsections
-- Use <p> for paragraphs and <ul>/<li> for lists
-- Add appropriate class names for styling (use descriptive class names)
-- Include a header with document title, participants, and date
-- Do NOT include <html>, <head>, or <body> tags - just the article content
-
-Document structure:
-<article class="alignment-document">
-  <header class="document-header">
-    <h1>Alignment Agreement</h1>
-    <div class="document-meta">
-      <p>Between: ${participantList}</p>
-      <p>Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-      <p>Subject: ${templateName}</p>
-    </div>
-  </header>
-
-  <section class="executive-summary">
-    <h2>Executive Summary</h2>
-    <!-- 3-5 bullet points summarizing key agreements -->
-  </section>
-
-  <section class="detailed-terms">
-    <h2>Detailed Terms</h2>
-    <!-- Organized by categories with h3 subheadings -->
-  </section>
-</article>
-
-Generate a complete, professional document now.`;
+/** Renders one aligned-position value as escaped HTML. */
+function renderPositionBody(value: unknown): string {
+  if (typeof value === 'string') {
+    return `<p>${escapeHtml(value)}</p>`;
+  }
+  if (Array.isArray(value)) {
+    return `<ul>${value.map((v) => `<li>${escapeHtml(String(v))}</li>`).join('')}</ul>`;
+  }
+  if (value && typeof value === 'object') {
+    return `<ul>${Object.entries(value as Record<string, unknown>)
+      .map(([k, v]) => `<li><strong>${escapeHtml(humanizeKey(k))}:</strong> ${escapeHtml(String(v))}</li>`)
+      .join('')}</ul>`;
+  }
+  return `<p>${escapeHtml(String(value))}</p>`;
 }
 
 // ============================================================================
@@ -251,30 +218,37 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       event: 'ai.document.start',
       alignmentId,
       latencyMs: 0,
-      model: AI_MODELS.SONNET,
+      model: 'deterministic-template',
       success: true,
       userId: user.id,
     });
 
-    // 6. Build AI prompt
-    const prompt = buildDocumentPrompt(
-      template.name,
-      template.category,
-      participants,
-      finalPositions,
-      summary
-    );
+    // 6. Load the DB-managed document skeleton (editable in /admin/prompts)
+    const skeleton = await getPrompt('document-skeleton');
 
-    // 7. Generate document with Claude (config from prompt system)
-    const promptConfig = await getPrompt('generate-document');
-    const result = await generateText({
-      model: resolveModel(promptConfig.model) as any,
-      prompt,
-      temperature: promptConfig.temperature,
-      maxOutputTokens: promptConfig.maxTokens,
+    // 7. Fill in the blanks deterministically (all content HTML-escaped)
+    const summaryItems = summary
+      .map((item) => `        <li>${escapeHtml(item)}</li>`)
+      .join('\n');
+    const termsSections = Object.entries(finalPositions)
+      .map(
+        ([key, value]) =>
+          `      <section class="term">\n        <h3>${escapeHtml(humanizeKey(key))}</h3>\n        ${renderPositionBody(value)}\n      </section>`
+      )
+      .join('\n');
+
+    const documentHtml = renderPrompt(skeleton.userPromptTemplate, {
+      participantList: participants.map((name) => escapeHtml(name)).join(' and '),
+      documentDate: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      templateName: escapeHtml(template.name),
+      templateCategory: escapeHtml(template.category),
+      summaryItems,
+      termsSections,
     });
-
-    const documentHtml = result.text;
 
     // 8. Parse document into sections
     const sections = parseDocumentSections(documentHtml);
@@ -285,7 +259,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       event: 'ai.document.complete',
       alignmentId,
       latencyMs,
-      model: AI_MODELS.SONNET,
+      model: 'deterministic-template',
       success: true,
       userId: user.id,
     });
@@ -316,7 +290,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           event: 'ai.document.error',
           alignmentId: bodyData.alignmentId,
           latencyMs: timer.getLatency(),
-          model: AI_MODELS.SONNET,
+          model: 'deterministic-template',
           success: false,
           errorCode: (error as any).code || 'UNKNOWN',
           errorMessage: error instanceof Error ? error.message : 'Unknown error',

@@ -12,7 +12,7 @@ interface Step {
 const steps: Step[] = [
   {
     number: 1,
-    title: 'Answer alone',
+    title: 'Answer privately',
     description: 'Each of you answers the same hard questions independently. No anchoring, no performing, no pressure.',
     icon: PenLine,
   },
@@ -48,7 +48,7 @@ export function FlowVisualization() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl font-bold text-foreground sm:text-4xl">
-            Think alone. Align together.
+            Space to think. Align together.
           </h2>
           <p className="mt-3 text-lg text-muted-foreground">
             Five steps from dread to a signed agreement.

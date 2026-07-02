@@ -9,7 +9,7 @@ export function HowToSchema() {
     step: [
       {
         '@type': 'HowToStep',
-        name: 'Answer alone',
+        name: 'Answer privately',
         text: 'Each of you answers the same hard questions independently. No anchoring, no performing, no pressure.',
         position: 1,
       },

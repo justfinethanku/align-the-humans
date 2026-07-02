@@ -13,7 +13,7 @@
 
 import { generateText } from 'ai';
 import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
-import { getPrompt } from '@/app/lib/prompts';
+import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -47,70 +47,6 @@ interface SuggestionResponse {
     text: string;
     confidence: number;
   }>;
-}
-
-// ============================================================================
-// AI Prompt Construction
-// ============================================================================
-
-function buildSuggestionPrompt(
-  section: string,
-  currentValue: string,
-  context: { topic: string; participants: string[]; desiredOutcome: string }
-): string {
-  if (section === 'topic') {
-    return `You are helping someone define what they want to align on. Generate 2-3 clear, specific topic suggestions for an alignment conversation.
-
-Current input: "${currentValue || 'none yet'}"
-Context: This is for a conversation between ${context.participants.join(' and ')}.
-
-Provide 2-3 diverse, realistic examples of alignment topics. Each should be:
-- Clear and specific (not vague)
-- Realistic and relatable
-- Different from each other
-- 8-15 words long
-
-Examples of good topics:
-- "Deciding on our vacation destination for this summer"
-- "Finalizing the budget for the home renovation project"
-- "Choosing which city to relocate to for work"
-
-Return only the topic suggestions, one per line, without numbering or explanations.`;
-  }
-
-  if (section === 'partner') {
-    return `You are helping someone identify their partner for an alignment conversation. Generate 2-3 common relationship type suggestions.
-
-Current input: "${currentValue || 'none yet'}"
-Topic: "${context.topic}"
-
-Provide 2-3 common relationship types that make sense for this topic. Examples:
-- "My spouse"
-- "My business co-founder"
-- "A family member"
-- "My roommate"
-
-Return only the relationship descriptions, one per line, without numbering or explanations.`;
-  }
-
-  // outcome section
-  return `You are helping someone define the desired outcome of an alignment conversation. Generate 2-3 clear outcome suggestions.
-
-Current input: "${currentValue || 'none yet'}"
-Topic: "${context.topic}"
-Participants: ${context.participants.join(' and ')}
-
-Provide 2-3 realistic desired outcomes. Each should be:
-- Clear and achievable
-- Specific to reaching agreement
-- Different from each other
-
-Examples of good outcomes:
-- "A clear, mutual decision we both feel good about"
-- "A list of actionable next steps we both commit to"
-- "Understanding each other's perspective and finding common ground"
-
-Return only the outcome descriptions, one per line, without numbering or explanations.`;
 }
 
 // ============================================================================
@@ -178,19 +114,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       userId,
     });
 
-    // 4. Build prompt
-    const aiPrompt = buildSuggestionPrompt(
-      section,
-      currentValue || '',
-      alignmentContext
-    );
-
-    // 5. Generate AI response (config from prompt system)
+    // 4. Load prompt config and render the DB-managed template
     const promptConfig = await getPrompt(`clarity-suggest-${section}`);
+    const aiPrompt = renderPrompt(promptConfig.userPromptTemplate, {
+      currentValue: currentValue || 'none yet',
+      topic: alignmentContext.topic || '',
+      participants: alignmentContext.participants.join(' and '),
+    });
+
+    // 5. Generate AI response (prompt text, model, and params all from the DB)
     const { text, usage } = await generateText({
       model: resolveModel(promptConfig.model) as any,
+      system: promptConfig.systemPrompt,
       prompt: aiPrompt,
       temperature: promptConfig.temperature,
+      maxOutputTokens: promptConfig.maxTokens,
     });
 
     if (!text || text.trim().length === 0) {
