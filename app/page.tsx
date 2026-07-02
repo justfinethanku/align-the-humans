@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { Hero } from '@/components/homepage/Hero';
+import { ProblemSection } from '@/components/homepage/ProblemSection';
 import { FlowVisualization } from '@/components/homepage/FlowVisualization';
 import { StatsSection } from '@/components/homepage/StatsSection';
 import { UseCases } from '@/components/homepage/UseCases';
@@ -32,24 +33,8 @@ export default function Home() {
           <Hero />
         </section>
 
-        {/* About Section - Brief explanation */}
-        <section id="about" className="w-full bg-surface-dark py-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-foreground mb-6">
-              What is Human Alignment?
-            </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
-              Human Alignment is infrastructure for collaborative thinking at any scale.
-              From splitting chores to splitting equity, the same structure enables partners
-              to think independently, then discover solutions together through AI synthesis.
-            </p>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              This isn&apos;t conflict resolution - it&apos;s proactive alignment architecture.
-              Use it BEFORE disagreement exists. Build the habit with small decisions.
-              Trust it when everything&apos;s on the line. Practice compounds trust.
-            </p>
-          </div>
-        </section>
+        {/* Problem Section */}
+        <ProblemSection />
 
         {/* 5-Step Process */}
         <section id="how-it-works" className="scroll-mt-16">
