@@ -2,28 +2,33 @@
  * Centralized AI model configuration
  *
  * All AI model references, default parameters, and model discovery.
+ * Generation routes through OpenRouter (@openrouter/ai-sdk-provider).
  * Prompt management system (app/lib/prompts.ts) uses resolveModel()
  * to dynamically select models from database-stored config.
  */
 
-import { anthropic } from '@ai-sdk/anthropic';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPEN_ROUTER_API_KEY ?? process.env.OPENROUTER_API_KEY ?? '',
+});
 
 // ============================================================================
 // Model Constants
 // ============================================================================
 
-/** Model IDs - official Anthropic identifiers */
+/** Model IDs - OpenRouter slugs for Anthropic models */
 export const AI_MODELS = {
   /** Primary model for analysis, document generation, and complex reasoning */
-  SONNET: 'claude-sonnet-4-6',
+  SONNET: 'anthropic/claude-sonnet-4.6',
   /** Fast model for inline suggestions, clarity assistance, and lightweight tasks */
-  HAIKU: 'claude-haiku-4-5-20251001',
+  HAIKU: 'anthropic/claude-haiku-4.5',
 } as const;
 
 /** Pre-configured model instances */
 export const models = {
-  sonnet: anthropic(AI_MODELS.SONNET),
-  haiku: anthropic(AI_MODELS.HAIKU),
+  sonnet: openrouter.chat(AI_MODELS.SONNET),
+  haiku: openrouter.chat(AI_MODELS.HAIKU),
 } as const;
 
 /** Default parameters by use case */
@@ -34,12 +39,24 @@ export const AI_DEFAULTS = {
   clarify: { temperature: 0.7, maxTokens: 1024 },
 } as const;
 
+const LEGACY_MODEL_MAP: Record<string, string> = {
+  'claude-sonnet-4-6': AI_MODELS.SONNET,
+  'claude-haiku-4-5-20251001': AI_MODELS.HAIKU,
+};
+
+function toOpenRouterSlug(id: string): string {
+  if (!id) return AI_MODELS.SONNET;
+  if (id.includes('/')) return id;
+  if (LEGACY_MODEL_MAP[id]) return LEGACY_MODEL_MAP[id];
+  return AI_MODELS.SONNET;
+}
+
 /**
- * Resolves a model ID string to an Anthropic provider instance.
+ * Resolves a model ID string to an OpenRouter provider instance.
  * Used by the prompt management system to dynamically select models.
  */
 export function resolveModel(modelId: string) {
-  return anthropic(modelId);
+  return openrouter.chat(toOpenRouterSlug(modelId));
 }
 
 // ============================================================================
