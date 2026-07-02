@@ -8,7 +8,7 @@ import type { Metadata } from 'next';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 export const metadata: Metadata = {
-  title: 'Sign In - Align The Humans',
+  title: 'Sign In - Align the Humans',
   description: 'Log in or create an account to start aligning',
 };
 
@@ -36,7 +36,7 @@ export default function AuthLayout({
               </svg>
             </div>
             <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">
-              Align The Humans
+              Align the Humans
             </h2>
           </div>
           <ThemeToggle />

@@ -14,6 +14,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -128,7 +129,7 @@ export default function ResetPasswordPage() {
               </svg>
             </div>
             <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">
-              Align The Humans
+              Align the Humans
             </h2>
           </div>
           <ThemeToggle />
@@ -206,9 +207,7 @@ export default function ResetPasswordPage() {
                       aria-label="Toggle password visibility"
                       className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted-foreground hover:text-foreground"
                     >
-                      <span className="material-symbols-outlined text-xl">
-                        {showPassword ? 'visibility' : 'visibility_off'}
-                      </span>
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
                   {fieldErrors.password && (

@@ -116,7 +116,7 @@ export function WaitingClient({
               <div className="size-5 rounded-full bg-primary" />
             </div>
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-              Align The Humans
+              Align the Humans
             </h2>
           </Link>
         </div>

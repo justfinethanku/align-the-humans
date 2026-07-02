@@ -199,7 +199,7 @@ export function NewAlignmentClient({ userId, preselectedPartner }: NewAlignmentC
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">
-              Align The Humans
+              Align the Humans
             </h2>
           </div>
           <Button

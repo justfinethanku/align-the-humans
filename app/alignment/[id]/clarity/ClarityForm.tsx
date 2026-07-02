@@ -456,7 +456,7 @@ export function ClarityForm({
             </svg>
           </div>
           <h2 className="text-lg font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100">
-            Align The Humans
+            Align the Humans
           </h2>
           {isSaving && (
             <span className="ml-auto text-xs text-gray-500">Saving...</span>

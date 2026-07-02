@@ -150,7 +150,7 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
           <div className="flex items-center gap-3">
             <HeartHandshake className="size-7 text-primary-500" />
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-              Align The Humans
+              Align the Humans
             </h2>
           </div>
 

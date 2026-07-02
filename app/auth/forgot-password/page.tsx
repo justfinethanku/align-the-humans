@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
               </svg>
             </div>
             <h2 className="text-lg font-bold leading-tight tracking-[-0.015em]">
-              Align The Humans
+              Align the Humans
             </h2>
           </div>
           <ThemeToggle />

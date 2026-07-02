@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -153,9 +154,7 @@ export default function SignupPage() {
                 aria-label="Toggle password visibility"
                 className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground hover:text-foreground"
               >
-                <span className="material-symbols-outlined text-xl">
-                  {showPassword ? 'visibility' : 'visibility_off'}
-                </span>
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
             {state?.fieldErrors?.password && (
