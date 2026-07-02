@@ -333,7 +333,7 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
               <Button
                 onClick={() => setIsAddPartnerModalOpen(true)}
                 variant="outline"
-                className="flex h-10 w-full shrink-0 items-center justify-center gap-2 overflow-hidden rounded-lg border-slate-300 bg-background px-4 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:shadow-md dark:border-slate-700/60 dark:bg-card-dark dark:text-slate-200 dark:shadow-none dark:hover:bg-slate-700/40 sm:w-auto"
+                className="flex h-10 w-full shrink-0 items-center justify-center gap-2 overflow-hidden rounded-lg border-slate-300 bg-background px-4 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:shadow-md dark:border-slate-700/60 dark:bg-surface-dark dark:text-slate-200 dark:shadow-none dark:hover:bg-slate-700/40 sm:w-auto"
               >
                 <UserPlus className="size-4" />
                 <span className="truncate">Add Partner</span>
@@ -348,7 +348,7 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
                 placeholder="Search partners..."
                 value={partnerSearchQuery}
                 onChange={(e) => setPartnerSearchQuery(e.target.value)}
-                className="h-11 w-full rounded-lg border-slate-300 bg-background pl-11 pr-4 text-sm placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700/60 dark:bg-card-dark dark:placeholder:text-slate-500 dark:focus:border-primary-500"
+                className="h-11 w-full rounded-lg border-slate-300 bg-background pl-11 pr-4 text-sm placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700/60 dark:bg-surface-dark dark:placeholder:text-slate-500 dark:focus:border-primary-500"
               />
             </div>
 

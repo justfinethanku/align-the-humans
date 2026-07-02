@@ -141,7 +141,7 @@ export function DocumentContent({
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
-            color: hsl(var(--foreground));
+            color: rgb(var(--foreground));
           }
 
           .document-content h2 {
@@ -149,8 +149,8 @@ export function DocumentContent({
             font-weight: 600;
             margin-top: 2rem;
             margin-bottom: 1rem;
-            color: hsl(var(--foreground));
-            border-bottom: 2px solid hsl(var(--border));
+            color: rgb(var(--foreground));
+            border-bottom: 2px solid rgb(var(--shadcn-border));
             padding-bottom: 0.5rem;
           }
 
@@ -159,13 +159,13 @@ export function DocumentContent({
             font-weight: 600;
             margin-top: 1.5rem;
             margin-bottom: 0.75rem;
-            color: hsl(var(--foreground));
+            color: rgb(var(--foreground));
           }
 
           .document-content p {
             margin-bottom: 1rem;
             line-height: 1.7;
-            color: hsl(var(--foreground));
+            color: rgb(var(--foreground));
           }
 
           .document-content ul {
@@ -181,12 +181,12 @@ export function DocumentContent({
           .document-content .document-header {
             margin-bottom: 2rem;
             padding-bottom: 1.5rem;
-            border-bottom: 3px solid hsl(var(--border));
+            border-bottom: 3px solid rgb(var(--shadcn-border));
           }
 
           .document-content .document-meta {
             margin-top: 1rem;
-            color: hsl(var(--muted-foreground));
+            color: rgb(var(--muted-foreground));
           }
 
           .document-content .document-meta p {
@@ -195,7 +195,7 @@ export function DocumentContent({
           }
 
           .document-content .executive-summary {
-            background-color: hsl(var(--muted) / 0.3);
+            background-color: rgb(var(--muted) / 0.3);
             padding: 1.5rem;
             border-radius: 0.5rem;
             margin-bottom: 2rem;
