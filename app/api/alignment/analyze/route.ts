@@ -19,7 +19,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { generateObject } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { resolveModel } from '@/app/lib/ai-config';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { createServerClient, createAdminClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, updateAlignmentStatus, isParticipant } from '@/app/lib/db-helpers';
@@ -221,11 +221,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 7. Log start of AI analysis
+    const promptConfig = await getPrompt('analyze-responses');
+
     telemetry.logAIOperation({
       event: 'ai.analysis.start',
       alignmentId,
       latencyMs: 0,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: true,
       userId: user.id,
     });
@@ -258,7 +260,7 @@ export async function POST(request: NextRequest) {
         ],
       },
       details: {
-        model: AI_MODELS.SONNET,
+        model: promptConfig.model,
         prompt_tokens: 0, // Will be populated from usage if available
         completion_tokens: 0,
         raw_output: JSON.stringify(analysis),
@@ -312,7 +314,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.analysis.complete',
       alignmentId,
       latencyMs,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: true,
       userId: user.id,
     });
@@ -425,7 +427,7 @@ async function analyzeResponses(
       event: 'ai.analysis.error',
       alignmentId,
       latencyMs: 0,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: false,
       errorCode: error instanceof Error ? error.name : 'UNKNOWN',
       errorMessage: error instanceof Error ? error.message : 'AI analysis failed',

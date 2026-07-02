@@ -25,12 +25,6 @@ export const AI_MODELS = {
   HAIKU: 'anthropic/claude-haiku-4.5',
 } as const;
 
-/** Pre-configured model instances */
-export const models = {
-  sonnet: openrouter.chat(AI_MODELS.SONNET),
-  haiku: openrouter.chat(AI_MODELS.HAIKU),
-} as const;
-
 /** Default parameters by use case */
 export const AI_DEFAULTS = {
   analysis: { temperature: 0.3, maxTokens: 4096 },

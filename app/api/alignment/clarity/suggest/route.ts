@@ -12,7 +12,7 @@
  */
 
 import { generateText } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { resolveModel } from '@/app/lib/ai-config';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -56,8 +56,7 @@ interface SuggestionResponse {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const timer = new PerformanceTimer();
   const supabase = createServerClient();
-  const modelName = AI_MODELS.HAIKU;
-  const model = models.haiku;
+  let modelName = 'db-config';
 
   let userId: string | undefined;
 
@@ -116,6 +115,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 4. Load prompt config and render the DB-managed template
     const promptConfig = await getPrompt(`clarity-suggest-${section}`);
+    modelName = promptConfig.model;
     const aiPrompt = renderPrompt(promptConfig.userPromptTemplate, {
       currentValue: currentValue || 'none yet',
       topic: alignmentContext.topic || '',

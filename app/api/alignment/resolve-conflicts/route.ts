@@ -9,7 +9,7 @@
  */
 
 import { generateObject } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { resolveModel } from '@/app/lib/ai-config';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
@@ -121,18 +121,19 @@ export async function POST(request: NextRequest) {
       throw AlignmentError.unauthorized(alignmentId, user.id);
     }
 
+    const promptConfig = await getPrompt('resolve-conflicts');
+
     // 4. Log AI operation start
     telemetry.logAIOperation({
       event: 'ai.resolve.start',
       alignmentId,
       latencyMs: 0,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: true,
       userId: user.id,
     });
 
     // 5. Generate compromise suggestions using Claude
-    const promptConfig = await getPrompt('resolve-conflicts');
     const constraintsSection =
       conflict.constraints && conflict.constraints.length > 0
         ? `\n\nConstraints to consider:\n${conflict.constraints.map((c) => `- ${c}`).join('\n')}`
@@ -182,7 +183,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.resolve.complete',
       alignmentId,
       latencyMs,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: true,
       userId: user.id,
     });
@@ -208,7 +209,7 @@ export async function POST(request: NextRequest) {
         event: 'ai.resolve.error',
         alignmentId: 'unknown',
         latencyMs,
-        model: AI_MODELS.SONNET,
+        model: 'db-config',
         success: false,
         errorCode: error.code,
         errorMessage: error.message,

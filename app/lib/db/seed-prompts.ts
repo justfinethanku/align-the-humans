@@ -4,12 +4,25 @@
  * All hardcoded AI prompts extracted from API routes,
  * ready to be inserted into the prompts table.
  *
- * Run via: npx tsx app/lib/db/seed-prompts.ts
+ * Seed via: npx tsx --env-file=.env.local scripts/seed-prompts.ts
  */
 
-import type { NewPrompt } from './types';
+/** Shape of a seed prompt row (DB source of truth lives in public.prompts). */
+export interface PromptSeed {
+  slug: string;
+  name: string;
+  description?: string | null;
+  category?: string;
+  model?: string;
+  temperature?: string;
+  maxTokens?: number;
+  systemPrompt: string;
+  userPromptTemplate: string;
+  outputSchema?: unknown;
+  isActive?: boolean;
+}
 
-export const PROMPT_SEEDS: Omit<NewPrompt, 'id' | 'createdAt' | 'updatedAt'>[] = [
+export const PROMPT_SEEDS: PromptSeed[] = [
   // ============================================================================
   // 1. Analyze Responses - Main alignment analysis
   // ============================================================================

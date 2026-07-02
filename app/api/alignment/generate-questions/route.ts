@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { resolveModel } from '@/app/lib/ai-config';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { z } from 'zod';
 
@@ -97,6 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // 4. Generate questions using AI
+    const promptConfig = await getPrompt('generate-questions');
     let questions: AlignmentQuestion[];
     let source: GenerateQuestionsResponse['data']['source'];
 
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       questions = generatedQuestions.questions;
       source = {
         type: 'ai',
-        model: AI_MODELS.SONNET,
+        model: promptConfig.model,
       };
 
       // Validate generated questions
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.error',
         alignmentId: validatedRequest.alignmentId,
         latencyMs: timer.getLatency(),
-        model: AI_MODELS.SONNET,
+        model: promptConfig.model,
         success: false,
         userId,
         errorCode: 'AI_GENERATION_FALLBACK',
@@ -199,7 +200,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.complete',
         alignmentId: validatedRequest.alignmentId,
         latencyMs: timer.stop(),
-        model: AI_MODELS.SONNET,
+        model: promptConfig.model,
         success: true,
         userId,
       });
@@ -224,7 +225,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.error',
         alignmentId,
         latencyMs: timer.stop(),
-        model: AI_MODELS.SONNET,
+        model: 'db-config',
         success: false,
         userId,
         errorCode: (error as any).code || 'UNKNOWN',
@@ -246,16 +247,16 @@ async function generateQuestionsWithAI(
 ): Promise<{ questions: AlignmentQuestion[] }> {
   const timer = new PerformanceTimer();
 
+  const promptConfig = await getPrompt('generate-questions');
+
   telemetry.logAIOperation({
     event: 'ai.generation.start',
     alignmentId: request.alignmentId,
     latencyMs: 0,
-    model: AI_MODELS.SONNET,
+    model: promptConfig.model,
     success: true,
     userId,
   });
-
-  const promptConfig = await getPrompt('generate-questions');
 
   try {
     const { object } = await generateObject({

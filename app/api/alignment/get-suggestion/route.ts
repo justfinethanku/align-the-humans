@@ -12,7 +12,7 @@
  */
 
 import { generateText } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
+import { resolveModel } from '@/app/lib/ai-config';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
@@ -123,8 +123,7 @@ function calculateConfidence(
 export async function POST(request: NextRequest): Promise<Response> {
   const timer = new PerformanceTimer();
   const supabase = createServerClient();
-  const modelName = AI_MODELS.HAIKU;
-  const model = models.haiku;
+  let modelName = 'db-config';
   let telemetryAlignmentId = 'suggestion-request';
   let telemetryUserId: string | undefined;
 
@@ -177,6 +176,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Load prompt config based on mode and render the DB-managed template
     const promptSlug = `suggestion-${mode}`;
     const promptConfig = await getPrompt(promptSlug);
+    modelName = promptConfig.model;
 
     const suggestionInstruction =
       mode === 'suggest'
