@@ -2,9 +2,8 @@ import { Metadata } from 'next';
 import { Hero } from '@/components/homepage/Hero';
 import { ProblemSection } from '@/components/homepage/ProblemSection';
 import { FlowVisualization } from '@/components/homepage/FlowVisualization';
-import { StatsSection } from '@/components/homepage/StatsSection';
+import { WhyItWorks } from '@/components/homepage/WhyItWorks';
 import { UseCases } from '@/components/homepage/UseCases';
-import Testimonials from '@/components/homepage/Testimonials';
 import { CTASection } from '@/components/homepage/CTASection';
 import { Header } from '@/components/layout/Header';
 import { WebApplicationSchema } from '@/components/seo/WebApplicationSchema';
@@ -41,19 +40,14 @@ export default function Home() {
           <FlowVisualization />
         </section>
 
-        {/* Statistics */}
-        <section id="stats" className="scroll-mt-16">
-          <StatsSection />
+        {/* Why it works */}
+        <section id="why" className="scroll-mt-16">
+          <WhyItWorks />
         </section>
 
         {/* Use Cases */}
         <section id="use-cases" className="scroll-mt-16 bg-surface-dark">
           <UseCases />
-        </section>
-
-        {/* Testimonials */}
-        <section id="testimonials" className="scroll-mt-16">
-          <Testimonials />
         </section>
 
         {/* Final CTA */}
@@ -85,12 +79,6 @@ export default function Home() {
                 className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
               >
                 Use Cases
-              </a>
-              <a
-                href="#testimonials"
-                className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
-              >
-                Testimonials
               </a>
             </nav>
           </div>

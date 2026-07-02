@@ -20,10 +20,10 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   metadataBase: new URL('https://alignthehumans.com'),
   title: {
-    default: 'Human Alignment - Structure for Every Decision That Matters',
-    template: '%s | Human Alignment'
+    default: 'Align the Humans - Agree on the Hard Things, Without the Fight',
+    template: '%s | Align the Humans'
   },
-  description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity. Think independently, align collectively, decide confidently. 87% success rate, 10,000+ decisions aligned.',
+  description: 'Agree on the hard things - without the fight. From cofounder equity to household decisions: answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter.',
   keywords: [
     'alignment',
     'collaborative decision-making',

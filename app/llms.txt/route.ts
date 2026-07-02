@@ -84,14 +84,14 @@ When partners use Human Alignment:
 7. The process iterates until both people feel heard and aligned
 8. Final decision is documented and can be confirmed by both parties
 
-## Success Metrics
+## Why It Works
 
-Human Alignment helps people discover better solutions together:
+Align the Humans helps people discover better solutions together:
 
-- **87% alignment success rate** across all decision types and scales
-- **10,000+ decisions aligned** from household chores to cofounder equity
-- **70% deeper clarity** compared to unstructured conversation
-- **Practice compounds trust** - Users return for progressively bigger decisions
+- **No anchoring** - answering independently means both views arrive whole, before positions harden
+- **A neutral third brain** - AI facilitates without judging, taking sides, or getting tired
+- **Everything in writing** - every step leaves a record: what you each said, resolved, and signed
+- **Practice compounds trust** - the format works for progressively bigger decisions
 
 ## Privacy & Security
 

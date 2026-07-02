@@ -47,13 +47,6 @@ export function Header() {
             >
               Use Cases
             </a>
-            <a
-              href="#testimonials"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Testimonials
-            </a>
           </div>
 
           {/* Desktop CTA Buttons */}
@@ -115,13 +108,6 @@ export function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Use Cases
-              </a>
-              <a
-                href="#testimonials"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Testimonials
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 <div className="flex items-center justify-between px-1 pb-1">
