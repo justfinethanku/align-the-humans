@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -9,17 +10,17 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-surface-dark/95 backdrop-blur-sm border-b border-slate-800">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link
               href="/"
-              className="text-xl font-bold text-white hover:text-primary-400 transition-colors"
-              aria-label="Human Alignment home"
+              className="text-xl font-bold text-foreground hover:text-primary-400 transition-colors"
+              aria-label="Align the Humans home"
             >
-              Human<span className="text-primary-500">Alignment</span>
+              Align<span className="text-primary-500">theHumans</span>
             </Link>
           </div>
 
@@ -27,48 +28,42 @@ export function Header() {
           <div className="hidden md:flex items-center gap-8">
             <a
               href="#about"
-              className="text-sm text-slate-300 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               About
             </a>
             <a
               href="#how-it-works"
-              className="text-sm text-slate-300 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               How It Works
             </a>
             <a
               href="#use-cases"
-              className="text-sm text-slate-300 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               Use Cases
-            </a>
-            <a
-              href="#testimonials"
-              className="text-sm text-slate-300 hover:text-white transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Testimonials
             </a>
           </div>
 
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="text-slate-300 hover:text-white hover:bg-slate-800"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               <Link href="/login">Sign In</Link>
             </Button>
             <Button
               asChild
               size="sm"
-              className="bg-primary-600 hover:bg-primary-700 text-white"
+              className="bg-primary-600 hover:bg-primary-700 text-primary-foreground"
             >
               <Link href="/signup">Get Started</Link>
             </Button>
@@ -76,7 +71,7 @@ export function Header() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-slate-300 hover:text-white transition-colors"
+            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle mobile menu"
             aria-expanded={mobileMenuOpen}
@@ -91,42 +86,39 @@ export function Header() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-slate-800">
+          <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
               <a
                 href="#about"
-                className="text-sm text-slate-300 hover:text-white transition-colors py-2"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 About
               </a>
               <a
                 href="#how-it-works"
-                className="text-sm text-slate-300 hover:text-white transition-colors py-2"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 How It Works
               </a>
               <a
                 href="#use-cases"
-                className="text-sm text-slate-300 hover:text-white transition-colors py-2"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Use Cases
               </a>
-              <a
-                href="#testimonials"
-                className="text-sm text-slate-300 hover:text-white transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Testimonials
-              </a>
-              <div className="flex flex-col gap-2 pt-4 border-t border-slate-800">
+              <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                <div className="flex items-center justify-between px-1 pb-1">
+                  <span className="text-sm text-muted-foreground">Theme</span>
+                  <ThemeToggle />
+                </div>
                 <Button
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="text-slate-300 hover:text-white hover:bg-slate-800 justify-start"
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent justify-start"
                 >
                   <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
                     Sign In
@@ -135,7 +127,7 @@ export function Header() {
                 <Button
                   asChild
                   size="sm"
-                  className="bg-primary-600 hover:bg-primary-700 text-white justify-start"
+                  className="bg-primary-600 hover:bg-primary-700 text-primary-foreground justify-start"
                 >
                   <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
                     Get Started

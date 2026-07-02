@@ -2,25 +2,25 @@
  * API Route: Generate Final Alignment Document
  * POST /api/alignment/generate-document
  *
- * Generates a professional agreement document from aligned positions using Claude AI.
- * Returns HTML-formatted document with executive summary and detailed terms.
- *
- * Reference: plan_a.md lines 1147-1172, 1027-1044, 961-1008
+ * Renders the final agreement document deterministically ("fill in the
+ * blank"): a DB-managed HTML skeleton (prompt slug 'document-skeleton',
+ * editable in the admin dashboard) is filled with the aligned positions,
+ * executive summary, participants, and date. All interpolated content is
+ * HTML-escaped; no AI call and no model-generated markup is involved.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateText } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
-import { getPrompt } from '@/app/lib/prompts';
+import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import {
   createErrorResponse,
   ValidationError,
-  AIError,
   AlignmentError,
+  RateLimitError,
   logError
 } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { z } from 'zod';
 
 // ============================================================================
@@ -143,70 +143,89 @@ async function getTemplateDetails(
 }
 
 /**
- * Generates AI prompt for document creation
+ * Escapes user-supplied text for safe interpolation into document HTML.
  */
-function buildDocumentPrompt(
-  templateName: string,
-  templateCategory: string,
-  participants: string[],
-  finalPositions: Record<string, unknown>,
-  summary: string[]
-): string {
-  const participantList = participants.join(' and ');
-  const positionsJson = JSON.stringify(finalPositions, null, 2);
-  const summaryBullets = summary.map(item => `- ${item}`).join('\n');
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-  return `Generate a professional alignment agreement document.
+/** Converts a snake_case/kebab-case position key into a readable heading. */
+function humanizeKey(key: string): string {
+  return key
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
 
-Context:
-- Template type: ${templateName}
-- Category: ${templateCategory}
-- Participants: ${participantList}
-- Aligned positions:
-${positionsJson}
+const MAX_POSITION_RENDER_DEPTH = 4;
 
-Executive Summary Points:
-${summaryBullets}
+function stringifyForDepthLimit(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? '';
+  } catch {
+    return String(value);
+  }
+}
 
-Create a well-structured HTML document with:
-1. An executive summary section with 3-5 bullet points highlighting key agreements
-2. Detailed terms organized by logical categories (e.g., Equity & Ownership, Decision Making, Operations, etc.)
-3. Professional but readable language suitable for a legally-binding agreement
-4. Include reasoning and context where helpful to clarify decisions
-5. Use proper HTML semantic structure (article, section, h1, h2, h3, p, ul, li)
+function renderPositionValue(value: unknown, depth: number): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
 
-Format requirements:
-- Use <article> as the root element
-- Use <section> tags for major divisions
-- Use <h2> for category headings and <h3> for subsections
-- Use <p> for paragraphs and <ul>/<li> for lists
-- Add appropriate class names for styling (use descriptive class names)
-- Include a header with document title, participants, and date
-- Do NOT include <html>, <head>, or <body> tags - just the article content
+  if (depth >= MAX_POSITION_RENDER_DEPTH) {
+    return escapeHtml(stringifyForDepthLimit(value));
+  }
 
-Document structure:
-<article class="alignment-document">
-  <header class="document-header">
-    <h1>Alignment Agreement</h1>
-    <div class="document-meta">
-      <p>Between: ${participantList}</p>
-      <p>Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-      <p>Subject: ${templateName}</p>
-    </div>
-  </header>
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return escapeHtml(String(value));
+  }
 
-  <section class="executive-summary">
-    <h2>Executive Summary</h2>
-    <!-- 3-5 bullet points summarizing key agreements -->
-  </section>
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => renderPositionValue(item, depth + 1))
+      .filter((item) => item.length > 0);
 
-  <section class="detailed-terms">
-    <h2>Detailed Terms</h2>
-    <!-- Organized by categories with h3 subheadings -->
-  </section>
-</article>
+    return items.length > 0
+      ? `<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`
+      : '';
+  }
 
-Generate a complete, professional document now.`;
+  if (typeof value === 'object') {
+    const items = Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => {
+        const renderedItem = renderPositionValue(item, depth + 1);
+        if (!renderedItem) {
+          return '';
+        }
+        return `<li><strong>${escapeHtml(humanizeKey(key))}:</strong> ${renderedItem}</li>`;
+      })
+      .filter((item) => item.length > 0);
+
+    return items.length > 0 ? `<ul>${items.join('')}</ul>` : '';
+  }
+
+  return escapeHtml(String(value));
+}
+
+/** Renders one aligned-position value as escaped HTML. */
+function renderPositionBody(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  const renderedValue = renderPositionValue(value, 0);
+  if (!renderedValue) {
+    return '';
+  }
+
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? `<p>${renderedValue}</p>`
+    : renderedValue;
 }
 
 // ============================================================================
@@ -220,6 +239,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // 1. Authenticate user
     const user = await requireAuth(supabase);
+
+    // 1b. Rate limit (heavy AI operation): ~10/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.generate-document'),
+      { limit: 10, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many document generation requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
 
     // 2. Parse and validate request body
     const body = await request.json();
@@ -238,30 +268,37 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       event: 'ai.document.start',
       alignmentId,
       latencyMs: 0,
-      model: AI_MODELS.SONNET,
+      model: 'deterministic-template',
       success: true,
       userId: user.id,
     });
 
-    // 6. Build AI prompt
-    const prompt = buildDocumentPrompt(
-      template.name,
-      template.category,
-      participants,
-      finalPositions,
-      summary
-    );
+    // 6. Load the DB-managed document skeleton (editable in /admin/prompts)
+    const skeleton = await getPrompt('document-skeleton');
 
-    // 7. Generate document with Claude (config from prompt system)
-    const promptConfig = await getPrompt('generate-document');
-    const result = await generateText({
-      model: resolveModel(promptConfig.model) as any,
-      prompt,
-      temperature: promptConfig.temperature,
-      maxOutputTokens: promptConfig.maxTokens,
+    // 7. Fill in the blanks deterministically (all content HTML-escaped)
+    const summaryItems = summary
+      .map((item) => `        <li>${escapeHtml(item)}</li>`)
+      .join('\n');
+    const termsSections = Object.entries(finalPositions)
+      .map(
+        ([key, value]) =>
+          `      <section class="term">\n        <h3>${escapeHtml(humanizeKey(key))}</h3>\n        ${renderPositionBody(value)}\n      </section>`
+      )
+      .join('\n');
+
+    const documentHtml = renderPrompt(skeleton.userPromptTemplate, {
+      participantList: participants.map((name) => escapeHtml(name)).join(' and '),
+      documentDate: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      templateName: escapeHtml(template.name),
+      templateCategory: escapeHtml(template.category),
+      summaryItems,
+      termsSections,
     });
-
-    const documentHtml = result.text;
 
     // 8. Parse document into sections
     const sections = parseDocumentSections(documentHtml);
@@ -272,7 +309,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       event: 'ai.document.complete',
       alignmentId,
       latencyMs,
-      model: AI_MODELS.SONNET,
+      model: 'deterministic-template',
       success: true,
       userId: user.id,
     });
@@ -303,7 +340,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           event: 'ai.document.error',
           alignmentId: bodyData.alignmentId,
           latencyMs: timer.getLatency(),
-          model: AI_MODELS.SONNET,
+          model: 'deterministic-template',
           success: false,
           errorCode: (error as any).code || 'UNKNOWN',
           errorMessage: error instanceof Error ? error.message : 'Unknown error',

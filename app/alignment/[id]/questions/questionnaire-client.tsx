@@ -362,7 +362,7 @@ export function QuestionnaireClient({
                   fill="currentColor"
                 />
               </svg>
-              <span>Align The Humans</span>
+              <span>Align the Humans</span>
             </div>
           </div>
         </div>

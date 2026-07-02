@@ -11,8 +11,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
-import { getPrompt } from '@/app/lib/prompts';
+import { resolveModel } from '@/app/lib/ai-config';
+import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { z } from 'zod';
 
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -30,9 +30,11 @@ import {
   ValidationError,
   AIError,
   AlignmentError,
+  RateLimitError,
   createErrorResponse,
   logError,
 } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import type {
   AlignmentQuestion,
@@ -54,6 +56,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 1. Authenticate user
     const user = await requireAuth(supabase);
     userId = user.id;
+
+    // 1b. Rate limit (heavy AI operation): ~10/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.generate-questions'),
+      { limit: 10, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many question generation requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
 
     // 2. Parse and validate request body
     const body = await request.json();
@@ -84,6 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // 4. Generate questions using AI
+    const promptConfig = await getPrompt('generate-questions');
     let questions: AlignmentQuestion[];
     let source: GenerateQuestionsResponse['data']['source'];
 
@@ -95,7 +109,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       questions = generatedQuestions.questions;
       source = {
         type: 'ai',
-        model: AI_MODELS.SONNET,
+        model: promptConfig.model,
       };
 
       // Validate generated questions
@@ -122,7 +136,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.error',
         alignmentId: validatedRequest.alignmentId,
         latencyMs: timer.getLatency(),
-        model: AI_MODELS.SONNET,
+        model: promptConfig.model,
         success: false,
         userId,
         errorCode: 'AI_GENERATION_FALLBACK',
@@ -186,7 +200,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.complete',
         alignmentId: validatedRequest.alignmentId,
         latencyMs: timer.stop(),
-        model: AI_MODELS.SONNET,
+        model: promptConfig.model,
         success: true,
         userId,
       });
@@ -211,7 +225,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         event: 'ai.generation.error',
         alignmentId,
         latencyMs: timer.stop(),
-        model: AI_MODELS.SONNET,
+        model: 'db-config',
         success: false,
         userId,
         errorCode: (error as any).code || 'UNKNOWN',
@@ -233,16 +247,16 @@ async function generateQuestionsWithAI(
 ): Promise<{ questions: AlignmentQuestion[] }> {
   const timer = new PerformanceTimer();
 
+  const promptConfig = await getPrompt('generate-questions');
+
   telemetry.logAIOperation({
     event: 'ai.generation.start',
     alignmentId: request.alignmentId,
     latencyMs: 0,
-    model: AI_MODELS.SONNET,
+    model: promptConfig.model,
     success: true,
     userId,
   });
-
-  const promptConfig = await getPrompt('generate-questions');
 
   try {
     const { object } = await generateObject({
@@ -271,8 +285,16 @@ async function generateQuestionsWithAI(
           })
         ),
       }),
-      prompt: buildGenerationPrompt(request),
+      system: promptConfig.systemPrompt,
+      prompt: renderPrompt(promptConfig.userPromptTemplate, {
+        topic: request.clarity.topic,
+        participants: request.clarity.participants.join(' and '),
+        desiredOutcome: request.clarity.desiredOutcome,
+        templateSeed: request.templateSeed,
+        focusAreas: buildFocusAreas(request.templateSeed),
+      }),
       temperature: promptConfig.temperature,
+      maxOutputTokens: promptConfig.maxTokens,
     });
 
     // Validate that all questions are valid
@@ -297,41 +319,13 @@ async function generateQuestionsWithAI(
 /**
  * Builds the AI prompt for question generation
  */
-function buildGenerationPrompt(request: GenerateQuestionsRequest): string {
-  const { clarity, templateSeed } = request;
-
-  const baseContext = `You are an expert facilitator helping two people think through a decision together. Generate a thoughtful set of 5-10 questions that will help each person articulate what matters to them before collaborative synthesis begins.
-
-Context:
-- Topic: ${clarity.topic}
-- Participants: ${clarity.participants.join(' and ')}
-- Desired Outcome: ${clarity.desiredOutcome}
-- Template Type: ${templateSeed}
-
-Guidelines:
-1. Generate 5-10 questions (no more, no less)
-2. Mix question types: use long_text for open-ended questions, multiple_choice for discrete options, scale for preferences
-3. Make questions specific to the topic and desired outcome
-4. Each question should have a clear, actionable prompt
-5. Include helpful descriptions that guide users on what to consider
-6. For multiple_choice and scale questions, provide 3-5 relevant options
-7. Add AI hints to help users if they get stuck (explainPrompt, examplePrompt, suggestionPrompt)
-8. Use snake_case for question IDs (e.g., "equity_split_ratio", "decision_authority")
-9. Mark critical questions as required: true
-10. Consider adding follow-up questions for complex topics
-
-Question Types:
-- short_text: Brief text input (names, titles, single-line answers)
-- long_text: Extended text input (explanations, descriptions, detailed answers)
-- multiple_choice: Select one option from a list
-- checkbox: Select multiple options from a list
-- number: Numeric input
-- scale: Rating or scale selection (e.g., 1-5, low-high)
-
-Focus Areas Based on Template:`;
-
+/**
+ * Template-specific focus areas injected into the DB-managed question
+ * generation template via the {{focusAreas}} placeholder.
+ */
+function buildFocusAreas(templateSeed: string): string {
   if (templateSeed === 'operating_agreement') {
-    return baseContext + `
+    return `Focus Areas Based on Template:
 - Equity and ownership structure
 - Roles and responsibilities
 - Decision-making processes
@@ -339,20 +333,16 @@ Focus Areas Based on Template:`;
 - Intellectual property
 - Disagreement resolution frameworks
 - Exit scenarios
-- Vesting schedules
-
-Generate questions that cover the most critical aspects of a business operating agreement while staying relevant to: "${clarity.topic}".`;
+- Vesting schedules`;
   }
 
-  return baseContext + `
+  return `Focus Areas:
 - Core goals and objectives
 - Expectations from each party
 - Key concerns and priorities
 - Success metrics
 - Boundaries and deal-breakers
-- Implementation details
-
-Generate questions that explore the fundamentals of reaching agreement on: "${clarity.topic}".`;
+- Implementation details`;
 }
 
 /**

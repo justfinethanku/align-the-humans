@@ -13,10 +13,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
-import { saveResponse, submitResponse, isParticipant, getRoundResponses, updateAlignmentStatus } from '@/app/lib/db-helpers';
+import { saveResponse, submitResponse, isParticipant, getRoundResponses } from '@/app/lib/db-helpers';
 import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import type { ResponseAnswers } from '@/app/lib/types';
+import { MAX_RESOLUTION_ROUNDS } from '@/app/lib/resolution-config';
 
 // ============================================================================
 // Request Schema
@@ -114,6 +114,8 @@ export async function POST(
       );
     }
 
+    const responseRound = round + 1;
+
     // 7. Build response answers structure
     const answers = {
       response_version: 1,
@@ -130,18 +132,22 @@ export async function POST(
       }, {} as Record<string, any>),
       metadata: {
         resolution_round: round,
+        response_round: responseRound,
         submission_timestamp: new Date().toISOString(),
       },
     } as any;
 
-    // 8. Save response
+    // 8. Save resolution picks as the next round's analysis input. This keeps
+    // them separate from the original questionnaire answers for the current round.
     const { error: saveError } = await saveResponse(supabase, {
       alignmentId,
       userId: user.id,
-      round,
+      round: responseRound,
       answers,
       metadata: {
         resolution_submission: true,
+        resolution_round: round,
+        response_round: responseRound,
         conflict_count: resolutions.length,
       },
     });
@@ -151,7 +157,7 @@ export async function POST(
         'Failed to save resolution response',
         'SAVE_ERROR',
         500,
-        { alignmentId, round }
+        { alignmentId, round, responseRound }
       );
     }
 
@@ -160,7 +166,7 @@ export async function POST(
       supabase,
       alignmentId,
       user.id,
-      round
+      responseRound
     );
 
     if (submitError) {
@@ -168,15 +174,15 @@ export async function POST(
         'Failed to submit resolution response',
         'SUBMIT_ERROR',
         500,
-        { alignmentId, round }
+        { alignmentId, round, responseRound }
       );
     }
 
-    // 10. Check if both participants have submitted
+    // 10. Check if both participants have submitted resolution picks
     const { data: roundResponses, error: responsesError } = await getRoundResponses(
       supabase,
       alignmentId,
-      round
+      responseRound
     );
 
     if (responsesError) {
@@ -185,18 +191,35 @@ export async function POST(
         errorCode: 'RESPONSES_CHECK_FAILED',
         errorMessage: 'Failed to check if both participants submitted',
         userId: user.id,
-        context: { alignmentId, round, responsesError },
+        context: { alignmentId, round, responseRound, responsesError },
       });
     }
 
-    const bothSubmitted = roundResponses && roundResponses.length >= 2;
+    const resolutionResponses = (roundResponses || []).filter((response) => {
+      const metadata = response.metadata as Record<string, unknown> | null;
+      return metadata?.resolution_submission === true && metadata?.resolution_round === round;
+    });
+    const bothSubmitted = resolutionResponses.length >= 2;
 
-    // 11. If both submitted, increment round and stay in resolving status
-    // The analysis page will handle triggering re-analysis
-    if (bothSubmitted) {
+    // 11. If both submitted and the round cap has not been reached, increment
+    // round and stay in resolving status. The analysis page will handle
+    // triggering re-analysis.
+    //
+    // If both submitted but this round is already at MAX_RESOLUTION_ROUNDS,
+    // do NOT start another round: leave current_round and status untouched
+    // (status stays 'resolving', current_round stays at the cap). This is
+    // the authoritative circuit breaker for the analyze <-> resolve loop --
+    // combined with the next-round resolution response rows, "current_round
+    // === MAX_RESOLUTION_ROUNDS and both partners have submitted resolution
+    // picks for that analysis round" is the durable signal the UI uses to
+    // detect this terminal state, without requiring a new alignments status
+    // value or schema change.
+    const maxRoundsReached = round >= MAX_RESOLUTION_ROUNDS;
+
+    if (bothSubmitted && !maxRoundsReached) {
       const { error: incrementError } = await supabase
         .from('alignments')
-        .update({ current_round: round + 1 })
+        .update({ current_round: responseRound })
         .eq('id', alignmentId);
 
       if (incrementError) {
@@ -204,25 +227,24 @@ export async function POST(
           errorCode: 'ROUND_INCREMENT_FAILED',
           errorMessage: 'Failed to increment round',
           userId: user.id,
-          context: { alignmentId, round, incrementError },
+          context: { alignmentId, round, responseRound, incrementError },
         });
       }
-
-      const { error: statusUpdateError } = await updateAlignmentStatus(
-        supabase,
-        alignmentId,
-        'analyzing'
+    } else if (bothSubmitted && maxRoundsReached) {
+      telemetry.log(
+        'alignment.status.changed' as any,
+        user.id,
+        {
+          alignmentId,
+          action: 'resolution.max_rounds_reached',
+          round,
+          responseRound,
+          maxRounds: MAX_RESOLUTION_ROUNDS,
+        }
       );
-
-      if (statusUpdateError) {
-        telemetry.logError({
-          errorCode: 'STATUS_UPDATE_FAILED',
-          errorMessage: 'Failed to move alignment back to analyzing after resolution',
-          userId: user.id,
-          context: { alignmentId, round, statusUpdateError },
-        });
-      }
     }
+
+    const cappedOut = bothSubmitted && maxRoundsReached;
 
     // 12. Log successful completion
     const latencyMs = timer.stop();
@@ -234,6 +256,8 @@ export async function POST(
         latencyMs,
         action: 'resolution.submit.complete',
         bothSubmitted,
+        cappedOut,
+        responseRound,
       }
     );
 
@@ -242,10 +266,15 @@ export async function POST(
       data: {
         success: true,
         bothSubmitted,
-        nextRound: bothSubmitted ? round + 1 : round,
-        message: bothSubmitted
-          ? 'Both resolutions submitted. Ready for re-analysis.'
-          : 'Your resolutions submitted. Waiting for partner.',
+        maxRoundsReached: cappedOut,
+        currentRound: round,
+        maxRounds: MAX_RESOLUTION_ROUNDS,
+        nextRound: bothSubmitted && !cappedOut ? responseRound : round,
+        message: cappedOut
+          ? `You've reached the maximum number of resolution rounds (${MAX_RESOLUTION_ROUNDS}). This alignment needs manual resolution -- review your current areas of agreement or start a new alignment.`
+          : bothSubmitted
+            ? 'Both resolutions submitted. Ready for re-analysis.'
+            : 'Your resolutions submitted. Waiting for partner.',
       },
     }, { status: 200 });
 

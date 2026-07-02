@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Manrope } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import './globals.css'
 
 const inter = Inter({
@@ -9,13 +10,20 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
+const manrope = Manrope({
+  subsets: ['latin'],
+  display: 'optional',
+  variable: '--font-display',
+  weight: ['500', '600', '700', '800'],
+})
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://alignthehumans.com'),
   title: {
-    default: 'Human Alignment - Structure for Every Decision That Matters',
-    template: '%s | Human Alignment'
+    default: 'Align the Humans - Agree on the Hard Things, Without the Fight',
+    template: '%s | Align the Humans'
   },
-  description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity. Think independently, align collectively, decide confidently. 87% success rate, 10,000+ decisions aligned.',
+  description: 'Agree on the hard things - without the fight. From cofounder equity to household decisions: answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter.',
   keywords: [
     'alignment',
     'collaborative decision-making',
@@ -47,7 +55,7 @@ export const metadata: Metadata = {
     description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity. Think independently, align collectively, decide confidently.',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'Human Alignment - Structure for Every Decision'
@@ -58,7 +66,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Human Alignment - Structure for Every Decision That Matters',
     description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity.',
-    images: ['/og-image.png'],
+    images: ['/og-image.jpg'],
   },
   robots: {
     index: true,
@@ -92,7 +100,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${manrope.variable}`}>
       <head>
         <script
           type="application/ld+json"
@@ -101,9 +109,11 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
-        {children}
-        <Toaster richColors position="top-right" />
+      <body className="font-sans antialiased">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   )

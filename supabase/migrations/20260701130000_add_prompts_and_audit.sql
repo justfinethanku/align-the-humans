@@ -1,9 +1,12 @@
--- Migration: Add Prompt Management and Admin Audit tables
--- Generated from Drizzle schema for Phase 3 and Phase 4
-
--- ============================================================================
--- Prompt Management Tables
--- ============================================================================
+-- Prompt management + admin audit tables (moved from the Drizzle-only
+-- drizzle/0001_add_prompts_and_audit.sql into the Supabase migration chain so
+-- it is version-controlled and applied to prod alongside every other migration).
+--
+-- Prompts, their model slug, and generation params now live in the DB and are
+-- managed via the admin dashboard instead of hardcoded seeds. RLS write access
+-- is admin-only via the is_platform_admin() SECURITY DEFINER helper; the app
+-- reads/writes through the Supabase service-role client (bypasses RLS).
+-- Idempotent: safe to re-run.
 
 -- Prompt configurations
 CREATE TABLE IF NOT EXISTS public.prompts (
@@ -12,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.prompts (
   name TEXT NOT NULL,
   description TEXT,
   category TEXT NOT NULL DEFAULT 'alignment',
-  model TEXT NOT NULL DEFAULT 'claude-sonnet-4-6',
+  model TEXT NOT NULL DEFAULT 'anthropic/claude-sonnet-4.6',
   temperature NUMERIC(3,2) NOT NULL DEFAULT 0.3,
   max_tokens INTEGER NOT NULL DEFAULT 4096,
   system_prompt TEXT NOT NULL,
@@ -40,10 +43,7 @@ CREATE TABLE IF NOT EXISTS public.prompt_versions (
   UNIQUE(prompt_id, version)
 );
 
--- ============================================================================
--- Admin Audit Log
--- ============================================================================
-
+-- Admin audit log
 CREATE TABLE IF NOT EXISTS public.admin_audit_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   admin_id UUID NOT NULL REFERENCES public.profiles(id),
@@ -54,16 +54,8 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_log (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- ============================================================================
--- Add is_admin to profiles (Phase 4)
--- ============================================================================
-
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
-
--- ============================================================================
--- Indexes
--- ============================================================================
+-- is_admin already added by 20260217140000; keep idempotent for fresh DBs
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
 
 CREATE INDEX IF NOT EXISTS idx_prompts_slug ON public.prompts(slug);
 CREATE INDEX IF NOT EXISTS idx_prompts_category ON public.prompts(category);
@@ -72,63 +64,26 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_log_admin_id ON public.admin_audit_lo
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_target ON public.admin_audit_log(target_type, target_id);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created_at ON public.admin_audit_log(created_at);
 
--- ============================================================================
--- RLS Policies
--- ============================================================================
-
--- Prompts: readable by all authenticated users, writable by admins
 ALTER TABLE public.prompts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "prompts_read_all" ON public.prompts;
+CREATE POLICY "prompts_read_all" ON public.prompts FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "prompts_write_admin" ON public.prompts;
+CREATE POLICY "prompts_write_admin" ON public.prompts FOR ALL TO authenticated USING (public.is_platform_admin());
 
-CREATE POLICY "prompts_read_all" ON public.prompts
-  FOR SELECT TO authenticated
-  USING (true);
-
-CREATE POLICY "prompts_write_admin" ON public.prompts
-  FOR ALL TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid()
-        AND profiles.is_admin = true
-    )
-  );
-
--- Prompt versions: readable by all, writable by admins
 ALTER TABLE public.prompt_versions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "prompt_versions_read_all" ON public.prompt_versions;
+CREATE POLICY "prompt_versions_read_all" ON public.prompt_versions FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "prompt_versions_write_admin" ON public.prompt_versions;
+CREATE POLICY "prompt_versions_write_admin" ON public.prompt_versions FOR ALL TO authenticated USING (public.is_platform_admin());
 
-CREATE POLICY "prompt_versions_read_all" ON public.prompt_versions
-  FOR SELECT TO authenticated
-  USING (true);
-
-CREATE POLICY "prompt_versions_write_admin" ON public.prompt_versions
-  FOR ALL TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid()
-        AND profiles.is_admin = true
-    )
-  );
-
--- Admin audit log: only admins can read/write
 ALTER TABLE public.admin_audit_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "audit_log_admin_only" ON public.admin_audit_log;
+CREATE POLICY "audit_log_admin_only" ON public.admin_audit_log FOR ALL TO authenticated USING (public.is_platform_admin());
 
-CREATE POLICY "audit_log_admin_only" ON public.admin_audit_log
-  FOR ALL TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid()
-        AND profiles.is_admin = true
-    )
-  );
-
--- Grants
 GRANT SELECT ON public.prompts TO authenticated;
 GRANT SELECT ON public.prompt_versions TO authenticated;
 GRANT SELECT, INSERT ON public.admin_audit_log TO authenticated;
 
--- Updated_at trigger for prompts
 DROP TRIGGER IF EXISTS trg_prompts_updated_at ON public.prompts;
 CREATE TRIGGER trg_prompts_updated_at BEFORE UPDATE ON public.prompts
 FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();

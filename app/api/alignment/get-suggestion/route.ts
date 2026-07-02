@@ -12,15 +12,16 @@
  */
 
 import { generateText } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
-import { getPrompt } from '@/app/lib/prompts';
+import { resolveModel } from '@/app/lib/ai-config';
+import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { TemplateQuestion } from '@/app/lib/types';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import { createErrorResponse, ValidationError, AIError, AlignmentError } from '@/app/lib/errors';
+import { createErrorResponse, ValidationError, AIError, AlignmentError, RateLimitError } from '@/app/lib/errors';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { isParticipant } from '@/app/lib/db-helpers';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 
 // ============================================================================
 // Request/Response Schema
@@ -74,53 +75,6 @@ interface ResponseBody {
 // ============================================================================
 
 /**
- * Builds prompt for "explain" mode
- */
-function buildExplainPrompt(question: TemplateQuestion, context: { topic: string; round: number }): string {
-  return `You are helping someone understand a question in an alignment conversation about "${context.topic}".
-
-Question: "${question.text}"
-${question.help_text ? `Context: ${question.help_text}` : ''}
-
-Provide a clear, concise explanation (2-3 sentences) of what this question is asking for and why it matters in the context of reaching mutual agreement. Be helpful and supportive.`;
-}
-
-/**
- * Builds prompt for "examples" mode
- */
-function buildExamplesPrompt(question: TemplateQuestion, context: { topic: string; round: number }): string {
-  return `You are helping someone answer a question in an alignment conversation about "${context.topic}".
-
-Question: "${question.text}"
-${question.help_text ? `Context: ${question.help_text}` : ''}
-
-Provide 2-3 relevant, realistic examples of how different people might answer this question. Keep examples concise (1-2 sentences each) and diverse to show the range of valid responses.`;
-}
-
-/**
- * Builds prompt for "suggest" mode
- */
-function buildSuggestPrompt(
-  question: TemplateQuestion,
-  context: { topic: string; round: number },
-  currentAnswer?: string | null
-): string {
-  const basePrompt = `You are helping someone thoughtfully answer a question in an alignment conversation about "${context.topic}".
-
-Question: "${question.text}"
-${question.help_text ? `Context: ${question.help_text}` : ''}
-${currentAnswer ? `Their current draft answer: "${currentAnswer}"` : ''}
-
-${currentAnswer
-  ? 'Provide a suggestion to improve or expand their current answer. Be constructive and specific.'
-  : 'Suggest a thoughtful starting point for answering this question. Encourage them to personalize it.'}
-
-Keep your suggestion concise (2-4 sentences) and supportive. Frame it as a helpful suggestion, not a directive.`;
-
-  return basePrompt;
-}
-
-/**
  * Calculates confidence score based on question type and response quality
  */
 function calculateConfidence(
@@ -169,8 +123,7 @@ function calculateConfidence(
 export async function POST(request: NextRequest): Promise<Response> {
   const timer = new PerformanceTimer();
   const supabase = createServerClient();
-  const modelName = AI_MODELS.HAIKU;
-  const model = models.haiku;
+  let modelName = 'db-config';
   let telemetryAlignmentId = 'suggestion-request';
   let telemetryUserId: string | undefined;
 
@@ -178,6 +131,17 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Authenticate user
     const user = await requireAuth(supabase);
     telemetryUserId = user.id;
+
+    // Rate limit (light AI operation): ~30/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.get-suggestion'),
+      { limit: 30, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many suggestion requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
 
     // Parse and validate request body
     const body = await request.json();
@@ -209,27 +173,33 @@ export async function POST(request: NextRequest): Promise<Response> {
       userId: telemetryUserId,
     });
 
-    // Build prompt based on mode
-    let prompt: string;
-    switch (mode) {
-      case 'explain':
-        prompt = buildExplainPrompt(question, alignmentContext);
-        break;
-      case 'examples':
-        prompt = buildExamplesPrompt(question, alignmentContext);
-        break;
-      case 'suggest':
-        prompt = buildSuggestPrompt(question, alignmentContext, currentAnswer);
-        break;
-    }
-
-    // Load prompt config based on mode (model, temperature, maxTokens from DB/seeds)
+    // Load prompt config based on mode and render the DB-managed template
     const promptSlug = `suggestion-${mode}`;
     const promptConfig = await getPrompt(promptSlug);
+    modelName = promptConfig.model;
+
+    const suggestionInstruction =
+      mode === 'suggest'
+        ? currentAnswer
+          ? 'Provide a suggestion to improve or expand their current answer. Be constructive and specific.'
+          : 'Suggest a thoughtful starting point for answering this question. Encourage them to personalize it.'
+        : '';
+
+    const prompt = renderPrompt(promptConfig.userPromptTemplate, {
+      topic: alignmentContext.topic,
+      questionText: question.text,
+      helpText: question.help_text ? `Context: ${question.help_text}` : '',
+      currentAnswer:
+        mode === 'suggest' && currentAnswer
+          ? `Their current draft answer: "${currentAnswer}"`
+          : '',
+      suggestionInstruction,
+    });
 
     // Generate AI response using Vercel AI SDK
     const { text, usage } = await generateText({
       model: resolveModel(promptConfig.model) as any,
+      system: promptConfig.systemPrompt,
       prompt,
       maxOutputTokens: promptConfig.maxTokens,
       temperature: promptConfig.temperature,

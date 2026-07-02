@@ -1,21 +1,22 @@
 import { Metadata } from 'next';
 import { Hero } from '@/components/homepage/Hero';
+import { ProblemSection } from '@/components/homepage/ProblemSection';
 import { FlowVisualization } from '@/components/homepage/FlowVisualization';
-import { StatsSection } from '@/components/homepage/StatsSection';
+import { WhyItWorks } from '@/components/homepage/WhyItWorks';
 import { UseCases } from '@/components/homepage/UseCases';
-import Testimonials from '@/components/homepage/Testimonials';
 import { CTASection } from '@/components/homepage/CTASection';
+import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { WebApplicationSchema } from '@/components/seo/WebApplicationSchema';
 import { HowToSchema } from '@/components/seo/HowToSchema';
 
 export const metadata: Metadata = {
-  title: 'Human Alignment - Structure for Every Decision That Matters',
-  description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity. Think independently, align collectively, decide confidently.',
+  title: 'Align the Humans - Agree on the Hard Things, Without the Fight',
+  description: 'Answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter - from cofounder equity to household decisions.',
   keywords: ['alignment', 'collaborative decision-making', 'structured thinking', 'partnership decisions', 'team alignment', 'household decisions', 'cofounder agreement', 'AI collaboration'],
   openGraph: {
-    title: 'Human Alignment - Structure for Every Decision That Matters',
-    description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity. Think independently, align collectively, decide confidently.',
+    title: 'Align the Humans - Agree on the Hard Things, Without the Fight',
+    description: 'Answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter - from cofounder equity to household decisions.',
     type: 'website',
   },
 };
@@ -32,33 +33,17 @@ export default function Home() {
           <Hero />
         </section>
 
-        {/* About Section - Brief explanation */}
-        <section id="about" className="w-full bg-surface-dark py-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-white mb-6">
-              What is Human Alignment?
-            </h2>
-            <p className="text-lg text-slate-400 leading-relaxed mb-4">
-              Human Alignment is infrastructure for collaborative thinking at any scale.
-              From splitting chores to splitting equity, the same structure enables partners
-              to think independently, then discover solutions together through AI synthesis.
-            </p>
-            <p className="text-lg text-slate-400 leading-relaxed">
-              This isn&apos;t conflict resolution - it&apos;s proactive alignment architecture.
-              Use it BEFORE disagreement exists. Build the habit with small decisions.
-              Trust it when everything&apos;s on the line. Practice compounds trust.
-            </p>
-          </div>
-        </section>
+        {/* Problem Section */}
+        <ProblemSection />
 
         {/* 5-Step Process */}
         <section id="how-it-works" className="scroll-mt-16">
           <FlowVisualization />
         </section>
 
-        {/* Statistics */}
-        <section id="stats" className="scroll-mt-16">
-          <StatsSection />
+        {/* Why it works */}
+        <section id="why" className="scroll-mt-16">
+          <WhyItWorks />
         </section>
 
         {/* Use Cases */}
@@ -66,50 +51,12 @@ export default function Home() {
           <UseCases />
         </section>
 
-        {/* Testimonials */}
-        <section id="testimonials" className="scroll-mt-16">
-          <Testimonials />
-        </section>
-
         {/* Final CTA */}
         <section id="cta" className="scroll-mt-16">
           <CTASection />
         </section>
 
-        {/* Footer */}
-        <footer className="w-full bg-surface-dark border-t border-slate-800 py-8 px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-slate-400 text-sm">
-              © 2025 Human Alignment. All rights reserved.
-            </div>
-            <nav className="flex gap-6" aria-label="Footer navigation">
-              <a
-                href="#about"
-                className="text-slate-400 hover:text-primary-400 transition-colors text-sm"
-              >
-                About
-              </a>
-              <a
-                href="#how-it-works"
-                className="text-slate-400 hover:text-primary-400 transition-colors text-sm"
-              >
-                How It Works
-              </a>
-              <a
-                href="#use-cases"
-                className="text-slate-400 hover:text-primary-400 transition-colors text-sm"
-              >
-                Use Cases
-              </a>
-              <a
-                href="#testimonials"
-                className="text-slate-400 hover:text-primary-400 transition-colors text-sm"
-              >
-                Testimonials
-              </a>
-            </nav>
-          </div>
-        </footer>
+        <Footer />
       </main>
     </>
   );

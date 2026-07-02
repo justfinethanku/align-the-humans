@@ -4,12 +4,25 @@
  * All hardcoded AI prompts extracted from API routes,
  * ready to be inserted into the prompts table.
  *
- * Run via: npx tsx app/lib/db/seed-prompts.ts
+ * Seed via: npx tsx --env-file=.env.local scripts/seed-prompts.ts
  */
 
-import type { NewPrompt } from './types';
+/** Shape of a seed prompt row (DB source of truth lives in public.prompts). */
+export interface PromptSeed {
+  slug: string;
+  name: string;
+  description?: string | null;
+  category?: string;
+  model?: string;
+  temperature?: string;
+  maxTokens?: number;
+  systemPrompt: string;
+  userPromptTemplate: string;
+  outputSchema?: unknown;
+  isActive?: boolean;
+}
 
-export const PROMPT_SEEDS: Omit<NewPrompt, 'id' | 'createdAt' | 'updatedAt'>[] = [
+export const PROMPT_SEEDS: PromptSeed[] = [
   // ============================================================================
   // 1. Analyze Responses - Main alignment analysis
   // ============================================================================
@@ -18,9 +31,9 @@ export const PROMPT_SEEDS: Omit<NewPrompt, 'id' | 'createdAt' | 'updatedAt'>[] =
     name: 'Analyze Alignment Responses',
     description: 'Compares both participants\' responses to identify agreements, conflicts, hidden assumptions, gaps, and power imbalances.',
     category: 'alignment',
-    model: 'claude-sonnet-4-6',
+    model: 'z-ai/glm-5.2',
     temperature: '0.30',
-    maxTokens: 4096,
+    maxTokens: 8192,
     systemPrompt: 'You are an expert alignment analyst. Your role is to thoroughly analyze two people\'s responses to alignment questions and provide actionable insights.',
     userPromptTemplate: `You are analyzing two people's responses to alignment questions. Your goal is to identify areas of agreement, conflicts, hidden assumptions, gaps, and power imbalances.
 
@@ -61,6 +74,8 @@ Analyze these responses thoroughly and provide:
    - 30-49: Poor alignment, fundamental disagreements
    - 0-29: Very poor alignment, may need to reconsider
 
+If either person's responses are sparse or incomplete, say so explicitly in GAPS and analyze only what is actually present — never invent positions for anyone.
+
 Be thorough, specific, and actionable in your analysis. Focus on helping both parties understand each other's perspectives and find common ground.`,
     outputSchema: {
       type: 'analysisSchema',
@@ -70,46 +85,43 @@ Be thorough, specific, and actionable in your analysis. Focus on helping both pa
   },
 
   // ============================================================================
-  // 2. Generate Document - Final agreement
+  // 2. Document Skeleton - deterministic fill-in-the-blank agreement
   // ============================================================================
   {
-    slug: 'generate-document',
-    name: 'Generate Agreement Document',
-    description: 'Generates a professional HTML agreement document from aligned positions.',
-    category: 'alignment',
-    model: 'claude-sonnet-4-6',
-    temperature: '0.50',
-    maxTokens: 4000,
-    systemPrompt: 'You are a professional document generator specializing in creating clear, well-structured alignment agreements.',
-    userPromptTemplate: `Generate a professional alignment agreement document.
+    slug: 'document-skeleton',
+    name: 'Agreement Document Skeleton',
+    description: 'Fill-in-the-blank HTML skeleton for the final agreement document. Rendered deterministically in code (no AI call): placeholders are filled with escaped content. Edit structure and wording here; model/temperature/maxTokens are unused for this entry.',
+    category: 'document',
+    model: 'z-ai/glm-5.2',
+    temperature: '0.30',
+    maxTokens: 4096,
+    systemPrompt: 'Unused - this entry is a deterministic HTML skeleton, not a model prompt.',
+    userPromptTemplate: `<article class="alignment-document">
+  <header class="document-header">
+    <h1>Alignment Agreement</h1>
+    <div class="document-meta">
+      <p>Between: {{participantList}}</p>
+      <p>Date: {{documentDate}}</p>
+      <p>Subject: {{templateName}}</p>
+    </div>
+  </header>
 
-Context:
-- Template type: {{templateName}}
-- Category: {{templateCategory}}
-- Participants: {{participantList}}
-- Aligned positions:
-{{positionsJson}}
+  <section class="executive-summary">
+    <h2>Executive Summary</h2>
+    <ul>
+{{summaryItems}}
+    </ul>
+  </section>
 
-Executive Summary Points:
-{{summaryBullets}}
+  <section class="detailed-terms">
+    <h2>Detailed Terms</h2>
+{{termsSections}}
+  </section>
 
-Create a well-structured HTML document with:
-1. An executive summary section with 3-5 bullet points highlighting key agreements
-2. Detailed terms organized by logical categories
-3. Professional but readable language suitable for a legally-binding agreement
-4. Include reasoning and context where helpful to clarify decisions
-5. Use proper HTML semantic structure (article, section, h1, h2, h3, p, ul, li)
-
-Format requirements:
-- Use <article> as the root element
-- Use <section> tags for major divisions
-- Use <h2> for category headings and <h3> for subsections
-- Use <p> for paragraphs and <ul>/<li> for lists
-- Add appropriate class names for styling
-- Include a header with document title, participants, and date
-- Do NOT include <html>, <head>, or <body> tags - just the article content
-
-Generate a complete, professional document now.`,
+  <footer class="document-footer">
+    <p class="document-disclaimer"><em>This document records the mutual understanding reached by the participants through Align the Humans. It is an aid to shared clarity — not legal advice. If you need a legally binding agreement, consult a qualified attorney.</em></p>
+  </footer>
+</article>`,
     outputSchema: null,
     isActive: true,
   },
@@ -122,9 +134,9 @@ Generate a complete, professional document now.`,
     name: 'Discover Solutions',
     description: 'Generates creative solutions by synthesizing both perspectives. Focuses on discovery over compromise.',
     category: 'alignment',
-    model: 'claude-sonnet-4-6',
+    model: 'z-ai/glm-5.2',
     temperature: '0.70',
-    maxTokens: 4096,
+    maxTokens: 6144,
     systemPrompt: 'You are an expert facilitator helping people discover new solutions through collaborative intelligence.',
     userPromptTemplate: `You are an expert facilitator helping two people discover new solutions by synthesizing their independent thinking.
 
@@ -175,9 +187,9 @@ Generate solutions that demonstrate collaborative intelligence.`,
     name: 'Question Explanation',
     description: 'Explains what an alignment question is asking and why it matters.',
     category: 'alignment',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'z-ai/glm-5.2',
     temperature: '0.50',
-    maxTokens: 300,
+    maxTokens: 800,
     systemPrompt: 'You are a helpful alignment assistant that explains questions clearly and concisely.',
     userPromptTemplate: `You are helping someone understand a question in an alignment conversation about "{{topic}}".
 
@@ -197,9 +209,9 @@ Provide a clear, concise explanation (2-3 sentences) of what this question is as
     name: 'Answer Examples',
     description: 'Provides realistic example answers to alignment questions.',
     category: 'alignment',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'z-ai/glm-5.2',
     temperature: '0.50',
-    maxTokens: 300,
+    maxTokens: 800,
     systemPrompt: 'You are a helpful alignment assistant that provides diverse, realistic examples.',
     userPromptTemplate: `You are helping someone answer a question in an alignment conversation about "{{topic}}".
 
@@ -219,9 +231,9 @@ Provide 2-3 relevant, realistic examples of how different people might answer th
     name: 'Answer Suggestion',
     description: 'Suggests thoughtful starting points or improvements for alignment answers.',
     category: 'alignment',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'z-ai/glm-5.2',
     temperature: '0.70',
-    maxTokens: 300,
+    maxTokens: 800,
     systemPrompt: 'You are a supportive alignment assistant that suggests thoughtful answers without being directive.',
     userPromptTemplate: `You are helping someone thoughtfully answer a question in an alignment conversation about "{{topic}}".
 
@@ -244,9 +256,9 @@ Keep your suggestion concise (2-4 sentences) and supportive. Frame it as a helpf
     name: 'Generate Alignment Questions',
     description: 'Creates thoughtful question sets based on topic and template type.',
     category: 'alignment',
-    model: 'claude-sonnet-4-6',
+    model: 'z-ai/glm-5.2',
     temperature: '0.70',
-    maxTokens: 4096,
+    maxTokens: 6000,
     systemPrompt: 'You are an expert facilitator who creates thoughtful, specific questions that help people articulate what matters to them.',
     userPromptTemplate: `You are an expert facilitator helping two people think through a decision together. Generate a thoughtful set of 5-10 questions that will help each person articulate what matters to them before collaborative synthesis begins.
 
@@ -268,6 +280,14 @@ Guidelines:
 9. Mark critical questions as required: true
 10. Consider follow-up questions for complex topics
 
+Question Types:
+- short_text: Brief text input (names, titles, single-line answers)
+- long_text: Extended text input (explanations, descriptions, detailed answers)
+- multiple_choice: Select one option from a list
+- checkbox: Select multiple options from a list
+- number: Numeric input
+- scale: Rating or scale selection (e.g., 1-5, low-high)
+
 {{focusAreas}}
 
 Generate questions that cover the most critical aspects while staying relevant to: "{{topic}}".`,
@@ -286,7 +306,7 @@ Generate questions that cover the most critical aspects while staying relevant t
     name: 'Topic Suggestions',
     description: 'Suggests clear, specific alignment topics based on user input.',
     category: 'alignment',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'z-ai/glm-5.2',
     temperature: '0.70',
     maxTokens: 1024,
     systemPrompt: 'You are a helpful assistant that suggests clear, specific topics for alignment conversations.',
@@ -301,7 +321,12 @@ Provide 2-3 diverse, realistic examples of alignment topics. Each should be:
 - Different from each other
 - 8-15 words long
 
-Return only the topic suggestions, one per line, without numbering or explanations.`,
+Examples of good topics:
+- Deciding on our vacation destination for this summer
+- Finalizing the budget for the home renovation project
+- Choosing which city to relocate to for work
+
+Output ONLY the suggestions, one per line — no preamble, no numbering, no bullets, no closing remarks. The first line of your output must be the first suggestion.`,
     outputSchema: null,
     isActive: true,
   },
@@ -314,7 +339,7 @@ Return only the topic suggestions, one per line, without numbering or explanatio
     name: 'Partner Suggestions',
     description: 'Suggests common relationship types for alignment context.',
     category: 'alignment',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'z-ai/glm-5.2',
     temperature: '0.70',
     maxTokens: 1024,
     systemPrompt: 'You are a helpful assistant that suggests relationship types for alignment conversations.',
@@ -323,9 +348,9 @@ Return only the topic suggestions, one per line, without numbering or explanatio
 Current input: "{{currentValue}}"
 Topic: "{{topic}}"
 
-Provide 2-3 common relationship types that make sense for this topic.
+Provide 2-3 common relationship types that make sense for this topic. Examples: my spouse, my business co-founder, a family member, my roommate.
 
-Return only the relationship descriptions, one per line, without numbering or explanations.`,
+Output ONLY the suggestions, one per line — no preamble, no numbering, no bullets, no closing remarks. The first line of your output must be the first suggestion.`,
     outputSchema: null,
     isActive: true,
   },
@@ -338,7 +363,7 @@ Return only the relationship descriptions, one per line, without numbering or ex
     name: 'Outcome Suggestions',
     description: 'Suggests desired outcomes for alignment conversations.',
     category: 'alignment',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'z-ai/glm-5.2',
     temperature: '0.70',
     maxTokens: 1024,
     systemPrompt: 'You are a helpful assistant that suggests clear, achievable outcomes for alignment conversations.',
@@ -353,7 +378,12 @@ Provide 2-3 realistic desired outcomes. Each should be:
 - Specific to reaching agreement
 - Different from each other
 
-Return only the outcome descriptions, one per line, without numbering or explanations.`,
+Examples of good outcomes:
+- A clear, mutual decision we both feel good about
+- A list of actionable next steps we both commit to
+- Understanding each other's perspective and finding common ground
+
+Output ONLY the suggestions, one per line — no preamble, no numbering, no bullets, no closing remarks. The first line of your output must be the first suggestion.`,
     outputSchema: null,
     isActive: true,
   },

@@ -1,84 +1,70 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export function Hero() {
   return (
-    <section className="relative flex w-full items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
-      <div className="w-full max-w-6xl">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+    <section className="relative flex w-full items-center justify-center overflow-hidden px-4 py-16 sm:px-6 lg:px-8">
+      {/* Restrained cinematic depth */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-radial-spotlight opacity-30 dark:opacity-50"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -left-32 top-1/4 h-[420px] w-[420px] rounded-full bg-primary-500/5 blur-3xl dark:bg-primary-500/15"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -right-32 bottom-1/4 h-[480px] w-[480px] rounded-full bg-primary-500/5 blur-3xl dark:bg-primary-500/20"
+        aria-hidden="true"
+      />
 
-          {/* Left Column - Text Content */}
-          <div className="flex flex-col gap-6">
-            <h1 className="text-5xl font-bold tracking-tight text-white leading-tight">
-              Human<br/>Alignment
+      <div className="relative w-full max-w-6xl">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Text */}
+          <div className="flex flex-col gap-6 lg:gap-8">
+            <h1 className="font-display text-5xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-6xl">
+              Agree on the hard things.
+              <br />
+              <span className="bg-gradient-to-r from-primary to-primary-400 bg-clip-text text-transparent">
+                Without the fight.
+              </span>
             </h1>
-            <p className="text-lg text-slate-400 leading-relaxed">
-              Structure for every decision that matters - from splitting chores to splitting equity
+            <p className="max-w-prose text-lg leading-relaxed text-muted-foreground">
+              The biggest decisions — equity, money, the future — usually go to whoever argues hardest. Align the Humans separates the thinking from the fighting: answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter.
             </p>
-            <Button
-              asChild
-              className="flex h-12 w-fit items-center justify-center gap-2 rounded-lg bg-primary-500 px-6 text-base font-semibold text-white shadow-glow transition-all hover:bg-primary-600 hover:shadow-glow-lg"
-            >
-              <Link href="/signup">
-                <span>Start Free Alignment</span>
-              </Link>
-            </Button>
-          </div>
-
-          {/* Right Column - Particle Visualization */}
-          <div className="flex items-center justify-center">
-            <div className="particle-container relative aspect-square w-full max-w-md rounded-2xl border border-primary-500/30 p-8">
-              {/* Simulated particle network */}
-              <svg viewBox="0 0 300 300" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                {/* Connection lines */}
-                <g opacity="0.3" stroke="rgb(16, 185, 129)" strokeWidth="1" fill="none">
-                  <line x1="150" y1="150" x2="80" y2="80"/>
-                  <line x1="150" y1="150" x2="220" y2="80"/>
-                  <line x1="150" y1="150" x2="80" y2="220"/>
-                  <line x1="150" y1="150" x2="220" y2="220"/>
-                  <line x1="80" y1="80" x2="220" y2="80"/>
-                  <line x1="80" y1="220" x2="220" y2="220"/>
-                  <line x1="80" y1="80" x2="80" y2="220"/>
-                  <line x1="220" y1="80" x2="220" y2="220"/>
-                </g>
-
-                {/* Particles/nodes */}
-                <g>
-                  {/* Center cluster */}
-                  <circle cx="150" cy="150" r="3" fill="rgb(16, 185, 129)" opacity="0.9">
-                    <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
-                  </circle>
-                  <circle cx="145" cy="145" r="2" fill="rgb(16, 185, 129)" opacity="0.8"/>
-                  <circle cx="155" cy="145" r="2" fill="rgb(16, 185, 129)" opacity="0.8"/>
-                  <circle cx="145" cy="155" r="2" fill="rgb(16, 185, 129)" opacity="0.8"/>
-                  <circle cx="155" cy="155" r="2" fill="rgb(16, 185, 129)" opacity="0.8"/>
-
-                  {/* Scattered particles */}
-                  <circle cx="80" cy="80" r="2.5" fill="rgb(16, 185, 129)" opacity="0.7"/>
-                  <circle cx="220" cy="80" r="2.5" fill="rgb(16, 185, 129)" opacity="0.7"/>
-                  <circle cx="80" cy="220" r="2.5" fill="rgb(16, 185, 129)" opacity="0.7"/>
-                  <circle cx="220" cy="220" r="2.5" fill="rgb(16, 185, 129)" opacity="0.7"/>
-
-                  <circle cx="100" cy="100" r="1.5" fill="rgb(16, 185, 129)" opacity="0.6"/>
-                  <circle cx="200" cy="100" r="1.5" fill="rgb(16, 185, 129)" opacity="0.6"/>
-                  <circle cx="100" cy="200" r="1.5" fill="rgb(16, 185, 129)" opacity="0.6"/>
-                  <circle cx="200" cy="200" r="1.5" fill="rgb(16, 185, 129)" opacity="0.6"/>
-
-                  <circle cx="120" cy="130" r="1.5" fill="rgb(16, 185, 129)" opacity="0.5"/>
-                  <circle cx="180" cy="130" r="1.5" fill="rgb(16, 185, 129)" opacity="0.5"/>
-                  <circle cx="120" cy="170" r="1.5" fill="rgb(16, 185, 129)" opacity="0.5"/>
-                  <circle cx="180" cy="170" r="1.5" fill="rgb(16, 185, 129)" opacity="0.5"/>
-
-                  {/* More scattered particles */}
-                  <circle cx="60" cy="150" r="1" fill="rgb(16, 185, 129)" opacity="0.4"/>
-                  <circle cx="240" cy="150" r="1" fill="rgb(16, 185, 129)" opacity="0.4"/>
-                  <circle cx="150" cy="60" r="1" fill="rgb(16, 185, 129)" opacity="0.4"/>
-                  <circle cx="150" cy="240" r="1" fill="rgb(16, 185, 129)" opacity="0.4"/>
-                </g>
-              </svg>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="h-12 shadow-glow">
+                <Link href="/signup">Start your first alignment</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-12">
+                <Link href="#how-it-works">See how it works</Link>
+              </Button>
             </div>
           </div>
 
+          {/* Image */}
+          <div className="relative">
+            <div className="blurred-spotlight opacity-30 dark:opacity-50" aria-hidden="true" />
+            <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow ring-1 ring-border">
+              <Image
+                src="/images/hero-cofounders.jpg"
+                alt="Two cofounders reaching agreement across a table at night"
+                width={1920}
+                height={1080}
+                priority
+                className="aspect-video w-full object-cover"
+              />
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-l from-background via-background/20 to-transparent"
+                aria-hidden="true"
+              />
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent lg:from-transparent"
+                aria-hidden="true"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </section>

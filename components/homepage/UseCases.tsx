@@ -1,4 +1,4 @@
-import { Briefcase, Users, Home, Handshake } from "lucide-react";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -8,40 +8,46 @@ import {
 } from "@/components/ui/card";
 
 interface UseCase {
-  icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
+  imageSrc: string;
+  imageAlt: string;
   ariaLabel: string;
 }
 
 const useCases: UseCase[] = [
   {
-    icon: Home,
-    title: "Household & Everyday",
+    title: "Cofounders",
     description:
-      "Fair chore schedules. Weekend plans everyone's excited about. Shared expense splits without resentment. Build the alignment habit with decisions that matter daily.",
-    ariaLabel: "Household and everyday decisions use case",
+      "Equity splits, roles, and what happens if one of you wants out. Settle it before it settles you.",
+    imageSrc: "/images/usecase-cofounders.jpg",
+    imageAlt:
+      "Two cofounders reviewing an agreement together in a bright daylight office",
+    ariaLabel: "Cofounders use case",
   },
   {
-    icon: Users,
-    title: "Team & Project Alignment",
+    title: "Couples",
     description:
-      "Project kickoffs that prevent misalignment. Role clarity before work begins. Strategic priorities that synthesize competing visions. Align early, execute confidently.",
-    ariaLabel: "Team and project alignment use case",
+      "Money, moving, family plans — the decisions too big to win and too important to lose.",
+    imageSrc: "/images/usecase-couple.jpg",
+    imageAlt: "A couple sitting together on a sofa in warm evening light",
+    ariaLabel: "Couples use case",
   },
   {
-    icon: Handshake,
-    title: "Major Life Decisions",
+    title: "Roommates",
     description:
-      "Moving decisions with full mutual understanding. Family choices made collaboratively. Living arrangements that respect everyone's needs. Structure for decisions that shape your future.",
-    ariaLabel: "Major life decisions use case",
+      "Rent, chores, guests, and quiet hours. House rules everyone actually agreed to.",
+    imageSrc: "/images/usecase-roommates.jpg",
+    imageAlt: "Two roommates talking in a shared kitchen",
+    ariaLabel: "Roommates use case",
   },
   {
-    icon: Briefcase,
-    title: "Business Foundations",
+    title: "Teams & partners",
     description:
-      "Cofounder equity built on explicit shared values. Operating agreements that won't crack under pressure. Partnership terms discovered through collaborative intelligence, not rushed compromise.",
-    ariaLabel: "Business foundations use case",
+      "Ownership, priorities, and who decides what. Alignment before the stakes get personal.",
+    imageSrc: "/images/usecase-team.jpg",
+    imageAlt: "Three colleagues collaborating at a table at dusk",
+    ariaLabel: "Teams and partners use case",
   },
 ];
 
@@ -52,42 +58,47 @@ export function UseCases() {
       aria-labelledby="use-cases-heading"
     >
       <div className="w-full max-w-6xl">
-        <h2
-          id="use-cases-heading"
-          className="text-3xl font-bold text-center text-white dark:text-white mb-12"
-        >
-          Any Decision. Any Scale. One Structure.
-        </h2>
+        <div className="mb-12 text-center">
+          <p className="text-sm font-medium uppercase tracking-wide text-primary">
+            Who it&apos;s for
+          </p>
+          <h2
+            id="use-cases-heading"
+            className="mt-3 font-display text-3xl font-bold text-foreground sm:text-4xl"
+          >
+            Built for the conversations you&apos;ve been putting off.
+          </h2>
+        </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {useCases.map((useCase, index) => {
-            const Icon = useCase.icon;
-            return (
-              <Card
-                key={index}
-                className="group rounded-xl bg-surface-dark dark:bg-surface-dark border border-border-subtle dark:border-slate-800/50 hover:border-primary-500/50 dark:hover:border-primary-500/50 transition-all duration-300 hover:shadow-glow flex flex-col"
-                aria-label={useCase.ariaLabel}
-                tabIndex={0}
-              >
-                <CardHeader className="p-6 flex-col items-start gap-4">
-                  <div
-                    className="flex size-12 items-center justify-center rounded-full bg-primary-500/20 dark:bg-primary-500/20 transition-transform duration-300 group-hover:scale-110"
-                    aria-hidden="true"
-                  >
-                    <Icon className="w-6 h-6 text-primary-400 dark:text-primary-400" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold text-white dark:text-white">
-                    {useCase.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 pt-0 flex-1">
-                  <CardDescription className="text-sm text-text-muted dark:text-slate-400 leading-relaxed">
-                    {useCase.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {useCases.map((useCase, index) => (
+            <Card
+              key={index}
+              className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-[box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-lg"
+              aria-label={useCase.ariaLabel}
+              tabIndex={0}
+            >
+              <div className="relative overflow-hidden">
+                <Image
+                  src={useCase.imageSrc}
+                  alt={useCase.imageAlt}
+                  width={1200}
+                  height={800}
+                  className="aspect-[3/2] w-full object-cover"
+                />
+              </div>
+              <CardHeader className="gap-2 p-5">
+                <CardTitle className="font-display text-lg font-semibold text-foreground xl:text-xl">
+                  {useCase.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 p-5 pt-0">
+                <CardDescription className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  {useCase.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </section>

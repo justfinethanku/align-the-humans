@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -25,7 +26,7 @@ function SubmitButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-[#1A1A1A]"
+      className="h-12 w-full rounded-lg text-base font-semibold"
     >
       {pending ? 'Logging in...' : 'Log In'}
     </Button>
@@ -73,13 +74,13 @@ export default function LoginPage() {
   }, [showVerificationError]);
 
   return (
-    <div className="w-full rounded-xl bg-white dark:bg-[#252525] p-6 sm:p-8 shadow-lg dark:shadow-2xl dark:shadow-black/50">
+    <div className="w-full rounded-xl bg-card p-6 sm:p-8 shadow-lg">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-[#111418] dark:text-white tracking-tight text-2xl sm:text-3xl font-bold leading-tight">
+        <h1 className="text-foreground tracking-tight text-2xl sm:text-3xl font-bold leading-tight">
           Log In to Your Account
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base font-normal leading-normal pt-2">
+        <p className="text-muted-foreground text-sm sm:text-base font-normal leading-normal pt-2">
           Welcome back! Please enter your details.
         </p>
       </div>
@@ -129,7 +130,7 @@ export default function LoginPage() {
           <div className="flex flex-col">
             <Label
               htmlFor="email"
-              className="text-[#111418] dark:text-slate-200 text-sm font-medium leading-normal pb-2"
+              className="text-foreground text-sm font-medium leading-normal pb-2"
             >
               Email
             </Label>
@@ -140,7 +141,7 @@ export default function LoginPage() {
               autoComplete="email"
               required
               placeholder="Enter your email"
-              className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-base text-[#111418] placeholder:text-slate-400 focus:border-blue-600 focus:outline-0 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-[#2a2a2a] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/20"
+              className="h-12 w-full rounded-lg border border-input bg-background px-3.5 py-2.5 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-0 focus:ring-2 focus:ring-ring/20"
             />
           </div>
 
@@ -149,13 +150,13 @@ export default function LoginPage() {
             <div className="flex items-center justify-between pb-2">
               <Label
                 htmlFor="password"
-                className="text-[#111418] dark:text-slate-200 text-sm font-medium leading-normal"
+                className="text-foreground text-sm font-medium leading-normal"
               >
                 Password
               </Label>
               <Link
                 href="/auth/forgot-password"
-                className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-sm font-medium text-primary hover:underline"
               >
                 Forgot password?
               </Link>
@@ -168,17 +169,15 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 required
                 placeholder="Enter your password"
-                className="h-12 w-full rounded-lg border border-slate-300 bg-white pr-12 pl-3.5 py-2.5 text-base text-[#111418] placeholder:text-slate-400 focus:border-blue-600 focus:outline-0 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-[#2a2a2a] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/20"
+                className="h-12 w-full rounded-lg border border-input bg-background pr-12 pl-3.5 py-2.5 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-0 focus:ring-2 focus:ring-ring/20"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label="Toggle password visibility"
-                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted-foreground hover:text-foreground"
               >
-                <span className="material-symbols-outlined text-xl">
-                  {showPassword ? 'visibility' : 'visibility_off'}
-                </span>
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
           </div>
@@ -190,9 +189,9 @@ export default function LoginPage() {
         {/* Divider */}
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+            <div className="w-full border-t border-border" />
           </div>
-          <div className="relative bg-white dark:bg-[#252525] px-2 text-sm text-slate-400 dark:text-slate-500">
+          <div className="relative bg-card px-2 text-sm text-muted-foreground">
             OR
           </div>
         </div>
@@ -202,7 +201,7 @@ export default function LoginPage() {
           type="button"
           variant="outline"
           disabled
-          className="h-12 w-full rounded-lg border border-slate-300 bg-white px-6 text-base font-medium text-[#111418] transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:border-slate-700 dark:bg-[#2a2a2a] dark:text-white dark:hover:bg-slate-700/50 dark:focus:ring-offset-[#1A1A1A] dark:focus:ring-slate-500"
+          className="h-12 w-full rounded-lg border border-input bg-background px-6 text-base font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           <svg
             className="h-5 w-5 mr-2"
@@ -232,11 +231,11 @@ export default function LoginPage() {
       </form>
 
       {/* Sign Up Link */}
-      <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-8 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
         <Link
           href="/signup"
-          className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+          className="font-semibold text-primary hover:underline"
         >
           Sign up
         </Link>

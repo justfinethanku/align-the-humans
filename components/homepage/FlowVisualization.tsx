@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, Users, Sparkles, MessageSquare, BarChart3, Handshake } from 'lucide-react'
+import { PenLine, CheckCheck, Scale, GitMerge, FileSignature } from 'lucide-react'
 
 interface Step {
   number: number
@@ -12,33 +12,33 @@ interface Step {
 const steps: Step[] = [
   {
     number: 1,
-    title: 'Scope',
-    description: 'What decision needs to be made? Choose your decision type or describe your own situation. Works for household logistics or business strategy.',
-    icon: Users,
+    title: 'Answer privately',
+    description: 'Each of you answers the same hard questions independently. No anchoring, no performing, no pressure.',
+    icon: PenLine,
   },
   {
     number: 2,
-    title: 'Surface',
-    description: 'AI identifies what actually matters for YOUR specific decision. Whether it\'s chore fairness or equity philosophy, the questions adapt to what you need to align on.',
-    icon: Sparkles,
+    title: 'See where you already agree',
+    description: 'AI compares both sides and shows your common ground first — it\'s almost always more than you feared.',
+    icon: CheckCheck,
   },
   {
     number: 3,
-    title: 'Consider',
-    description: 'Each person thinks independently without real-time negotiation pressure. Articulate what matters to you before collaborative synthesis begins.',
-    icon: MessageSquare,
+    title: 'Name the real conflicts',
+    description: 'The genuine disagreements get named precisely, ranked by what actually matters.',
+    icon: Scale,
   },
   {
     number: 4,
-    title: 'Synthesize',
-    description: 'AI reveals patterns neither person would see alone. Discover shared priorities, underlying motivations, and possibilities you hadn\'t imagined.',
-    icon: BarChart3,
+    title: 'Resolve what matters',
+    description: 'Work through only the few conflicts that count, with AI suggesting fair middle ground.',
+    icon: GitMerge,
   },
   {
     number: 5,
-    title: 'Decide',
-    description: 'Co-create the solution with complete clarity on what matters to each person. Generate agreements built on mutual understanding, not compromise.',
-    icon: Handshake,
+    title: 'Sign it',
+    description: 'Walk away with a written agreement you both believe in — and the relationship intact.',
+    icon: FileSignature,
   },
 ]
 
@@ -46,9 +46,14 @@ export function FlowVisualization() {
   return (
     <section className="w-full bg-background py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
-          How It Works: Structure for Any Decision
-        </h2>
+        <div className="text-center mb-12">
+          <h2 className="font-display text-3xl font-bold text-foreground sm:text-4xl">
+            Space to think. Align together.
+          </h2>
+          <p className="mt-3 text-lg text-muted-foreground">
+            Five steps from dread to a signed agreement.
+          </p>
+        </div>
 
         {/* Desktop/Tablet: Horizontal Grid */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-4">

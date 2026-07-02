@@ -14,13 +14,6 @@ export function WebApplicationSchema() {
       priceCurrency: 'USD',
       description: 'Free tier with basic alignment features',
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      ratingCount: '247',
-      bestRating: '5',
-      worstRating: '1',
-    },
     author: {
       '@type': 'Organization',
       name: 'Human Alignment',

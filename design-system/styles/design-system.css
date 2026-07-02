@@ -4,30 +4,53 @@
 
 @layer base {
   :root {
-    /* Default palette: emerald primary, indigo accent */
-    --color-primary-50: 236 253 245;
-    --color-primary-100: 209 250 229;
-    --color-primary-200: 167 243 208;
-    --color-primary-300: 110 231 183;
-    --color-primary-400: 52 211 153;
-    --color-primary-500: 16 185 129;
-    --color-primary-600: 5 150 105;
-    --color-primary-700: 4 120 87;
-    --color-primary-800: 6 95 70;
-    --color-primary-900: 6 78 59;
-    --color-primary-950: 2 44 34;
+    /* shadcn semantic tokens — light mode */
+    --background: 40 20% 97%;
+    --foreground: 240 8% 12%;
+    --card: 40 18% 99%;
+    --card-foreground: 240 8% 12%;
+    --popover: 40 18% 99%;
+    --popover-foreground: 240 8% 12%;
+    --primary: 35 85% 45%;
+    --primary-foreground: 40 30% 98%;
+    --secondary: 185 45% 38%;
+    --secondary-foreground: 40 25% 97%;
+    --muted: 40 15% 92%;
+    --muted-foreground: 35 10% 42%;
+    --accent: 185 40% 90%;
+    --accent-foreground: 185 45% 28%;
+    --destructive: 0 55% 42%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 35 12% 85%;
+    --input: 35 12% 85%;
+    --ring: 35 85% 45%;
+    --radius: 0.75rem;
 
-    --color-accent-50: 238 242 255;
-    --color-accent-100: 224 231 255;
-    --color-accent-200: 199 210 254;
-    --color-accent-300: 165 180 252;
-    --color-accent-400: 129 140 248;
-    --color-accent-500: 99 102 241;
-    --color-accent-600: 79 70 229;
-    --color-accent-700: 67 56 202;
-    --color-accent-800: 55 48 163;
-    --color-accent-900: 49 46 129;
-    --color-accent-950: 30 27 75;
+    /* Amber primary scale */
+    --color-primary-50: 255 250 240;
+    --color-primary-100: 253 240 215;
+    --color-primary-200: 250 220 170;
+    --color-primary-300: 245 195 120;
+    --color-primary-400: 235 165 75;
+    --color-primary-500: 210 127 40;
+    --color-primary-600: 180 105 32;
+    --color-primary-700: 145 82 25;
+    --color-primary-800: 110 62 20;
+    --color-primary-900: 80 45 15;
+    --color-primary-950: 45 25 8;
+
+    /* Teal accent scale */
+    --color-accent-50: 240 250 250;
+    --color-accent-100: 220 245 245;
+    --color-accent-200: 180 230 230;
+    --color-accent-300: 130 210 210;
+    --color-accent-400: 80 180 180;
+    --color-accent-500: 50 150 150;
+    --color-accent-600: 40 125 125;
+    --color-accent-700: 32 100 100;
+    --color-accent-800: 25 80 80;
+    --color-accent-900: 18 60 60;
+    --color-accent-950: 10 35 35;
 
     --color-info-50: 240 249 255;
     --color-info-100: 224 242 254;
@@ -77,111 +100,90 @@
     --color-danger-900: 127 29 29;
     --color-danger-950: 69 10 10;
 
-    --color-background-light: 248 250 252;
-    --color-background-dark: 10 14 26;
-    --color-background-muted: 20 24 41;
+    --color-background-light: 245 241 235;
+    --color-background-dark: 12 12 14;
+    --color-background-muted: 235 230 222;
 
-    --color-surface-default: 255 255 255;
-    --color-surface-dark: 26 31 53;
-    --color-surface-contrast: 15 23 42;
+    --color-surface-default: 252 250 246;
+    --color-surface-dark: 240 235 228;
+    --color-surface-contrast: 30 28 26;
 
-    --color-border-subtle: 148, 163, 184;
-    --color-border-strong: 15, 23, 42;
+    --color-border-subtle: 55, 50, 45;
+    --color-border-strong: 30, 28, 26;
 
-    --color-text-primary: 15 23 42;
-    --color-text-muted: 148 163 184;
-    --color-text-inverted: 248 250 252;
-
-    /* shadcn/ui compatibility tokens (light mode) */
-    --background: 248 250 252;
-    --foreground: 15 23 42;
-    --card: 255 255 255;
-    --card-foreground: 15 23 42;
-    --popover: 255 255 255;
-    --popover-foreground: 15 23 42;
-    --primary-fg: 255 255 255;
-    --secondary: 241 245 249;
-    --secondary-foreground: 15 23 42;
-    --muted: 241 245 249;
-    --muted-foreground: 100 116 139;
-    --accent-fg: 255 255 255;
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
-    --shadcn-border: 226 232 240;
-    --input: 226 232 240;
-    --ring: 16 185 129;
+    --color-text-primary: 30 28 26;
+    --color-text-muted: 100 95 88;
+    --color-text-inverted: 245 241 235;
   }
 
   .dark {
-    --color-text-primary: 248 250 252;
-    --color-text-muted: 148 163 184;
-    --color-text-inverted: 15 23 42;
+    /* shadcn semantic tokens — dark mode (flagship) */
+    --background: 240 6% 5%;
+    --foreground: 40 20% 96%;
+    --card: 240 6% 9%;
+    --card-foreground: 40 20% 96%;
+    --popover: 240 6% 9%;
+    --popover-foreground: 40 20% 96%;
+    --primary: 38 78% 57%;
+    --primary-foreground: 240 8% 8%;
+    --secondary: 185 45% 45%;
+    --secondary-foreground: 40 20% 96%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 35 10% 58%;
+    --accent: 185 35% 22%;
+    --accent-foreground: 40 20% 96%;
+    --destructive: 0 50% 40%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 35 8% 20%;
+    --input: 35 8% 20%;
+    --ring: 38 78% 57%;
 
-    /* shadcn/ui compatibility tokens (dark mode) */
-    --background: 10 14 26;
-    --foreground: 248 250 252;
-    --card: 26 31 53;
-    --card-foreground: 248 250 252;
-    --popover: 26 31 53;
-    --popover-foreground: 248 250 252;
-    --primary-fg: 255 255 255;
-    --secondary: 20 24 41;
-    --secondary-foreground: 248 250 252;
-    --muted: 20 24 41;
-    --muted-foreground: 148 163 184;
-    --accent-fg: 248 250 252;
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
-    --shadcn-border: 51 65 85;
-    --input: 51 65 85;
-    --ring: 16 185 129;
+    /* Amber primary scale — dark */
+    --color-primary-50: 45 30 10;
+    --color-primary-100: 70 45 15;
+    --color-primary-200: 100 65 22;
+    --color-primary-300: 140 90 30;
+    --color-primary-400: 180 120 40;
+    --color-primary-500: 232 163 61;
+    --color-primary-600: 240 175 75;
+    --color-primary-700: 245 190 100;
+    --color-primary-800: 250 210 140;
+    --color-primary-900: 253 230 180;
+    --color-primary-950: 255 248 230;
+
+    /* Teal accent scale — dark */
+    --color-accent-50: 10 35 35;
+    --color-accent-100: 18 55 55;
+    --color-accent-200: 25 75 75;
+    --color-accent-300: 32 95 95;
+    --color-accent-400: 40 120 120;
+    --color-accent-500: 55 145 145;
+    --color-accent-600: 70 165 165;
+    --color-accent-700: 100 185 185;
+    --color-accent-800: 140 205 205;
+    --color-accent-900: 180 225 225;
+    --color-accent-950: 220 245 245;
+
+    --color-background-muted: 20 20 23;
+
+    --color-surface-default: 20 20 23;
+    --color-surface-dark: 12 12 14;
+    --color-surface-contrast: 245 241 235;
+
+    --color-border-subtle: 55, 52, 48;
+    --color-border-strong: 200, 195, 185;
+
+    --color-text-primary: 245 241 235;
+    --color-text-muted: 155 148 138;
+    --color-text-inverted: 30 28 26;
   }
 
-  .theme-emerald {
-    /* Uses root values, defined for explicitness */
-  }
-
-  .theme-indigo {
-    --color-primary-50: 238 242 255;
-    --color-primary-100: 224 231 255;
-    --color-primary-200: 199 210 254;
-    --color-primary-300: 165 180 252;
-    --color-primary-400: 129 140 248;
-    --color-primary-500: 99 102 241;
-    --color-primary-600: 79 70 229;
-    --color-primary-700: 67 56 202;
-    --color-primary-800: 55 48 163;
-    --color-primary-900: 49 46 129;
-    --color-primary-950: 30 27 75;
-
-    --color-accent-50: 236 253 245;
-    --color-accent-100: 209 250 229;
-    --color-accent-200: 167 243 208;
-    --color-accent-300: 110 231 183;
-    --color-accent-400: 52 211 153;
-    --color-accent-500: 16 185 129;
-    --color-accent-600: 5 150 105;
-    --color-accent-700: 4 120 87;
-    --color-accent-800: 6 95 70;
-    --color-accent-900: 6 78 59;
-    --color-accent-950: 2 44 34;
-  }
-
-  .theme-amber {
-    --color-primary-50: 255 251 235;
-    --color-primary-100: 254 243 199;
-    --color-primary-200: 253 230 138;
-    --color-primary-300: 252 211 77;
-    --color-primary-400: 251 191 36;
-    --color-primary-500: 245 158 11;
-    --color-primary-600: 217 119 6;
-    --color-primary-700: 180 83 9;
-    --color-primary-800: 146 64 14;
-    --color-primary-900: 120 53 15;
-    --color-primary-950: 69 26 3;
+  * {
+    @apply border-border;
   }
 
   body {
+    @apply bg-background text-foreground;
     background-color: rgb(var(--color-background-light));
     color: rgb(var(--color-text-primary));
   }
@@ -202,15 +204,15 @@
 
 @layer components {
   .glass-card {
-    @apply relative rounded-2xl border border-white/10 bg-white/5 p-6 shadow-soft backdrop-blur-xl transition-colors dark:bg-white/5;
+    @apply relative rounded-2xl border border-border/40 bg-card/60 p-6 shadow-soft backdrop-blur-xl transition-colors;
   }
 
   .glow-card {
-    @apply rounded-2xl border border-white/5 bg-gradient-to-b from-white/10 to-white/0 p-6 shadow-glow transition-shadow hover:shadow-glow-lg;
+    @apply rounded-2xl border border-border/30 bg-gradient-to-b from-card/80 to-transparent p-6 shadow-glow transition-shadow hover:shadow-glow-lg;
   }
 
   .spotlight-card {
-    @apply relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/60 p-6 text-slate-200;
+    @apply relative overflow-hidden rounded-3xl border border-border/40 bg-card/80 p-6 text-card-foreground;
   }
 
   .spotlight-card::before {
@@ -218,12 +220,12 @@
     position: absolute;
     inset: -40% 10% auto;
     height: 60%;
-    background: radial-gradient(circle, rgba(99,102,241,0.35), transparent 70%);
+    background: radial-gradient(circle, rgb(var(--color-accent-500) / 0.35), transparent 70%);
     opacity: 0.7;
   }
 
   .status-pill {
-    @apply inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs font-medium uppercase tracking-wide;
+    @apply inline-flex items-center gap-2 rounded-full border border-border/40 px-3 py-1 text-xs font-medium uppercase tracking-wide text-foreground;
   }
 
   .metric-grid {
@@ -231,11 +233,11 @@
   }
 
   .metric-card {
-    @apply rounded-2xl border border-white/10 bg-white/5 p-5 shadow-soft text-left;
+    @apply rounded-2xl border border-border/40 bg-card/60 p-5 shadow-soft text-left text-card-foreground;
   }
 
   .section-heading {
-    @apply text-3xl font-semibold tracking-tight text-white dark:text-white;
+    @apply text-3xl font-semibold tracking-tight text-foreground;
   }
 }
 
@@ -243,7 +245,11 @@
   .particle-container {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 78, 59, 0.12) 100%);
+    background: linear-gradient(
+      135deg,
+      rgb(var(--color-primary-500) / 0.12) 0%,
+      rgb(var(--color-primary-900) / 0.12) 100%
+    );
   }
 
   .particle {
@@ -251,8 +257,8 @@
     width: 3px;
     height: 3px;
     border-radius: 50%;
-    background: rgba(16, 185, 129, 0.6);
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+    background: rgb(var(--color-primary-500) / 0.6);
+    box-shadow: 0 0 10px rgb(var(--color-primary-500) / 0.8);
     animation: particle-float 6s ease-in-out infinite;
   }
 
@@ -268,7 +274,7 @@
     width: 60%;
     height: 60%;
     transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(16,185,129,0.25), transparent 70%);
+    background: radial-gradient(circle, rgb(var(--color-primary-500) / 0.25), transparent 70%);
     filter: blur(40px);
     opacity: 0.5;
     pointer-events: none;
@@ -278,11 +284,15 @@
     position: relative;
     border-radius: 1.5rem;
     padding: 1px;
-    background: linear-gradient(120deg, rgba(16,185,129,0.6), rgba(99,102,241,0.4));
+    background: linear-gradient(
+      120deg,
+      rgb(var(--color-primary-500) / 0.6),
+      rgb(var(--color-accent-500) / 0.4)
+    );
   }
 
   .gradient-border > * {
     border-radius: inherit;
-    background: rgb(var(--color-background-dark));
+    background: hsl(var(--background));
   }
 }

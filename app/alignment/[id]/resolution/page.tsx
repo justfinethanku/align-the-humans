@@ -14,12 +14,25 @@ import { redirect } from 'next/navigation';
 import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getAlignmentDetail, getAnalysis, isParticipant } from '@/app/lib/db-helpers';
 import { ResolutionForm } from './resolution-form';
+import { MAX_RESOLUTION_ROUNDS } from '@/app/lib/resolution-config';
 import type { ConflictItem } from '@/app/lib/types';
 
 interface ResolutionPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+function isResolutionSubmissionForRound(
+  response: { metadata: unknown; submitted_at: string | null },
+  round: number
+): boolean {
+  const metadata = response.metadata as Record<string, unknown> | null;
+  return (
+    Boolean(response.submitted_at) &&
+    metadata?.resolution_submission === true &&
+    metadata?.resolution_round === round
+  );
 }
 
 export default async function ResolutionPage({ params }: ResolutionPageProps) {
@@ -100,11 +113,35 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
 
   const partnerName = partnerProfile?.display_name || 'Your partner';
 
-  // 8. Check if user has already submitted resolution for this round
-  const hasUserSubmitted = alignment.user_response?.submitted_at !== null;
-  const hasPartnerSubmitted = alignment.partner_response?.submitted_at !== null;
+  // 8. Check if user has already submitted resolution picks for this analysis round.
+  // Resolution picks are stored as the next round's analysis input so they do not
+  // overwrite the questionnaire answers that produced the current analysis.
+  const resolutionResponseRound = alignment.current_round + 1;
+  const { data: resolutionResponses } = await supabase
+    .from('alignment_responses')
+    .select('user_id, submitted_at, metadata')
+    .eq('alignment_id', alignmentId)
+    .eq('round', resolutionResponseRound);
 
-  // 9. Render resolution form
+  const submittedResolutionResponses = (resolutionResponses || []).filter((response) =>
+    isResolutionSubmissionForRound(response, alignment.current_round)
+  );
+  const hasUserSubmitted = submittedResolutionResponses.some((response) => response.user_id === user.id);
+  const hasPartnerSubmitted = submittedResolutionResponses.some((response) => response.user_id === partnerId);
+
+  // 9. Detect the round-cap terminal state.
+  // submit-resolution/route.ts never transitions status to 'analyzing' once
+  // both partners have submitted at MAX_RESOLUTION_ROUNDS -- it leaves
+  // current_round and status untouched. So reaching this page with status
+  // still 'resolving', current_round already at the cap, and both partners
+  // submitted for that analysis round is the durable, derivable signal that this
+  // alignment has exhausted its resolution rounds.
+  const maxRoundsReached =
+    hasUserSubmitted &&
+    hasPartnerSubmitted &&
+    alignment.current_round >= MAX_RESOLUTION_ROUNDS;
+
+  // 10. Render resolution form
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12 md:px-6">
@@ -112,9 +149,11 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
           alignmentId={alignmentId}
           conflicts={conflicts}
           currentRound={alignment.current_round}
+          maxRounds={MAX_RESOLUTION_ROUNDS}
           partnerName={partnerName}
           hasUserSubmitted={hasUserSubmitted}
           hasPartnerSubmitted={hasPartnerSubmitted}
+          maxRoundsReached={maxRoundsReached}
         />
       </div>
     </div>

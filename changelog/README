@@ -2,8 +2,12 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 17**
+**Total Changelogs: 18**
 
+
+### [2026-07-01-2200 - launch-blockers-and-redesign](./2026-07-01-2200-launch-blockers-and-redesign.md)
+**Keywords:** [LAUNCH] [RLS] [AUTH] [SECURITY] [REDESIGN] [DESIGN-SYSTEM] [DARK-MODE] [COPY] [IMAGERY] [BRAND]
+Fixed the launch blockers (alignments RLS partner lockout, password-reset flow, webhook signature bypass, rate limiting, resolution round cap, admin bootstrap) and shipped a full premium-dark-cinematic public-site redesign: unified light/dark token system, next-themes, cinematic GPT-image hero + section photography, rhetorical-pipeline copy, all fabricated social proof removed, terms/privacy pages, brand unified to "Align the Humans." Engineering via multi-agent workflow; redesign via chunked Grok Build delegation.
 
 ### [2026-03-26-0900 - fix-ui-visibility-audit](./2026-03-26-0900-fix-ui-visibility-audit.md)
 **Keywords:** [UI] [BUGFIX] [DESIGN-SYSTEM] [SHADCN] [TAILWIND] [CSS-VARIABLES] [DARK-MODE] [NAVIGATION]

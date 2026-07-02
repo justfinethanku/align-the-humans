@@ -19,11 +19,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { generateObject } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
-import { getPrompt } from '@/app/lib/prompts';
+import { resolveModel } from '@/app/lib/ai-config';
+import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { createServerClient, createAdminClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, updateAlignmentStatus, isParticipant } from '@/app/lib/db-helpers';
-import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
+import { AlignmentError, ValidationError, RateLimitError, createErrorResponse } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { sendAnalysisCompleteEmail } from '@/app/lib/email-service';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import type { AlignmentResponse } from '@/app/lib/types';
@@ -96,11 +97,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Parse and validate request body
+    // 2. Rate limit (heavy AI operation): ~10/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.analyze'),
+      { limit: 10, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many analysis requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
+
+    // 3. Parse and validate request body
     const body = await request.json();
     const { alignmentId, round } = analyzeRequestSchema.parse(body);
 
-    // 3. Verify user is a participant
+    // 4. Verify user is a participant
     const isUserParticipant = await isParticipant(supabase, alignmentId, user.id);
     if (!isUserParticipant) {
       throw AlignmentError.unauthorized(alignmentId, user.id);
@@ -118,9 +130,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify alignment is in correct status
-    if (alignment.status !== 'active') {
+    if (alignment.status !== 'active' && alignment.status !== 'resolving') {
       // If already analyzing or beyond, check for existing analysis
-      if (alignment.status === 'analyzing' || alignment.status === 'resolving' || alignment.status === 'complete') {
+      if (alignment.status === 'analyzing' || alignment.status === 'complete') {
         const { data: existingAnalysis } = await supabase
           .from('alignment_analyses')
           .select('*')
@@ -135,10 +147,10 @@ export async function POST(request: NextRequest) {
         }
       }
       throw new AlignmentError(
-        `Cannot analyze alignment in '${alignment.status}' status. Must be 'active'.`,
+        `Cannot analyze alignment in '${alignment.status}' status. Must be 'active' or 'resolving'.`,
         'INVALID_STATUS',
         409,
-        { currentStatus: alignment.status, expectedStatus: 'active' }
+        { currentStatus: alignment.status, expectedStatus: 'active_or_resolving' }
       );
     }
 
@@ -147,7 +159,7 @@ export async function POST(request: NextRequest) {
       .from('alignments')
       .update({ status: 'analyzing' })
       .eq('id', alignmentId)
-      .eq('status', 'active')
+      .in('status', ['active', 'resolving'])
       .select('id')
       .single();
 
@@ -209,11 +221,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 7. Log start of AI analysis
+    const promptConfig = await getPrompt('analyze-responses');
+
     telemetry.logAIOperation({
       event: 'ai.analysis.start',
       alignmentId,
       latencyMs: 0,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: true,
       userId: user.id,
     });
@@ -246,7 +260,7 @@ export async function POST(request: NextRequest) {
         ],
       },
       details: {
-        model: AI_MODELS.SONNET,
+        model: promptConfig.model,
         prompt_tokens: 0, // Will be populated from usage if available
         completion_tokens: 0,
         raw_output: JSON.stringify(analysis),
@@ -300,7 +314,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.analysis.complete',
       alignmentId,
       latencyMs,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: true,
       userId: user.id,
     });
@@ -390,54 +404,20 @@ async function analyzeResponses(
   // Load prompt config from DB/seeds (model, temperature, maxTokens are admin-configurable)
   const promptConfig = await getPrompt('analyze-responses');
 
-  // Build comprehensive prompt with response data
-  const prompt = `You are analyzing two people's responses to alignment questions. Your goal is to identify areas of agreement, conflicts, hidden assumptions, gaps, and power imbalances.
-
-**Person A's Responses:**
-${JSON.stringify(responseA.answers, null, 2)}
-
-**Person B's Responses:**
-${JSON.stringify(responseB.answers, null, 2)}
-
-Analyze these responses thoroughly and provide:
-
-1. **ALIGNED ITEMS**: Areas where they completely agree. Be specific about what they agree on and why it's significant.
-
-2. **CONFLICTS**: Disagreements or misalignments. Categorize each by severity:
-   - **critical**: Fundamental disagreements that could prevent alignment
-   - **moderate**: Important differences that need resolution
-   - **minor**: Small differences that can be easily addressed
-
-   For each conflict:
-   - Identify the specific question/topic
-   - Clearly state each person's position
-   - Provide 2-3 concrete suggestions for resolution
-
-3. **HIDDEN ASSUMPTIONS**: Things one person assumes that the other hasn't addressed. These are often unstated expectations that could cause future problems.
-
-4. **GAPS**: Important topics that NEITHER person has adequately addressed. Suggest questions they should consider.
-
-5. **IMBALANCES**: Structural issues in the relationship that could cause problems:
-   - Power imbalances
-   - Unequal contributions or expectations
-   - One-sided arrangements
-   - Lack of reciprocity
-
-6. **OVERALL ALIGNMENT SCORE**: A score from 0-100 indicating overall alignment level.
-   - 90-100: Excellent alignment, minor refinement needed
-   - 70-89: Good alignment, some important conflicts to resolve
-   - 50-69: Moderate alignment, significant work needed
-   - 30-49: Poor alignment, fundamental disagreements
-   - 0-29: Very poor alignment, may need to reconsider
-
-Be thorough, specific, and actionable in your analysis. Focus on helping both parties understand each other's perspectives and find common ground.`;
+  // Render the DB-managed analysis template with both participants' answers
+  const prompt = renderPrompt(promptConfig.userPromptTemplate, {
+    responseA: JSON.stringify(responseA.answers, null, 2),
+    responseB: JSON.stringify(responseB.answers, null, 2),
+  });
 
   try {
     const result = await generateObject({
       model: resolveModel(promptConfig.model) as any,
       schema: analysisSchema,
+      system: promptConfig.systemPrompt,
       prompt,
       temperature: promptConfig.temperature,
+      maxOutputTokens: promptConfig.maxTokens,
     });
 
     return result.object;
@@ -447,7 +427,7 @@ Be thorough, specific, and actionable in your analysis. Focus on helping both pa
       event: 'ai.analysis.error',
       alignmentId,
       latencyMs: 0,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: false,
       errorCode: error instanceof Error ? error.name : 'UNKNOWN',
       errorMessage: error instanceof Error ? error.message : 'AI analysis failed',

@@ -483,7 +483,7 @@ export const VALID_STATUS_TRANSITIONS: Record<AlignmentStatus, AlignmentStatus[]
   draft: ['active'],
   active: ['analyzing'],
   analyzing: ['resolving'],
-  resolving: ['complete'],
+  resolving: ['complete', 'analyzing'],
   complete: [], // Terminal state
 };
 

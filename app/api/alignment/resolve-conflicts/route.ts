@@ -9,8 +9,8 @@
  */
 
 import { generateObject } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
-import { getPrompt } from '@/app/lib/prompts';
+import { resolveModel } from '@/app/lib/ai-config';
+import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
@@ -18,8 +18,10 @@ import {
   createErrorResponse,
   ValidationError,
   AlignmentError,
-  AIError
+  AIError,
+  RateLimitError
 } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 
 // ============================================================================
@@ -68,51 +70,6 @@ type CompromiseOption = z.infer<typeof CompromiseOptionSchema>;
 // Prompt Engineering
 // ============================================================================
 
-/**
- * Creates a detailed prompt for solution discovery through synthesis
- */
-function createResolutionPrompt(conflict: RequestBody['conflict']): string {
-  const constraintsSection = conflict.constraints && conflict.constraints.length > 0
-    ? `\n\nConstraints to consider:\n${conflict.constraints.map(c => `- ${c}`).join('\n')}`
-    : '';
-
-  return `You are an expert facilitator helping two people discover new solutions by synthesizing their independent thinking.
-
-DECISION DETAILS:
-Topic: ${conflict.topic}
-Person A's Perspective: ${conflict.personA}
-Person B's Perspective: ${conflict.personB}${constraintsSection}
-
-YOUR TASK:
-Analyze both perspectives deeply to discover 3-4 solutions that neither person may have considered alone. These should NOT be simple compromises - look for:
-
-1. Synthesis opportunities: Where both perspectives reveal a third option neither suggested
-2. Hidden shared values: What both people actually want underneath their stated positions
-3. False dichotomies: Are they treating this as either/or when it could be both/and?
-4. Unstated assumptions: What are they each assuming that might not be true?
-5. Creative reframes: Is there a different way to think about this decision entirely?
-
-For each discovered solution, provide:
-- A clear summary of the solution (what makes it different from simple compromise)
-- Specific pros (benefits, what this achieves for both people)
-- Specific cons (trade-offs, potential challenges)
-- Actionable next steps (3-5 concrete actions to implement this)
-
-Additionally, provide:
-- 2-3 implications: What discovering any of these solutions reveals about their shared priorities
-- 2-3 examples: Real-world precedents where similar synthesis approaches worked
-
-IMPORTANT GUIDELINES:
-- Seek discovery, not compromise: Don't just split the difference
-- Look beneath positions: What do they each actually need/value?
-- Be specific: Avoid vague suggestions like "communicate better"
-- Honor both perspectives: Show how each person's thinking contributed to the discovery
-- Consider context: Account for constraints if provided
-- Think generatively: What new possibilities emerge from combining their insights?
-
-Generate solutions that demonstrate collaborative intelligence - options better than either person imagined alone.`;
-}
-
 // ============================================================================
 // Main Handler
 // ============================================================================
@@ -127,6 +84,17 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Authenticate user
     const user = await requireAuth(supabase);
+
+    // 1b. Rate limit (heavy AI operation): ~10/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.resolve-conflicts'),
+      { limit: 10, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many resolution requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
 
     // 2. Parse and validate request body
     const body = await request.json();
@@ -153,19 +121,29 @@ export async function POST(request: NextRequest) {
       throw AlignmentError.unauthorized(alignmentId, user.id);
     }
 
+    const promptConfig = await getPrompt('resolve-conflicts');
+
     // 4. Log AI operation start
     telemetry.logAIOperation({
       event: 'ai.resolve.start',
       alignmentId,
       latencyMs: 0,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: true,
       userId: user.id,
     });
 
     // 5. Generate compromise suggestions using Claude
-    const prompt = createResolutionPrompt(conflict);
-    const promptConfig = await getPrompt('resolve-conflicts');
+    const constraintsSection =
+      conflict.constraints && conflict.constraints.length > 0
+        ? `\n\nConstraints to consider:\n${conflict.constraints.map((c) => `- ${c}`).join('\n')}`
+        : '';
+    const prompt = renderPrompt(promptConfig.userPromptTemplate, {
+      topic: conflict.topic,
+      personA: conflict.personA,
+      personB: conflict.personB,
+      constraintsSection,
+    });
 
     let resolution: ConflictResolution;
 
@@ -173,8 +151,10 @@ export async function POST(request: NextRequest) {
       const { object } = await generateObject({
         model: resolveModel(promptConfig.model) as any,
         schema: ConflictResolutionSchema,
+        system: promptConfig.systemPrompt,
         prompt,
         temperature: promptConfig.temperature,
+        maxOutputTokens: promptConfig.maxTokens,
       });
 
       resolution = object;
@@ -203,7 +183,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.resolve.complete',
       alignmentId,
       latencyMs,
-      model: AI_MODELS.SONNET,
+      model: promptConfig.model,
       success: true,
       userId: user.id,
     });
@@ -229,7 +209,7 @@ export async function POST(request: NextRequest) {
         event: 'ai.resolve.error',
         alignmentId: 'unknown',
         latencyMs,
-        model: AI_MODELS.SONNET,
+        model: 'db-config',
         success: false,
         errorCode: error.code,
         errorMessage: error.message,

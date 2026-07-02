@@ -12,19 +12,26 @@
  */
 
 import { generateText } from 'ai';
-import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
-import { getPrompt } from '@/app/lib/prompts';
+import { resolveModel } from '@/app/lib/ai-config';
+import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import { createErrorResponse, ValidationError, AIError } from '@/app/lib/errors';
+import { createErrorResponse, ValidationError, AIError, AlignmentError, RateLimitError } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 
 // ============================================================================
 // Request/Response Schema
 // ============================================================================
 
 const RequestSchema = z.object({
+  // Optional: not sent by the current ClarityForm caller. When present, we
+  // verify the caller is a participant on that alignment before generating.
+  // When absent, requireAuth() + the per-user rate limit below are the only
+  // guards (this endpoint accepts arbitrary client-supplied context and
+  // doesn't read any specific alignment's data server-side).
+  alignmentId: z.string().uuid('Invalid alignment ID format').optional(),
   section: z.enum(['topic', 'partner', 'outcome']),
   currentValue: z.string().optional(),
   prompt: z.string(),
@@ -43,78 +50,13 @@ interface SuggestionResponse {
 }
 
 // ============================================================================
-// AI Prompt Construction
-// ============================================================================
-
-function buildSuggestionPrompt(
-  section: string,
-  currentValue: string,
-  context: { topic: string; participants: string[]; desiredOutcome: string }
-): string {
-  if (section === 'topic') {
-    return `You are helping someone define what they want to align on. Generate 2-3 clear, specific topic suggestions for an alignment conversation.
-
-Current input: "${currentValue || 'none yet'}"
-Context: This is for a conversation between ${context.participants.join(' and ')}.
-
-Provide 2-3 diverse, realistic examples of alignment topics. Each should be:
-- Clear and specific (not vague)
-- Realistic and relatable
-- Different from each other
-- 8-15 words long
-
-Examples of good topics:
-- "Deciding on our vacation destination for this summer"
-- "Finalizing the budget for the home renovation project"
-- "Choosing which city to relocate to for work"
-
-Return only the topic suggestions, one per line, without numbering or explanations.`;
-  }
-
-  if (section === 'partner') {
-    return `You are helping someone identify their partner for an alignment conversation. Generate 2-3 common relationship type suggestions.
-
-Current input: "${currentValue || 'none yet'}"
-Topic: "${context.topic}"
-
-Provide 2-3 common relationship types that make sense for this topic. Examples:
-- "My spouse"
-- "My business co-founder"
-- "A family member"
-- "My roommate"
-
-Return only the relationship descriptions, one per line, without numbering or explanations.`;
-  }
-
-  // outcome section
-  return `You are helping someone define the desired outcome of an alignment conversation. Generate 2-3 clear outcome suggestions.
-
-Current input: "${currentValue || 'none yet'}"
-Topic: "${context.topic}"
-Participants: ${context.participants.join(' and ')}
-
-Provide 2-3 realistic desired outcomes. Each should be:
-- Clear and achievable
-- Specific to reaching agreement
-- Different from each other
-
-Examples of good outcomes:
-- "A clear, mutual decision we both feel good about"
-- "A list of actionable next steps we both commit to"
-- "Understanding each other's perspective and finding common ground"
-
-Return only the outcome descriptions, one per line, without numbering or explanations.`;
-}
-
-// ============================================================================
 // API Route Handler
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const timer = new PerformanceTimer();
   const supabase = createServerClient();
-  const modelName = AI_MODELS.HAIKU;
-  const model = models.haiku;
+  let modelName = 'db-config';
 
   let userId: string | undefined;
 
@@ -122,6 +64,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 1. Authenticate user
     const user = await requireAuth(supabase);
     userId = user.id;
+
+    // 1b. Rate limit (light AI operation): ~30/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.clarity-suggest'),
+      { limit: 30, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many suggestion requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
 
     // 2. Parse and validate request body
     const body = await request.json();
@@ -134,7 +87,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { section, currentValue, prompt, alignmentContext } = validationResult.data;
+    const { alignmentId, section, currentValue, prompt, alignmentContext } = validationResult.data;
+
+    // 2b. If the caller references a specific alignment, verify participation
+    if (alignmentId) {
+      const { data: participant, error: participantError } = await supabase
+        .from('alignment_participants')
+        .select('id')
+        .eq('alignment_id', alignmentId)
+        .eq('user_id', userId)
+        .single();
+
+      if (participantError || !participant) {
+        throw AlignmentError.unauthorized(alignmentId, userId);
+      }
+    }
 
     // 3. Log telemetry start
     telemetry.logAIOperation({
@@ -146,19 +113,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       userId,
     });
 
-    // 4. Build prompt
-    const aiPrompt = buildSuggestionPrompt(
-      section,
-      currentValue || '',
-      alignmentContext
-    );
-
-    // 5. Generate AI response (config from prompt system)
+    // 4. Load prompt config and render the DB-managed template
     const promptConfig = await getPrompt(`clarity-suggest-${section}`);
+    modelName = promptConfig.model;
+    const aiPrompt = renderPrompt(promptConfig.userPromptTemplate, {
+      currentValue: currentValue || 'none yet',
+      topic: alignmentContext.topic || '',
+      participants: alignmentContext.participants.join(' and '),
+    });
+
+    // 5. Generate AI response (prompt text, model, and params all from the DB)
     const { text, usage } = await generateText({
       model: resolveModel(promptConfig.model) as any,
+      system: promptConfig.systemPrompt,
       prompt: aiPrompt,
       temperature: promptConfig.temperature,
+      maxOutputTokens: promptConfig.maxTokens,
     });
 
     if (!text || text.trim().length === 0) {

@@ -8,6 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -25,7 +26,7 @@ function SubmitButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="h-14 w-full rounded-lg bg-blue-600 text-base font-bold text-white transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-[#1A1A1A]"
+      className="h-14 w-full rounded-lg text-base font-bold"
     >
       {pending ? 'Creating Account...' : 'Sign Up'}
     </Button>
@@ -48,13 +49,13 @@ export default function SignupPage() {
   }, [state?.error, state?.success]);
 
   return (
-    <div className="w-full rounded-xl bg-white dark:bg-[#252525] p-6 sm:p-8 shadow-lg dark:shadow-2xl dark:shadow-black/50">
+    <div className="w-full rounded-xl bg-card p-6 sm:p-8 shadow-lg">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-black tracking-[-0.033em] text-[#111418] dark:text-white">
+        <h1 className="text-3xl font-black tracking-[-0.033em] text-foreground">
           Create Your Account
         </h1>
-        <p className="text-base font-normal leading-normal text-slate-500 dark:text-slate-400 pt-2">
+        <p className="text-base font-normal leading-normal text-muted-foreground pt-2">
           Start aligning on decisions that matter - from household logistics to business strategy.
         </p>
       </div>
@@ -98,7 +99,7 @@ export default function SignupPage() {
               placeholder="Username"
               aria-invalid={!!state?.fieldErrors?.username}
               aria-describedby={state?.fieldErrors?.username ? 'username-error' : undefined}
-              className="h-14 w-full rounded-lg border border-slate-300 bg-white p-4 text-base text-[#111418] placeholder:text-slate-400 focus:border-blue-600 focus:outline-0 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-[#2C2C2C] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 aria-[invalid=true]:border-red-500 dark:aria-[invalid=true]:border-red-500"
+              className="h-14 w-full rounded-lg border border-input bg-background p-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-0 focus:ring-2 focus:ring-ring/20 aria-[invalid=true]:border-destructive"
             />
             {state?.fieldErrors?.username && (
               <p id="username-error" className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -121,7 +122,7 @@ export default function SignupPage() {
               placeholder="Email address"
               aria-invalid={!!state?.fieldErrors?.email}
               aria-describedby={state?.fieldErrors?.email ? 'email-error' : undefined}
-              className="h-14 w-full rounded-lg border border-slate-300 bg-white p-4 text-base text-[#111418] placeholder:text-slate-400 focus:border-blue-600 focus:outline-0 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-[#2C2C2C] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 aria-[invalid=true]:border-red-500 dark:aria-[invalid=true]:border-red-500"
+              className="h-14 w-full rounded-lg border border-input bg-background p-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-0 focus:ring-2 focus:ring-ring/20 aria-[invalid=true]:border-destructive"
             />
             {state?.fieldErrors?.email && (
               <p id="email-error" className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -145,17 +146,15 @@ export default function SignupPage() {
                 placeholder="Password"
                 aria-invalid={!!state?.fieldErrors?.password}
                 aria-describedby={state?.fieldErrors?.password ? 'password-error' : undefined}
-                className="h-14 w-full rounded-lg border border-slate-300 bg-white pr-12 pl-4 py-4 text-base text-[#111418] placeholder:text-slate-400 focus:border-blue-600 focus:outline-0 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-[#2C2C2C] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 aria-[invalid=true]:border-red-500 dark:aria-[invalid=true]:border-red-500"
+                className="h-14 w-full rounded-lg border border-input bg-background pr-12 pl-4 py-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-0 focus:ring-2 focus:ring-ring/20 aria-[invalid=true]:border-destructive"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label="Toggle password visibility"
-                className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                className="absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground hover:text-foreground"
               >
-                <span className="material-symbols-outlined text-xl">
-                  {showPassword ? 'visibility' : 'visibility_off'}
-                </span>
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
             {state?.fieldErrors?.password && (
@@ -181,7 +180,7 @@ export default function SignupPage() {
               aria-describedby={
                 state?.fieldErrors?.confirmPassword ? 'confirm-password-error' : undefined
               }
-              className="h-14 w-full rounded-lg border border-slate-300 bg-white p-4 text-base text-[#111418] placeholder:text-slate-400 focus:border-blue-600 focus:outline-0 focus:ring-2 focus:ring-blue-600/20 dark:border-slate-700 dark:bg-[#2C2C2C] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/20 aria-[invalid=true]:border-red-500 dark:aria-[invalid=true]:border-red-500"
+              className="h-14 w-full rounded-lg border border-input bg-background p-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-0 focus:ring-2 focus:ring-ring/20 aria-[invalid=true]:border-destructive"
             />
             {state?.fieldErrors?.confirmPassword && (
               <p id="confirm-password-error" className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -200,16 +199,16 @@ export default function SignupPage() {
             required
             checked={agreedToTerms}
             onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-600 dark:border-slate-600 dark:bg-slate-700"
+            className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-ring"
           />
           <Label
             htmlFor="terms-of-service"
-            className="ml-2 block text-sm text-slate-500 dark:text-slate-400"
+            className="ml-2 block text-sm text-muted-foreground"
           >
             I agree to the{' '}
             <Link
               href="/terms"
-              className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+              className="font-medium text-primary hover:text-primary/80"
             >
               Terms of Service
             </Link>
@@ -221,11 +220,11 @@ export default function SignupPage() {
       </form>
 
       {/* Login Link */}
-      <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{' '}
         <Link
           href="/login"
-          className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+          className="font-medium text-primary hover:text-primary/80"
         >
           Log in
         </Link>

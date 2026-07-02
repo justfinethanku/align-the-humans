@@ -6,9 +6,11 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { createServerClient } from '@/app/lib/supabase-server';
 import { upsertProfile } from '@/app/lib/db-helpers';
-import { AuthError, ValidationError, formatErrorMessage, logError } from '@/app/lib/errors';
+import { AuthError, formatErrorMessage, logError } from '@/app/lib/errors';
+import { checkRateLimit } from '@/app/lib/rate-limit';
 
 /**
  * Signup form state type
@@ -23,6 +25,17 @@ export type SignupState = {
     confirmPassword?: string;
   };
 };
+
+const RATE_LIMIT_MESSAGE = 'Too many attempts, please wait a minute.';
+
+function getClientIp(): string {
+  const forwardedFor = headers().get('x-forwarded-for');
+  return forwardedFor?.split(',')[0]?.trim() || 'unknown';
+}
+
+function authRateLimitKey(scope: string, email: string): string {
+  return `auth:${scope}:${email.toLowerCase()}:ip:${getClientIp()}`;
+}
 
 /**
  * Validates signup form data
@@ -113,6 +126,18 @@ export async function signupAction(
 
     const { username, email, password } = validation.data!;
 
+    // In-memory limiter; production should back this with Vercel KV / Upstash.
+    const rateLimitResult = await checkRateLimit(
+      authRateLimitKey('signup', email),
+      { limit: 5, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      return {
+        error: RATE_LIMIT_MESSAGE,
+        success: false,
+      };
+    }
+
     // Create Supabase client
     const supabase = createServerClient();
 
@@ -124,7 +149,7 @@ export async function signupAction(
         data: {
           display_name: username,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
       },
     });
 
