@@ -101,8 +101,8 @@ const preset = {
         '3xl': '2rem',
       },
       boxShadow: {
-        glow: '0 0 20px rgb(var(--color-primary-500) / 0.3)',
-        'glow-lg': '0 0 40px rgb(var(--color-primary-500) / 0.4)',
+        glow: '0 0 20px rgb(var(--color-primary-500) / 0.15)',
+        'glow-lg': '0 0 40px rgb(var(--color-primary-500) / 0.22)',
         soft: '0 4px 6px -1px rgb(15 23 42 / 0.15), 0 2px 4px -2px rgb(15 23 42 / 0.12)',
         'soft-md': '0 10px 15px -3px rgb(15 23 42 / 0.18), 0 4px 6px -4px rgb(15 23 42 / 0.1)',
         'soft-lg': '0 20px 30px -10px rgb(15 23 42 / 0.25)',
