@@ -54,7 +54,7 @@ export function UseCases() {
       <div className="w-full max-w-6xl">
         <h2
           id="use-cases-heading"
-          className="text-3xl font-bold text-center text-white dark:text-white mb-12"
+          className="text-3xl font-bold text-center text-foreground mb-12"
         >
           Any Decision. Any Scale. One Structure.
         </h2>
@@ -65,7 +65,7 @@ export function UseCases() {
             return (
               <Card
                 key={index}
-                className="group rounded-xl bg-surface-dark dark:bg-surface-dark border border-border-subtle dark:border-slate-800/50 hover:border-primary-500/50 dark:hover:border-primary-500/50 transition-all duration-300 hover:shadow-glow flex flex-col"
+                className="group rounded-xl bg-card border border-border hover:border-primary-500/50 transition-all duration-300 hover:shadow-glow flex flex-col"
                 aria-label={useCase.ariaLabel}
                 tabIndex={0}
               >
@@ -76,12 +76,12 @@ export function UseCases() {
                   >
                     <Icon className="w-6 h-6 text-primary-400 dark:text-primary-400" />
                   </div>
-                  <CardTitle className="text-lg font-semibold text-white dark:text-white">
+                  <CardTitle className="text-lg font-semibold text-card-foreground">
                     {useCase.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 pt-0 flex-1">
-                  <CardDescription className="text-sm text-text-muted dark:text-slate-400 leading-relaxed">
+                  <CardDescription className="text-sm text-muted-foreground leading-relaxed">
                     {useCase.description}
                   </CardDescription>
                 </CardContent>

@@ -31,7 +31,7 @@ export function CTASection() {
             <Button
               asChild
               size="lg"
-              className="group relative h-14 px-8 text-lg font-semibold bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-white shadow-lg shadow-primary-600/30 dark:shadow-primary-500/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary-600/50 dark:hover:shadow-primary-500/50"
+              className="group relative h-14 px-8 text-lg font-semibold bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 text-primary-foreground shadow-lg shadow-primary-600/30 dark:shadow-primary-500/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary-600/50 dark:hover:shadow-primary-500/50"
             >
               <Link href="/signup">
                 <span className="relative z-10 flex items-center gap-2">

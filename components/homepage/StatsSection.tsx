@@ -72,8 +72,7 @@ export function StatsSection() {
                       : 'opacity-0 translate-y-8'
                   }
                   hover:shadow-lg hover:scale-105
-                  dark:bg-card dark:border-border
-                  bg-white border-gray-200
+                  bg-card border-border
                 `}
                 style={{ transitionDelay: `${index * 150}ms` }}
               >

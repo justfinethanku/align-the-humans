@@ -1,12 +1,20 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Manrope } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import './globals.css'
 
 const inter = Inter({
   subsets: ['latin'],
   display: 'optional',
   variable: '--font-inter',
+})
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  display: 'optional',
+  variable: '--font-display',
+  weight: ['500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
@@ -92,7 +100,7 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${manrope.variable}`}>
       <head>
         <script
           type="application/ld+json"
@@ -101,9 +109,11 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
-        {children}
-        <Toaster richColors position="top-right" />
+      <body className="font-sans antialiased">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   )

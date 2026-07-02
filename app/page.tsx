@@ -35,15 +35,15 @@ export default function Home() {
         {/* About Section - Brief explanation */}
         <section id="about" className="w-full bg-surface-dark py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-white mb-6">
+            <h2 className="text-3xl font-bold text-foreground mb-6">
               What is Human Alignment?
             </h2>
-            <p className="text-lg text-slate-400 leading-relaxed mb-4">
+            <p className="text-lg text-muted-foreground leading-relaxed mb-4">
               Human Alignment is infrastructure for collaborative thinking at any scale.
               From splitting chores to splitting equity, the same structure enables partners
               to think independently, then discover solutions together through AI synthesis.
             </p>
-            <p className="text-lg text-slate-400 leading-relaxed">
+            <p className="text-lg text-muted-foreground leading-relaxed">
               This isn&apos;t conflict resolution - it&apos;s proactive alignment architecture.
               Use it BEFORE disagreement exists. Build the habit with small decisions.
               Trust it when everything&apos;s on the line. Practice compounds trust.
@@ -77,33 +77,33 @@ export default function Home() {
         </section>
 
         {/* Footer */}
-        <footer className="w-full bg-surface-dark border-t border-slate-800 py-8 px-4">
+        <footer className="w-full bg-surface-dark border-t border-border py-8 px-4">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-slate-400 text-sm">
+            <div className="text-muted-foreground text-sm">
               © 2025 Human Alignment. All rights reserved.
             </div>
             <nav className="flex gap-6" aria-label="Footer navigation">
               <a
                 href="#about"
-                className="text-slate-400 hover:text-primary-400 transition-colors text-sm"
+                className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
               >
                 About
               </a>
               <a
                 href="#how-it-works"
-                className="text-slate-400 hover:text-primary-400 transition-colors text-sm"
+                className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
               >
                 How It Works
               </a>
               <a
                 href="#use-cases"
-                className="text-slate-400 hover:text-primary-400 transition-colors text-sm"
+                className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
               >
                 Use Cases
               </a>
               <a
                 href="#testimonials"
-                className="text-slate-400 hover:text-primary-400 transition-colors text-sm"
+                className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
               >
                 Testimonials
               </a>
