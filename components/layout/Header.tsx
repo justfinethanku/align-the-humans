@@ -18,9 +18,9 @@ export function Header() {
             <Link
               href="/"
               className="text-xl font-bold text-foreground hover:text-primary-400 transition-colors"
-              aria-label="Human Alignment home"
+              aria-label="Align the Humans home"
             >
-              Human<span className="text-primary-500">Alignment</span>
+              Align<span className="text-primary-500">theHumans</span>
             </Link>
           </div>
 

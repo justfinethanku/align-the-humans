@@ -5,17 +5,18 @@ import { FlowVisualization } from '@/components/homepage/FlowVisualization';
 import { WhyItWorks } from '@/components/homepage/WhyItWorks';
 import { UseCases } from '@/components/homepage/UseCases';
 import { CTASection } from '@/components/homepage/CTASection';
+import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { WebApplicationSchema } from '@/components/seo/WebApplicationSchema';
 import { HowToSchema } from '@/components/seo/HowToSchema';
 
 export const metadata: Metadata = {
-  title: 'Human Alignment - Structure for Every Decision That Matters',
-  description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity. Think independently, align collectively, decide confidently.',
+  title: 'Align the Humans - Agree on the Hard Things, Without the Fight',
+  description: 'Answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter - from cofounder equity to household decisions.',
   keywords: ['alignment', 'collaborative decision-making', 'structured thinking', 'partnership decisions', 'team alignment', 'household decisions', 'cofounder agreement', 'AI collaboration'],
   openGraph: {
-    title: 'Human Alignment - Structure for Every Decision That Matters',
-    description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity. Think independently, align collectively, decide confidently.',
+    title: 'Align the Humans - Agree on the Hard Things, Without the Fight',
+    description: 'Answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter - from cofounder equity to household decisions.',
     type: 'website',
   },
 };
@@ -55,34 +56,7 @@ export default function Home() {
           <CTASection />
         </section>
 
-        {/* Footer */}
-        <footer className="w-full bg-surface-dark border-t border-border py-8 px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-muted-foreground text-sm">
-              © 2025 Human Alignment. All rights reserved.
-            </div>
-            <nav className="flex gap-6" aria-label="Footer navigation">
-              <a
-                href="#about"
-                className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
-              >
-                About
-              </a>
-              <a
-                href="#how-it-works"
-                className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
-              >
-                How It Works
-              </a>
-              <a
-                href="#use-cases"
-                className="text-muted-foreground hover:text-primary-400 transition-colors text-sm"
-              >
-                Use Cases
-              </a>
-            </nav>
-          </div>
-        </footer>
+        <Footer />
       </main>
     </>
   );
