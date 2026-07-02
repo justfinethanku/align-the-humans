@@ -29,7 +29,7 @@ export default function Home() {
       <Header />
       <main className="flex min-h-screen flex-col">
         {/* Hero Section */}
-        <section id="hero" className="min-h-screen flex items-center">
+        <section id="hero">
           <Hero />
         </section>
 
