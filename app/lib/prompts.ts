@@ -17,6 +17,7 @@
  */
 
 import { PROMPT_SEEDS } from './db/seed-prompts';
+import { createAdminClient } from './supabase-server';
 
 // ============================================================================
 // Types
@@ -83,7 +84,7 @@ function getSeedPrompt(slug: string): PromptConfig | null {
     name: seed.name,
     description: seed.description ?? null,
     category: seed.category ?? 'alignment',
-    model: seed.model ?? 'claude-sonnet-4-6',
+    model: seed.model ?? 'z-ai/glm-5.2',
     temperature: parseFloat(String(seed.temperature ?? '0.3')),
     maxTokens: seed.maxTokens ?? 4096,
     systemPrompt: seed.systemPrompt,
@@ -91,6 +92,49 @@ function getSeedPrompt(slug: string): PromptConfig | null {
     outputSchema: seed.outputSchema ?? null,
     isActive: seed.isActive ?? true,
   };
+}
+
+// ============================================================================
+// DB Row Mapping
+// ============================================================================
+
+/** Snake_case row from public.prompts (not yet in generated Database types). */
+interface PromptRow {
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  model: string;
+  temperature: string | number;
+  max_tokens: number;
+  system_prompt: string;
+  user_prompt_template: string;
+  output_schema: unknown;
+  is_active: boolean;
+}
+
+function mapRowToConfig(row: PromptRow): PromptConfig {
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    category: row.category,
+    model: row.model,
+    temperature: parseFloat(String(row.temperature)),
+    maxTokens: row.max_tokens,
+    systemPrompt: row.system_prompt,
+    userPromptTemplate: row.user_prompt_template,
+    outputSchema: row.output_schema,
+    isActive: row.is_active,
+  };
+}
+
+// The prompts table exists in the DB but is not yet in the generated Database
+// types, so we access it through an untyped query-builder boundary (matching
+// the codebase's existing `as any` convention for not-yet-typed tables).
+// Type safety is enforced downstream by mapRowToConfig() + PromptRow.
+function promptsTable(client: ReturnType<typeof createAdminClient>): any {
+  return (client as any).from('prompts');
 }
 
 // ============================================================================
@@ -108,38 +152,20 @@ export async function getPrompt(slug: string): Promise<PromptConfig> {
 
   // 2. Try database
   try {
-    // Dynamic import to avoid loading Drizzle on every import
-    const { db } = await import('./db/index');
-    const { prompts } = await import('./db/schema');
-    const { eq, and } = await import('drizzle-orm');
+    const supabase = createAdminClient();
+    const { data, error } = await promptsTable(supabase)
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .maybeSingle();
 
-    const result = await db
-      .select()
-      .from(prompts)
-      .where(and(eq(prompts.slug, slug), eq(prompts.isActive, true)))
-      .limit(1);
-
-    if (result.length > 0) {
-      const row = result[0];
-      const config: PromptConfig = {
-        slug: row.slug,
-        name: row.name,
-        description: row.description,
-        category: row.category,
-        model: row.model,
-        temperature: parseFloat(String(row.temperature)),
-        maxTokens: row.maxTokens,
-        systemPrompt: row.systemPrompt,
-        userPromptTemplate: row.userPromptTemplate,
-        outputSchema: row.outputSchema,
-        isActive: row.isActive,
-      };
-
+    if (!error && data) {
+      const config = mapRowToConfig(data as unknown as PromptRow);
       setCache(slug, config);
       return config;
     }
   } catch {
-    // Database not available (no DATABASE_URL, connection error, etc.)
+    // Database not available (connection error, missing env, etc.)
     // Fall through to seed data
   }
 
@@ -158,45 +184,33 @@ export async function getPrompt(slug: string): Promise<PromptConfig> {
  */
 export async function getAllPrompts(): Promise<PromptConfig[]> {
   try {
-    const { db } = await import('./db/index');
-    const { prompts } = await import('./db/schema');
-    const { eq, asc } = await import('drizzle-orm');
+    const supabase = createAdminClient();
+    const { data, error } = await promptsTable(supabase)
+      .select('*')
+      .eq('is_active', true)
+      .order('slug', { ascending: true });
 
-    const result = await db
-      .select()
-      .from(prompts)
-      .where(eq(prompts.isActive, true))
-      .orderBy(asc(prompts.slug));
-
-    return result.map(row => ({
-      slug: row.slug,
-      name: row.name,
-      description: row.description,
-      category: row.category,
-      model: row.model,
-      temperature: parseFloat(String(row.temperature)),
-      maxTokens: row.maxTokens,
-      systemPrompt: row.systemPrompt,
-      userPromptTemplate: row.userPromptTemplate,
-      outputSchema: row.outputSchema,
-      isActive: row.isActive,
-    }));
+    if (!error && data && data.length > 0) {
+      return (data as unknown as PromptRow[]).map(mapRowToConfig);
+    }
   } catch {
-    // Fall back to seed data
-    return PROMPT_SEEDS.map(seed => ({
-      slug: seed.slug,
-      name: seed.name,
-      description: seed.description ?? null,
-      category: seed.category ?? 'alignment',
-      model: seed.model ?? 'claude-sonnet-4-6',
-      temperature: parseFloat(String(seed.temperature ?? '0.3')),
-      maxTokens: seed.maxTokens ?? 4096,
-      systemPrompt: seed.systemPrompt,
-      userPromptTemplate: seed.userPromptTemplate,
-      outputSchema: seed.outputSchema ?? null,
-      isActive: seed.isActive ?? true,
-    }));
+    // Database not available — fall through to seed data below.
   }
+
+  // Fall back to seed data (DB unavailable, errored, or empty)
+  return PROMPT_SEEDS.map(seed => ({
+    slug: seed.slug,
+    name: seed.name,
+    description: seed.description ?? null,
+    category: seed.category ?? 'alignment',
+    model: seed.model ?? 'z-ai/glm-5.2',
+    temperature: parseFloat(String(seed.temperature ?? '0.3')),
+    maxTokens: seed.maxTokens ?? 4096,
+    systemPrompt: seed.systemPrompt,
+    userPromptTemplate: seed.userPromptTemplate,
+    outputSchema: seed.outputSchema ?? null,
+    isActive: seed.isActive ?? true,
+  }));
 }
 
 // ============================================================================
