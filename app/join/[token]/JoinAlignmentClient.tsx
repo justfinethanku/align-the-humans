@@ -89,7 +89,7 @@ export default function JoinAlignmentClient({
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-white dark:from-[#1A1A1A] dark:to-[#1A1A1A] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
         {/* Header with Logo */}
         <div className="mb-8 text-center">
@@ -98,7 +98,7 @@ export default function JoinAlignmentClient({
               fill="currentColor"
               viewBox="0 0 48 48"
               xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 text-blue-600 dark:text-blue-500"
+              className="h-12 w-12 text-primary"
             >
               <g clipPath="url(#clip0_6_319)">
                 <path d="M8.57829 8.57829C5.52816 11.6284 3.451 15.5145 2.60947 19.7452C1.76794 23.9758 2.19984 28.361 3.85056 32.3462C5.50128 36.3314 8.29667 39.7376 11.8832 42.134C15.4698 44.5305 19.6865 45.8096 24 45.8096C28.3135 45.8096 32.5302 44.5305 36.1168 42.134C39.7033 39.7375 42.4987 36.3314 44.1494 32.3462C45.8002 28.361 46.2321 23.9758 45.3905 19.7452C44.549 15.5145 42.4718 11.6284 39.4217 8.57829L24 24L8.57829 8.57829Z" />
@@ -110,22 +110,22 @@ export default function JoinAlignmentClient({
               </defs>
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-[#111418] dark:text-white">
+          <h1 className="text-3xl font-bold text-foreground">
             You&apos;re Invited to Join an Alignment
           </h1>
         </div>
 
         {/* Alignment Preview Card */}
-        <Card className="border border-slate-200 dark:border-slate-700">
+        <Card className="border-border">
           <div className="p-6 sm:p-8">
             {/* Alignment Title */}
-            <h2 className="text-2xl font-bold text-[#111418] dark:text-white mb-3">
+            <h2 className="text-2xl font-bold text-foreground mb-3">
               {alignment.title}
             </h2>
 
             {/* Alignment Description */}
             {alignment.description && (
-              <p className="text-base text-slate-600 dark:text-slate-300 mb-4 line-clamp-4">
+              <p className="text-base text-muted-foreground mb-4 line-clamp-4">
                 {alignment.description}
               </p>
             )}
@@ -133,7 +133,7 @@ export default function JoinAlignmentClient({
             {/* Creator Info */}
             <div className="flex items-center gap-2 mb-4">
               <svg
-                className="h-5 w-5 text-slate-500 dark:text-slate-400"
+                className="h-5 w-5 text-muted-foreground"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -145,8 +145,8 @@ export default function JoinAlignmentClient({
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-              <span className="text-sm text-slate-500 dark:text-slate-400">
-                Shared by <span className="font-medium text-slate-700 dark:text-slate-200">{alignment.creatorName}</span>
+              <span className="text-sm text-muted-foreground">
+                Shared by <span className="font-medium text-foreground">{alignment.creatorName}</span>
               </span>
             </div>
 
@@ -154,7 +154,7 @@ export default function JoinAlignmentClient({
             {expirationText && (
               <div className="flex items-center gap-2 mb-6">
                 <svg
-                  className="h-5 w-5 text-slate-500 dark:text-slate-400"
+                  className="h-5 w-5 text-muted-foreground"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -166,7 +166,7 @@ export default function JoinAlignmentClient({
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="text-sm text-muted-foreground">
                   {expirationText}
                 </span>
               </div>
@@ -204,7 +204,7 @@ export default function JoinAlignmentClient({
                 <Button
                   onClick={handleJoin}
                   disabled={isJoining}
-                  className="h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-[#1A1A1A]"
+                  className="h-12 w-full rounded-lg text-base font-semibold"
                 >
                   {isJoining ? (
                     <span className="flex items-center gap-2">
@@ -238,22 +238,22 @@ export default function JoinAlignmentClient({
                 <>
                   <Button
                     onClick={handleSignIn}
-                    className="h-12 w-full rounded-lg bg-blue-600 text-base font-semibold text-white transition-colors hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-[#1A1A1A]"
+                    className="h-12 w-full rounded-lg text-base font-semibold"
                   >
                     Sign in to Join
                   </Button>
                   <div className="relative flex items-center justify-center">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+                      <div className="w-full border-t border-border" />
                     </div>
-                    <div className="relative bg-white dark:bg-[#252525] px-2 text-sm text-slate-400 dark:text-slate-500">
+                    <div className="relative bg-card px-2 text-sm text-muted-foreground">
                       OR
                     </div>
                   </div>
                   <Button
                     onClick={handleCreateAccount}
                     variant="outline"
-                    className="h-12 w-full rounded-lg border border-slate-300 bg-white px-6 text-base font-medium text-[#111418] transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:border-slate-700 dark:bg-[#2a2a2a] dark:text-white dark:hover:bg-slate-700/50 dark:focus:ring-offset-[#1A1A1A] dark:focus:ring-slate-500"
+                    className="h-12 w-full rounded-lg border border-input bg-background px-6 text-base font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
                     Create Account
                   </Button>
@@ -264,7 +264,7 @@ export default function JoinAlignmentClient({
         </Card>
 
         {/* Info Text */}
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           By joining, you&apos;ll think through this decision independently, then collaborate to discover solutions together.
         </p>
       </div>
