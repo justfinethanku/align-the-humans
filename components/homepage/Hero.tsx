@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 export function Hero() {
   return (
-    <section className="relative flex w-full items-center justify-center overflow-hidden px-4 py-16 sm:px-6 lg:px-8">
+    <section className="relative flex w-full items-center justify-center overflow-hidden px-4 pb-16 pt-32 sm:px-6 lg:px-8">
       {/* Restrained cinematic depth */}
       <div
         className="pointer-events-none absolute inset-0 bg-radial-spotlight opacity-30 dark:opacity-50"
@@ -56,11 +56,11 @@ export function Hero() {
                 className="aspect-video w-full object-cover"
               />
               <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-l from-background via-background/20 to-transparent"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-l from-background/50 via-background/10 to-transparent"
                 aria-hidden="true"
               />
               <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent lg:from-transparent"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-transparent lg:from-transparent"
                 aria-hidden="true"
               />
             </div>

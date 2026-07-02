@@ -16,11 +16,11 @@ export function ProblemSection() {
                 className="aspect-video w-full object-cover"
               />
               <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-sky-950/30 via-transparent to-slate-900/20 dark:from-sky-950/40 dark:to-slate-900/30"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-sky-950/15 via-transparent to-slate-900/10 dark:from-sky-950/25 dark:to-slate-900/15"
                 aria-hidden="true"
               />
               <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/25 via-transparent to-transparent"
                 aria-hidden="true"
               />
             </div>
