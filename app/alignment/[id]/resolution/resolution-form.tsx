@@ -12,22 +12,32 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
+import { Lightbulb, TrendingUp, Loader2, AlertCircle, Flag } from 'lucide-react';
 import type { ConflictItem } from '@/app/lib/types';
 
 interface ResolutionFormProps {
   alignmentId: string;
   conflicts: ConflictItem[];
   currentRound: number;
+  maxRounds: number;
   partnerName: string;
   hasUserSubmitted: boolean;
   hasPartnerSubmitted: boolean;
+  /**
+   * True when both partners have submitted resolutions for the round that
+   * equals maxRounds, and no further resolution round will be started
+   * (see app/api/alignment/[id]/submit-resolution/route.ts). This is a
+   * terminal-ish state -- the alignment stays in 'resolving' status but the
+   * AI-mediated loop will not run again for it.
+   */
+  maxRoundsReached?: boolean;
 }
 
 interface ConflictResolution {
@@ -47,9 +57,11 @@ export function ResolutionForm({
   alignmentId,
   conflicts,
   currentRound,
+  maxRounds,
   partnerName,
   hasUserSubmitted,
   hasPartnerSubmitted,
+  maxRoundsReached = false,
 }: ResolutionFormProps) {
   const router = useRouter();
   const [resolutions, setResolutions] = useState<Record<string, ConflictResolution>>({});
@@ -283,11 +295,20 @@ export function ResolutionForm({
         throw new Error(errorData.error?.message || 'Failed to submit resolutions');
       }
 
+      const result = await response.json();
+      const capped = Boolean(result?.data?.maxRoundsReached);
+
       // Clear saved draft on successful submit
       try { localStorage.removeItem(storageKey); } catch {}
 
-      // Redirect based on partner status
-      if (hasPartnerSubmitted) {
+      // Redirect based on outcome
+      if (capped) {
+        // Max resolution rounds reached -- no re-analysis will run. Refresh
+        // this same route so the server component re-fetches alignment
+        // state and re-renders in the terminal state (router.push() to the
+        // same URL can serve a stale cached RSC payload instead).
+        router.refresh();
+      } else if (hasPartnerSubmitted) {
         // Both submitted, trigger re-analysis
         router.push(`/alignment/${alignmentId}/analysis?reanalyze=true`);
       } else {
@@ -314,12 +335,57 @@ export function ResolutionForm({
     }
   };
 
+  // If the round cap has been reached, this is a terminal-ish state: the
+  // analyze <-> resolve loop will not run again for this alignment.
+  // Surface clear options instead of letting the UI imply another round is
+  // coming.
+  if (maxRoundsReached) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-6 py-12">
+        <Badge variant="destructive" className="px-4 py-2 text-base">
+          Round {currentRound} of {maxRounds}
+        </Badge>
+        <Flag className="h-10 w-10 text-muted-foreground" />
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Maximum Resolution Rounds Reached
+        </h1>
+        <p className="max-w-2xl text-center text-lg text-muted-foreground">
+          You and {partnerName} have gone through {maxRounds} rounds of AI-mediated
+          resolution without reaching full agreement on every point. Another automated
+          round is unlikely to change the outcome, so from here you have two options:
+        </p>
+        <ul className="max-w-xl list-disc space-y-2 pl-6 text-left text-muted-foreground">
+          <li>
+            Review the areas you have already aligned on, and work through the
+            remaining conflicts directly with {partnerName} (or a mediator) outside
+            the app.
+          </li>
+          <li>
+            Start a brand new alignment if your circumstances or positions have
+            changed.
+          </li>
+        </ul>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Button asChild size="lg">
+            <Link href={`/alignment/${alignmentId}/analysis`}>Review Analysis</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/alignment/new">Start a New Alignment</Link>
+          </Button>
+          <Button onClick={() => router.push('/dashboard')} variant="ghost">
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // If already submitted, show waiting state
   if (hasUserSubmitted) {
     return (
       <div className="flex flex-col items-center justify-center space-y-6 py-12">
         <Badge variant="default" className="px-4 py-2 text-base">
-          Round {currentRound}
+          Round {currentRound} of {maxRounds}
         </Badge>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           Waiting for {partnerName}
@@ -340,7 +406,7 @@ export function ResolutionForm({
       {/* Header */}
       <div className="text-center space-y-4">
         <Badge variant="default" className="px-4 py-2 text-base">
-          Round {currentRound}
+          Round {currentRound} of {maxRounds}
         </Badge>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           Resolve Conflicts

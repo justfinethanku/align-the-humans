@@ -18,6 +18,21 @@ export type LoginState = {
 };
 
 /**
+ * Validates that a redirect destination is a same-site relative path.
+ * Rejects protocol-relative ("//evil.com") and backslash-prefixed
+ * ("/\evil.com") values, both of which some browsers/routers will treat
+ * as absolute/external even though they start with a single "/".
+ */
+function isSafeRedirectPath(dest: string | null | undefined): dest is string {
+  return (
+    !!dest &&
+    dest.startsWith('/') &&
+    !dest.startsWith('//') &&
+    !dest.startsWith('/\\')
+  );
+}
+
+/**
  * Server action to handle user login
  * @param prevState Previous form state
  * @param formData Form data containing email and password
@@ -89,7 +104,7 @@ export async function loginAction(
 
     // Success - redirect to original destination or dashboard
     // Note: redirect() throws, so this won't return
-    const destination = redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard';
+    const destination = isSafeRedirectPath(redirectTo) ? redirectTo : '/dashboard';
     redirect(destination);
   } catch (error) {
     // Catch redirect throws and rethrow
@@ -128,8 +143,9 @@ export async function forgotPasswordAction(
 
     // Create Supabase client and send reset email
     const supabase = createServerClient();
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/reset-password`,
+      redirectTo: `${appUrl}/auth/callback?next=/auth/reset-password`,
     });
 
     if (error) {

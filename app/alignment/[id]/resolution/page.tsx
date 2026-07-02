@@ -14,6 +14,7 @@ import { redirect } from 'next/navigation';
 import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getAlignmentDetail, getAnalysis, isParticipant } from '@/app/lib/db-helpers';
 import { ResolutionForm } from './resolution-form';
+import { MAX_RESOLUTION_ROUNDS } from '@/app/lib/resolution-config';
 import type { ConflictItem } from '@/app/lib/types';
 
 interface ResolutionPageProps {
@@ -101,10 +102,33 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
   const partnerName = partnerProfile?.display_name || 'Your partner';
 
   // 8. Check if user has already submitted resolution for this round
-  const hasUserSubmitted = alignment.user_response?.submitted_at !== null;
-  const hasPartnerSubmitted = alignment.partner_response?.submitted_at !== null;
+  //
+  // NOTE: `!== null` here is deliberately NOT used -- `alignment.user_response`
+  // and `alignment.partner_response` are `undefined` (not `null`) whenever no
+  // response row exists yet for this round (see getAlignmentDetail() in
+  // app/lib/db-helpers.ts, which does `userResponse || undefined`). Since
+  // `undefined !== null` is `true` in JS, a naive `!== null` check would make
+  // both flags incorrectly evaluate to `true` on every fresh round before
+  // anyone has submitted anything -- which would immediately show the
+  // "waiting for partner" screen instead of the resolution form, and would
+  // make the round-cap detection below misfire after only one partner
+  // submits. Boolean(...) correctly treats "no response row yet" as false.
+  const hasUserSubmitted = Boolean(alignment.user_response?.submitted_at);
+  const hasPartnerSubmitted = Boolean(alignment.partner_response?.submitted_at);
 
-  // 9. Render resolution form
+  // 9. Detect the round-cap terminal state.
+  // submit-resolution/route.ts never transitions status to 'analyzing' once
+  // both partners have submitted at MAX_RESOLUTION_ROUNDS -- it leaves
+  // current_round and status untouched. So reaching this page with status
+  // still 'resolving', current_round already at the cap, and both partners
+  // submitted for that round is the durable, derivable signal that this
+  // alignment has exhausted its resolution rounds.
+  const maxRoundsReached =
+    hasUserSubmitted &&
+    hasPartnerSubmitted &&
+    alignment.current_round >= MAX_RESOLUTION_ROUNDS;
+
+  // 10. Render resolution form
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12 md:px-6">
@@ -112,9 +136,11 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
           alignmentId={alignmentId}
           conflicts={conflicts}
           currentRound={alignment.current_round}
+          maxRounds={MAX_RESOLUTION_ROUNDS}
           partnerName={partnerName}
           hasUserSubmitted={hasUserSubmitted}
           hasPartnerSubmitted={hasPartnerSubmitted}
+          maxRoundsReached={maxRoundsReached}
         />
       </div>
     </div>

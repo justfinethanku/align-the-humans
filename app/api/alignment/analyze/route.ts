@@ -23,7 +23,8 @@ import { models, AI_MODELS, resolveModel } from '@/app/lib/ai-config';
 import { getPrompt } from '@/app/lib/prompts';
 import { createServerClient, createAdminClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, updateAlignmentStatus, isParticipant } from '@/app/lib/db-helpers';
-import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
+import { AlignmentError, ValidationError, RateLimitError, createErrorResponse } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { sendAnalysisCompleteEmail } from '@/app/lib/email-service';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import type { AlignmentResponse } from '@/app/lib/types';
@@ -96,11 +97,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Parse and validate request body
+    // 2. Rate limit (heavy AI operation): ~10/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.analyze'),
+      { limit: 10, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many analysis requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
+
+    // 3. Parse and validate request body
     const body = await request.json();
     const { alignmentId, round } = analyzeRequestSchema.parse(body);
 
-    // 3. Verify user is a participant
+    // 4. Verify user is a participant
     const isUserParticipant = await isParticipant(supabase, alignmentId, user.id);
     if (!isUserParticipant) {
       throw AlignmentError.unauthorized(alignmentId, user.id);

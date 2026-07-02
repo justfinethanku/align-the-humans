@@ -19,8 +19,10 @@ import {
   ValidationError,
   AIError,
   AlignmentError,
+  RateLimitError,
   logError
 } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { z } from 'zod';
 
 // ============================================================================
@@ -220,6 +222,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // 1. Authenticate user
     const user = await requireAuth(supabase);
+
+    // 1b. Rate limit (heavy AI operation): ~10/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.generate-document'),
+      { limit: 10, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many document generation requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
 
     // 2. Parse and validate request body
     const body = await request.json();

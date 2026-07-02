@@ -18,13 +18,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import { createErrorResponse, ValidationError, AIError } from '@/app/lib/errors';
+import { createErrorResponse, ValidationError, AIError, AlignmentError, RateLimitError } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 
 // ============================================================================
 // Request/Response Schema
 // ============================================================================
 
 const RequestSchema = z.object({
+  // Optional: not sent by the current ClarityForm caller. When present, we
+  // verify the caller is a participant on that alignment before generating.
+  // When absent, requireAuth() + the per-user rate limit below are the only
+  // guards (this endpoint accepts arbitrary client-supplied context and
+  // doesn't read any specific alignment's data server-side).
+  alignmentId: z.string().uuid('Invalid alignment ID format').optional(),
   section: z.enum(['topic', 'partner', 'outcome']),
   currentValue: z.string().optional(),
   prompt: z.string(),
@@ -123,6 +130,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const user = await requireAuth(supabase);
     userId = user.id;
 
+    // 1b. Rate limit (light AI operation): ~30/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.clarity-suggest'),
+      { limit: 30, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many suggestion requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
+
     // 2. Parse and validate request body
     const body = await request.json();
     const validationResult = RequestSchema.safeParse(body);
@@ -134,7 +152,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { section, currentValue, prompt, alignmentContext } = validationResult.data;
+    const { alignmentId, section, currentValue, prompt, alignmentContext } = validationResult.data;
+
+    // 2b. If the caller references a specific alignment, verify participation
+    if (alignmentId) {
+      const { data: participant, error: participantError } = await supabase
+        .from('alignment_participants')
+        .select('id')
+        .eq('alignment_id', alignmentId)
+        .eq('user_id', userId)
+        .single();
+
+      if (participantError || !participant) {
+        throw AlignmentError.unauthorized(alignmentId, userId);
+      }
+    }
 
     // 3. Log telemetry start
     telemetry.logAIOperation({

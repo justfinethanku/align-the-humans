@@ -18,9 +18,10 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { TemplateQuestion } from '@/app/lib/types';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import { createErrorResponse, ValidationError, AIError, AlignmentError } from '@/app/lib/errors';
+import { createErrorResponse, ValidationError, AIError, AlignmentError, RateLimitError } from '@/app/lib/errors';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { isParticipant } from '@/app/lib/db-helpers';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 
 // ============================================================================
 // Request/Response Schema
@@ -178,6 +179,17 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Authenticate user
     const user = await requireAuth(supabase);
     telemetryUserId = user.id;
+
+    // Rate limit (light AI operation): ~30/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.get-suggestion'),
+      { limit: 30, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many suggestion requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
 
     // Parse and validate request body
     const body = await request.json();

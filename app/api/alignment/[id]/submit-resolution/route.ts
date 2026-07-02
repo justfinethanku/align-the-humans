@@ -16,6 +16,7 @@ import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { saveResponse, submitResponse, isParticipant, getRoundResponses, updateAlignmentStatus } from '@/app/lib/db-helpers';
 import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
+import { MAX_RESOLUTION_ROUNDS } from '@/app/lib/resolution-config';
 import type { ResponseAnswers } from '@/app/lib/types';
 
 // ============================================================================
@@ -191,9 +192,21 @@ export async function POST(
 
     const bothSubmitted = roundResponses && roundResponses.length >= 2;
 
-    // 11. If both submitted, increment round and stay in resolving status
-    // The analysis page will handle triggering re-analysis
-    if (bothSubmitted) {
+    // 11. If both submitted and the round cap has not been reached, increment
+    // round and stay in resolving status. The analysis page will handle
+    // triggering re-analysis.
+    //
+    // If both submitted but this round is already at MAX_RESOLUTION_ROUNDS,
+    // do NOT start another round: leave current_round and status untouched
+    // (status stays 'resolving', current_round stays at the cap). This is
+    // the authoritative circuit breaker for the analyze <-> resolve loop --
+    // combined with getAlignmentDetail()/getRoundResponses(), "current_round
+    // === MAX_RESOLUTION_ROUNDS and both partners have submitted" is the
+    // durable signal the UI uses to detect this terminal state, without
+    // requiring a new alignments status value or schema change.
+    const maxRoundsReached = round >= MAX_RESOLUTION_ROUNDS;
+
+    if (bothSubmitted && !maxRoundsReached) {
       const { error: incrementError } = await supabase
         .from('alignments')
         .update({ current_round: round + 1 })
@@ -222,7 +235,20 @@ export async function POST(
           context: { alignmentId, round, statusUpdateError },
         });
       }
+    } else if (bothSubmitted && maxRoundsReached) {
+      telemetry.log(
+        'alignment.status.changed' as any,
+        user.id,
+        {
+          alignmentId,
+          action: 'resolution.max_rounds_reached',
+          round,
+          maxRounds: MAX_RESOLUTION_ROUNDS,
+        }
+      );
     }
+
+    const cappedOut = bothSubmitted && maxRoundsReached;
 
     // 12. Log successful completion
     const latencyMs = timer.stop();
@@ -234,6 +260,7 @@ export async function POST(
         latencyMs,
         action: 'resolution.submit.complete',
         bothSubmitted,
+        cappedOut,
       }
     );
 
@@ -242,10 +269,15 @@ export async function POST(
       data: {
         success: true,
         bothSubmitted,
-        nextRound: bothSubmitted ? round + 1 : round,
-        message: bothSubmitted
-          ? 'Both resolutions submitted. Ready for re-analysis.'
-          : 'Your resolutions submitted. Waiting for partner.',
+        maxRoundsReached: cappedOut,
+        currentRound: round,
+        maxRounds: MAX_RESOLUTION_ROUNDS,
+        nextRound: bothSubmitted && !cappedOut ? round + 1 : round,
+        message: cappedOut
+          ? `You've reached the maximum number of resolution rounds (${MAX_RESOLUTION_ROUNDS}). This alignment needs manual resolution -- review your current areas of agreement or start a new alignment.`
+          : bothSubmitted
+            ? 'Both resolutions submitted. Ready for re-analysis.'
+            : 'Your resolutions submitted. Waiting for partner.',
       },
     }, { status: 200 });
 

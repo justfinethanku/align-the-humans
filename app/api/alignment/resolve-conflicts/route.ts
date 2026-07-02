@@ -18,8 +18,10 @@ import {
   createErrorResponse,
   ValidationError,
   AlignmentError,
-  AIError
+  AIError,
+  RateLimitError
 } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 
 // ============================================================================
@@ -127,6 +129,17 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Authenticate user
     const user = await requireAuth(supabase);
+
+    // 1b. Rate limit (heavy AI operation): ~10/min/user
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.resolve-conflicts'),
+      { limit: 10, windowMs: 60_000 }
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many resolution requests. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
 
     // 2. Parse and validate request body
     const body = await request.json();

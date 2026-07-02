@@ -38,7 +38,10 @@ next-env.d.ts
 
 # supabase
 .supabase
-supabase/
+supabase/*
+!supabase/migrations/
+supabase/migrations/.gitkeep
+!supabase/migrations/*.sql
 
 # Context folder (contains sensitive documentation and credentials)
 context/
@@ -53,3 +56,6 @@ test-scripts/
 test-results/
 playwright-report/
 playwright/.cache/
+
+# local claude settings
+.claude/settings.local.json

@@ -146,6 +146,18 @@ export class AlignmentError extends AppError {
 }
 
 /**
+ * Rate limiting errors
+ */
+export class RateLimitError extends AppError {
+  constructor(
+    message: string = 'Too many requests. Please try again later.',
+    details?: Record<string, unknown>
+  ) {
+    super(message, 'RATE_LIMIT', 429, details);
+  }
+}
+
+/**
  * Database operation errors
  */
 export class DatabaseError extends AppError {

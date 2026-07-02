@@ -10,14 +10,24 @@
  *   Authentication → Hooks → Send Email → HTTP endpoint
  *   URL: https://alignthehumans.com/api/auth/email
  *
- * Supabase Auth Hooks send a signed JWT in the request body.
- * The hook secret format is: v1,whsec_<base64-secret>
- * We verify the JWT signature using the whsec_ portion.
+ * Supabase Auth Hooks send the raw JSON payload in the request body and
+ * sign it via the `x-supabase-webhook-signature` header (HMAC-SHA256,
+ * base64-encoded, computed over the raw body using the `whsec_` secret
+ * portion of SUPABASE_AUTH_HOOK_SECRET). Verify this header format against
+ * current Supabase Auth Hooks docs before changing the verification method.
+ *
+ * SECURITY: Signature verification is mandatory. If SUPABASE_AUTH_HOOK_SECRET
+ * is configured, a request with a missing or invalid signature is rejected
+ * (401). If SUPABASE_AUTH_HOOK_SECRET is not configured at all, the endpoint
+ * fails closed in production (500) rather than silently accepting unsigned
+ * payloads — this endpoint can send email as Human Alignment's Resend
+ * account to any address an attacker supplies, so it must never process an
+ * unverified request in production.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { render } from '@react-email/components';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { getResendClient, FROM_EMAIL, getAppUrl } from '@/app/lib/resend';
 import { AuthConfirmEmail } from '@/app/lib/emails/auth-confirm';
 import { PasswordResetEmail } from '@/app/lib/emails/password-reset';
@@ -40,68 +50,127 @@ function getSigningSecret(): Buffer | null {
   return Buffer.from(base64Secret, 'base64');
 }
 
+type VerifyResult =
+  | { verified: true; payload: any }
+  | { verified: false; status: number; message: string };
+
 /**
- * Verify the Supabase Auth Hook JWT signature.
- * Supabase signs the payload as a compact JWS (HS256).
+ * Verifies the Supabase Auth Hook webhook signature and parses the payload.
+ * Fails closed: any missing/misconfigured secret or missing/invalid
+ * signature results in `verified: false` rather than falling through to a
+ * "verified" state.
  */
-function verifySupabaseHookPayload(rawBody: string): { verified: boolean; payload: any } {
+function verifySupabaseHookPayload(
+  rawBody: string,
+  signatureHeader: string | null
+): VerifyResult {
   const signingSecret = getSigningSecret();
 
-  // If no secret configured, skip verification (dev mode)
   if (!signingSecret) {
+    // No secret configured at all. Only acceptable outside production
+    // (local dev convenience). In production this must fail closed.
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        verified: false,
+        status: 500,
+        message: 'webhook secret not configured',
+      };
+    }
+
     try {
       return { verified: true, payload: JSON.parse(rawBody) };
     } catch {
-      return { verified: false, payload: null };
+      return { verified: false, status: 400, message: 'Invalid JSON payload' };
     }
   }
 
-  try {
-    // The raw body IS the payload directly (not a JWT) for HTTP hooks
-    // Supabase sends the payload in the body and signs it via the
-    // x-supabase-webhook-signature header
-    const payload = JSON.parse(rawBody);
-    return { verified: true, payload };
-  } catch {
-    return { verified: false, payload: null };
+  // A secret IS configured — the signature header is mandatory. Missing
+  // header must NOT be treated as verified.
+  if (!signatureHeader) {
+    return {
+      verified: false,
+      status: 401,
+      message: 'Missing webhook signature',
+    };
   }
+
+  const hmac = createHmac('sha256', signingSecret);
+  hmac.update(rawBody);
+  const expectedSignature = hmac.digest('base64');
+
+  const providedBuf = Buffer.from(signatureHeader);
+  const expectedBuf = Buffer.from(expectedSignature);
+  const signaturesMatch =
+    providedBuf.length === expectedBuf.length &&
+    timingSafeEqual(providedBuf, expectedBuf);
+
+  if (!signaturesMatch) {
+    return { verified: false, status: 401, message: 'Invalid signature' };
+  }
+
+  try {
+    return { verified: true, payload: JSON.parse(rawBody) };
+  } catch {
+    return { verified: false, status: 400, message: 'Invalid JSON payload' };
+  }
+}
+
+/**
+ * Ensures a redirect target is same-site before it's embedded into an
+ * outbound email link. Accepts relative paths (single leading "/") or
+ * absolute https URLs whose host matches NEXT_PUBLIC_APP_URL. Anything else
+ * (off-site hosts, protocol-relative "//" URLs, backslash-prefixed paths,
+ * non-https schemes) is dropped in favor of a safe default.
+ */
+function sanitizeRedirectTo(redirectTo: unknown, appUrl: string): string {
+  const fallback = `${appUrl}/dashboard`;
+
+  if (typeof redirectTo !== 'string' || redirectTo.length === 0) {
+    return fallback;
+  }
+
+  // Relative path — but reject protocol-relative "//host" values and
+  // backslash-prefixed values ("/\evil.com"), both of which browsers'
+  // URL parsers treat as protocol-relative/absolute for special schemes
+  // even though they start with a single "/".
+  if (
+    redirectTo.startsWith('/') &&
+    !redirectTo.startsWith('//') &&
+    !redirectTo.startsWith('/\\')
+  ) {
+    return redirectTo;
+  }
+
+  try {
+    const target = new URL(redirectTo);
+    const allowed = new URL(appUrl);
+    if (target.protocol === 'https:' && target.host === allowed.host) {
+      return redirectTo;
+    }
+  } catch {
+    // Not a parseable absolute URL — fall through to default below.
+  }
+
+  console.warn('[Auth Email] Rejected off-site redirect_to:', redirectTo);
+  return fallback;
 }
 
 export async function POST(request: NextRequest) {
   try {
     // Read raw body for signature verification
     const rawBody = await request.text();
+    const signatureHeader = request.headers.get('x-supabase-webhook-signature');
 
-    // Verify webhook signature
-    const signingSecret = getSigningSecret();
-    if (signingSecret) {
-      const signature = request.headers.get('x-supabase-webhook-signature');
-      if (signature) {
-        // Verify HMAC signature
-        const hmac = createHmac('sha256', signingSecret);
-        hmac.update(rawBody);
-        const expectedSignature = hmac.digest('base64');
-
-        if (signature !== expectedSignature) {
-          console.error('[Auth Email] Webhook signature mismatch');
-          return NextResponse.json(
-            { error: 'Invalid signature' },
-            { status: 401 }
-          );
-        }
-      }
-    }
-
-    // Parse the payload
-    let payload: any;
-    try {
-      payload = JSON.parse(rawBody);
-    } catch {
+    const verifyResult = verifySupabaseHookPayload(rawBody, signatureHeader);
+    if (!verifyResult.verified) {
+      console.error(`[Auth Email] Verification failed: ${verifyResult.message}`);
       return NextResponse.json(
-        { error: 'Invalid JSON payload' },
-        { status: 400 }
+        { error: verifyResult.message },
+        { status: verifyResult.status }
       );
     }
+
+    const payload = verifyResult.payload;
 
     const { user, email_data } = payload;
 
@@ -119,7 +188,7 @@ export async function POST(request: NextRequest) {
     // Build the confirmation/action URL
     // Supabase provides token_hash for PKCE flow
     const tokenHash = email_data.token_hash;
-    const redirectTo = email_data.redirect_to || `${appUrl}/dashboard`;
+    const redirectTo = sanitizeRedirectTo(email_data.redirect_to, appUrl);
     const emailActionType = email_data.email_action_type;
 
     let subject: string;
