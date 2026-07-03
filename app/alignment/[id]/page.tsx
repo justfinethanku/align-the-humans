@@ -38,6 +38,11 @@ export default async function AlignmentDetailPage({ params }: PageProps) {
     case 'draft':
       redirect(`/alignment/${id}/clarity`);
     case 'active':
+      // A user who already submitted must not be sent back into the
+      // questionnaire (answers would be editable post-submit).
+      if (alignment.user_response?.submitted_at) {
+        redirect(`/alignment/${id}/waiting`);
+      }
       redirect(`/alignment/${id}/questions`);
     case 'analyzing':
       redirect(`/alignment/${id}/analysis`);

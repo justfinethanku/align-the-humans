@@ -6,7 +6,7 @@
  *
  * Security model:
  * - Tokens are 32 bytes (256 bits) of random data
- * - Tokens are base64url encoded (64 characters, URL-safe)
+ * - Tokens are base64url encoded (43 characters, URL-safe)
  * - Only SHA-256 hashes are stored in database
  * - Raw tokens are only exposed once at generation time
  */
@@ -16,7 +16,7 @@ import crypto from 'crypto';
 /**
  * Generates a cryptographically secure random token
  *
- * @returns 64-character base64url-encoded token (256 bits of entropy)
+ * @returns 43-character base64url-encoded token (256 bits of entropy)
  *
  * @example
  * const token = generateToken();
@@ -42,7 +42,11 @@ export function hashToken(token: string): string {
 }
 
 /**
- * Validates token format (64 characters, base64url)
+ * Validates token format (43 characters, base64url)
+ *
+ * 32 random bytes encode to exactly 43 unpadded base64url characters.
+ * The previous 64-character pattern rejected every token generateToken()
+ * ever produced, so no freshly generated invite link could be redeemed.
  *
  * @param token - Token to validate
  * @returns true if token has valid format
@@ -52,8 +56,8 @@ export function hashToken(token: string): string {
  * isValidTokenFormat(generateToken()) // => true
  */
 export function isValidTokenFormat(token: string): boolean {
-  // Must be exactly 64 characters and contain only base64url characters
-  return /^[A-Za-z0-9_-]{64}$/.test(token);
+  // Must be exactly 43 characters and contain only base64url characters
+  return /^[A-Za-z0-9_-]{43}$/.test(token);
 }
 
 /**

@@ -67,7 +67,9 @@ export function useDashboardData(): UseDashboardDataReturn {
 
   const fetchAlignments = useCallback(async () => {
     try {
-      setLoading(true);
+      // No setLoading(true) here: refetches (e.g. from realtime events)
+      // must not blank the already-rendered list. `loading` starts true
+      // and only ever flips false.
       setError(null);
 
       const supabase = createClient();

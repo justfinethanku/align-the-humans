@@ -312,8 +312,10 @@ export function ResolutionForm({
         // Both submitted, trigger re-analysis
         router.push(`/alignment/${alignmentId}/analysis?reanalyze=true`);
       } else {
-        // Waiting for partner
-        router.push(`/alignment/${alignmentId}/analysis?waiting=true`);
+        // Waiting for partner: stay on the resolution route and refresh so
+        // the server re-renders the submitted/waiting state here. Pushing to
+        // /analysis just showed the stale report (the page ignores ?waiting).
+        router.refresh();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit resolutions');
