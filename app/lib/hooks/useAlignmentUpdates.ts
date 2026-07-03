@@ -102,6 +102,14 @@ export function useAlignmentUpdates(
   const channelRef = useRef<RealtimeChannel | null>(null);
   const supabaseRef = useRef(createClient());
 
+  // Keep event callbacks in a ref so callers can pass inline functions
+  // without tearing down and recreating the realtime subscription on
+  // every render (subscription churn caused visible dashboard flicker).
+  const callbacksRef = useRef({ onInsert, onUpdate, onDelete, onPartnerJoin });
+  useEffect(() => {
+    callbacksRef.current = { onInsert, onUpdate, onDelete, onPartnerJoin };
+  });
+
   const disconnect = useCallback(() => {
     if (channelRef.current) {
       supabaseRef.current.removeChannel(channelRef.current);
@@ -169,7 +177,7 @@ export function useAlignmentUpdates(
             (payload) => {
               if (!mounted) return;
               const newRecord = payload.new as AlignmentRow;
-              onInsert?.(newRecord);
+              callbacksRef.current.onInsert?.(newRecord);
             }
           )
           .on(
@@ -183,7 +191,7 @@ export function useAlignmentUpdates(
             (payload) => {
               if (!mounted) return;
               const updatedRecord = payload.new as AlignmentRow;
-              onUpdate?.(updatedRecord);
+              callbacksRef.current.onUpdate?.(updatedRecord);
             }
           )
           .on(
@@ -197,12 +205,12 @@ export function useAlignmentUpdates(
             (payload) => {
               if (!mounted) return;
               const deletedRecord = payload.old as AlignmentRow;
-              onDelete?.(deletedRecord);
+              callbacksRef.current.onDelete?.(deletedRecord);
             }
           );
 
         // Subscribe to alignment_participants table changes (for partner join notifications)
-        if (alignmentId && onPartnerJoin) {
+        if (alignmentId) {
           channel.on(
             'postgres_changes',
             {
@@ -217,7 +225,7 @@ export function useAlignmentUpdates(
 
               // Only trigger callback for partner role (not owner)
               if (newParticipant.role === 'partner') {
-                onPartnerJoin(newParticipant);
+                callbacksRef.current.onPartnerJoin?.(newParticipant);
               }
             }
           );
@@ -257,7 +265,7 @@ export function useAlignmentUpdates(
       mounted = false;
       disconnect();
     };
-  }, [enabled, alignmentId, onInsert, onUpdate, onDelete, onPartnerJoin, disconnect]);
+  }, [enabled, alignmentId, disconnect]);
 
   return {
     connected,

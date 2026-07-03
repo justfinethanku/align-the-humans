@@ -82,15 +82,14 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
   } = usePartners();
 
   // Subscribe to real-time alignment updates
+  const handleAlignmentChange = React.useCallback(() => {
+    refetchAlignments();
+  }, [refetchAlignments]);
+
   useAlignmentUpdates({
     enabled: true,
-    onUpdate: () => {
-      // Refresh alignments when an update is received
-      refetchAlignments();
-    },
-    onInsert: () => {
-      refetchAlignments();
-    },
+    onUpdate: handleAlignmentChange,
+    onInsert: handleAlignmentChange,
   });
 
   // Transform partners data to match PartnerWithDetails interface

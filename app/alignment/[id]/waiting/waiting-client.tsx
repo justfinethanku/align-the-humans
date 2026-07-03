@@ -34,22 +34,31 @@ export function WaitingClient({
   const [partnerSubmitted, setPartnerSubmitted] = useState(initialPartnerSubmitted);
   const [partnerJoined, setPartnerJoined] = useState(hasPartnerJoined);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  // Three paths can navigate to /analysis (initial state, realtime, poll);
+  // this guard ensures only one of them ever fires the navigation.
+  const navigatedRef = useRef(false);
+
+  const goToAnalysis = useCallback(() => {
+    if (navigatedRef.current) return;
+    navigatedRef.current = true;
+    router.replace(`/alignment/${alignmentId}/analysis`);
+  }, [alignmentId, router]);
 
   // If partner already submitted on load, redirect immediately
   useEffect(() => {
     if (initialPartnerSubmitted) {
-      router.push(`/alignment/${alignmentId}/analysis`);
+      goToAnalysis();
     }
-  }, [initialPartnerSubmitted, alignmentId, router]);
+  }, [initialPartnerSubmitted, goToAnalysis]);
 
   // Realtime subscription for alignment status changes
   const handleUpdate = useCallback(
     (alignment: any) => {
       if (alignment.status === 'analyzing' || alignment.status === 'resolving') {
-        router.push(`/alignment/${alignmentId}/analysis`);
+        goToAnalysis();
       }
     },
-    [alignmentId, router]
+    [goToAnalysis]
   );
 
   const handlePartnerJoin = useCallback(() => {
@@ -77,7 +86,7 @@ export function WaitingClient({
 
       if (responses && responses.length >= 2) {
         setPartnerSubmitted(true);
-        router.push(`/alignment/${alignmentId}/analysis`);
+        goToAnalysis();
       }
 
       // Also check alignment status directly
@@ -92,7 +101,7 @@ export function WaitingClient({
         alignment?.status === 'resolving' ||
         alignment?.status === 'complete'
       ) {
-        router.push(`/alignment/${alignmentId}/analysis`);
+        goToAnalysis();
       }
     };
 
@@ -104,7 +113,7 @@ export function WaitingClient({
       if (pollRef.current) clearInterval(pollRef.current);
       clearTimeout(initialPoll);
     };
-  }, [alignmentId, partnerSubmitted, router]);
+  }, [alignmentId, partnerSubmitted, goToAnalysis]);
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-background to-muted/20">
