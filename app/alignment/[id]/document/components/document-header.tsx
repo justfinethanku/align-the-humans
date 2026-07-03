@@ -33,7 +33,7 @@ export function DocumentHeader({ title, isComplete }: DocumentHeaderProps) {
             </div>
             <p className="text-muted-foreground">
               Below is the executive summary of the key terms agreed upon by the participants.
-              This document is legally binding upon signature.
+              The agreement document is ready for careful review and signature.
             </p>
           </div>
         </div>

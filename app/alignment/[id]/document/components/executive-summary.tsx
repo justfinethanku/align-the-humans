@@ -52,8 +52,8 @@ export function ExecutiveSummary({
           <div className="space-y-3">
             <h3 className="text-lg font-semibold">Key Terms</h3>
             <p className="text-sm text-muted-foreground">
-              This document constitutes the full and final agreement between the participants listed above.
-              Please review all sections carefully before providing your digital signature.
+              This summary highlights the terms captured in the agreement below.
+              Please review all sections carefully before confirming your digital signature.
             </p>
             <ul className="space-y-2 mt-4">
               {keyTerms.map((term, index) => (

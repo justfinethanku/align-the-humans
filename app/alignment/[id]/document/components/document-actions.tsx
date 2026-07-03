@@ -13,11 +13,13 @@ import { Download, Share2, Check, Loader2 } from 'lucide-react';
 interface DocumentActionsProps {
   alignmentId: string;
   alignmentTitle: string;
+  exportElementId?: string;
 }
 
 export function DocumentActions({
   alignmentId,
-  alignmentTitle
+  alignmentTitle,
+  exportElementId
 }: DocumentActionsProps) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -25,7 +27,7 @@ export function DocumentActions({
   async function handleDownload() {
     try {
       setDownloading(true);
-      const content = document.getElementById('alignment-document');
+      const content = document.getElementById(exportElementId ?? 'alignment-document-export');
       if (!content) {
         throw new Error('Unable to locate document content for export.');
       }

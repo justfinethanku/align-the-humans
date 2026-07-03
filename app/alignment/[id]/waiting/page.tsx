@@ -76,6 +76,7 @@ export default async function WaitingPage({ params }: PageProps) {
       partnerName={partnerName}
       initialPartnerSubmitted={partnerHasSubmitted}
       hasPartnerJoined={!!partnerParticipant}
+      isCreator={alignment.created_by === user.id}
     />
   );
 }

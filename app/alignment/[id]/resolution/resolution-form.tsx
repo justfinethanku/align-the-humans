@@ -13,14 +13,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@/app/lib/supabase-browser';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, TrendingUp, Loader2, AlertCircle, Flag } from 'lucide-react';
-import type { ConflictItem } from '@/app/lib/types';
+import { Lightbulb, TrendingUp, Loader2, AlertCircle, Flag, RefreshCw } from 'lucide-react';
+import type { AlignmentStatus, ConflictItem } from '@/app/lib/types';
 
 interface ResolutionFormProps {
   alignmentId: string;
@@ -28,6 +29,8 @@ interface ResolutionFormProps {
   currentRound: number;
   maxRounds: number;
   partnerName: string;
+  alignmentStatus: AlignmentStatus;
+  isCurrentUserPersonA: boolean;
   hasUserSubmitted: boolean;
   hasPartnerSubmitted: boolean;
   /**
@@ -42,7 +45,7 @@ interface ResolutionFormProps {
 
 interface ConflictResolution {
   conflict_id: string;
-  resolution_type: 'ai_suggestion' | 'accept_own' | 'accept_partner' | 'custom';
+  resolution_type?: 'ai_suggestion' | 'accept_own' | 'accept_partner' | 'custom';
   selected_option?: string;
   custom_solution?: string;
 }
@@ -59,6 +62,8 @@ export function ResolutionForm({
   currentRound,
   maxRounds,
   partnerName,
+  alignmentStatus,
+  isCurrentUserPersonA,
   hasUserSubmitted,
   hasPartnerSubmitted,
   maxRoundsReached = false,
@@ -70,9 +75,62 @@ export function ResolutionForm({
   const [loadingAI, setLoadingAI] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
 
   const currentConflict = conflicts[currentConflictIndex];
   const storageKey = `resolution-draft-${alignmentId}-${currentRound}`;
+
+  const getConflictPositions = useCallback(
+    (conflict: ConflictItem) => ({
+      yourPosition: isCurrentUserPersonA ? conflict.user1_response : conflict.user2_response,
+      partnerPosition: isCurrentUserPersonA ? conflict.user2_response : conflict.user1_response,
+    }),
+    [isCurrentUserPersonA]
+  );
+
+  const isResolutionComplete = useCallback((resolution?: ConflictResolution) => {
+    if (!resolution?.resolution_type) return false;
+
+    if (resolution.resolution_type === 'ai_suggestion') {
+      return Boolean(resolution.selected_option?.trim());
+    }
+
+    if (resolution.resolution_type === 'custom') {
+      return Boolean(resolution.custom_solution?.trim());
+    }
+
+    return true;
+  }, []);
+
+  const checkForResolutionUpdate = useCallback(async () => {
+    setCheckingUpdates(true);
+
+    try {
+      const supabase = createClient();
+      const { data: alignment, error: alignmentError } = await supabase
+        .from('alignments')
+        .select('status, current_round')
+        .eq('id', alignmentId)
+        .single();
+
+      if (alignmentError || !alignment) {
+        throw alignmentError || new Error('Alignment not found');
+      }
+
+      if (alignment.current_round > currentRound) {
+        router.push(`/alignment/${alignmentId}/analysis`);
+        return;
+      }
+
+      if (alignment.status !== alignmentStatus) {
+        router.refresh();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to check for updates');
+    } finally {
+      setCheckingUpdates(false);
+    }
+  }, [alignmentId, alignmentStatus, currentRound, router]);
 
   // Load saved resolutions from localStorage, or initialize fresh
   useEffect(() => {
@@ -83,7 +141,7 @@ export function ResolutionForm({
         if (parsed.resolutions && typeof parsed.resolutions === 'object') {
           setResolutions(parsed.resolutions);
           if (typeof parsed.currentIndex === 'number') {
-            setCurrentConflictIndex(parsed.currentIndex);
+            setCurrentConflictIndex(Math.min(parsed.currentIndex, conflicts.length - 1));
           }
           return;
         }
@@ -96,11 +154,22 @@ export function ResolutionForm({
     conflicts.forEach(conflict => {
       initialResolutions[conflict.question_id] = {
         conflict_id: conflict.question_id,
-        resolution_type: 'ai_suggestion',
+        resolution_type: conflict.suggested_resolution ? 'ai_suggestion' : undefined,
+        selected_option: conflict.suggested_resolution ? 'suggestion_0' : undefined,
       };
     });
     setResolutions(initialResolutions);
   }, [conflicts, storageKey]);
+
+  useEffect(() => {
+    if (!hasUserSubmitted || hasPartnerSubmitted || maxRoundsReached) return;
+
+    const interval = window.setInterval(() => {
+      void checkForResolutionUpdate();
+    }, 10000);
+
+    return () => window.clearInterval(interval);
+  }, [checkForResolutionUpdate, hasPartnerSubmitted, hasUserSubmitted, maxRoundsReached]);
 
   // Auto-save resolutions to localStorage on change
   const persistDraft = useCallback(() => {
@@ -269,13 +338,12 @@ export function ResolutionForm({
     try {
       // Validate all conflicts have resolutions
       const incompleteResolutions = conflicts.filter(
-        conflict => !resolutions[conflict.question_id] ||
-          (resolutions[conflict.question_id].resolution_type === 'custom' &&
-            !resolutions[conflict.question_id].custom_solution?.trim())
+        conflict => !isResolutionComplete(resolutions[conflict.question_id])
       );
 
       if (incompleteResolutions.length > 0) {
-        setError('Please provide resolutions for all conflicts');
+        setCurrentConflictIndex(conflicts.indexOf(incompleteResolutions[0]));
+        setError('Please select a resolution for every conflict');
         setSubmitting(false);
         return;
       }
@@ -286,7 +354,7 @@ export function ResolutionForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           round: currentRound,
-          resolutions: Object.values(resolutions),
+          resolutions: Object.values(resolutions).filter(isResolutionComplete),
         }),
       });
 
@@ -297,6 +365,7 @@ export function ResolutionForm({
 
       const result = await response.json();
       const capped = Boolean(result?.data?.maxRoundsReached);
+      const bothSubmitted = Boolean(result?.data?.bothSubmitted);
 
       // Clear saved draft on successful submit
       try { localStorage.removeItem(storageKey); } catch {}
@@ -308,9 +377,9 @@ export function ResolutionForm({
         // state and re-renders in the terminal state (router.push() to the
         // same URL can serve a stale cached RSC payload instead).
         router.refresh();
-      } else if (hasPartnerSubmitted) {
+      } else if (bothSubmitted) {
         // Both submitted, trigger re-analysis
-        router.push(`/alignment/${alignmentId}/analysis?reanalyze=true`);
+        router.push(`/alignment/${alignmentId}/analysis`);
       } else {
         // Waiting for partner: stay on the resolution route and refresh so
         // the server re-renders the submitted/waiting state here. Pushing to
@@ -396,12 +465,38 @@ export function ResolutionForm({
           You have submitted your resolutions. Once {partnerName} submits theirs, we will
           re-analyze to see if alignment has been reached.
         </p>
-        <Button onClick={() => router.push('/dashboard')} variant="outline">
-          Return to Dashboard
-        </Button>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {checkingUpdates ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Checking for updates...
+            </>
+          ) : (
+            'Checking for updates every 10 seconds.'
+          )}
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Button
+            onClick={() => void checkForResolutionUpdate()}
+            variant="outline"
+            disabled={checkingUpdates}
+          >
+            {checkingUpdates ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Refresh
+          </Button>
+          <Button onClick={() => router.push('/dashboard')} variant="ghost">
+            Return to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
+
+  const currentPositions = getConflictPositions(currentConflict);
 
   return (
     <div className="space-y-8">
@@ -455,7 +550,7 @@ export function ResolutionForm({
             <CardTitle className="text-lg">Your Position</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{String(currentConflict.user1_response)}</p>
+            <p className="text-muted-foreground">{String(currentPositions.yourPosition)}</p>
           </CardContent>
         </Card>
 
@@ -464,7 +559,7 @@ export function ResolutionForm({
             <CardTitle className="text-lg">{partnerName}&apos;s Position</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{String(currentConflict.user2_response)}</p>
+            <p className="text-muted-foreground">{String(currentPositions.partnerPosition)}</p>
           </CardContent>
         </Card>
       </div>
@@ -479,7 +574,7 @@ export function ResolutionForm({
         </CardHeader>
         <CardContent className="space-y-6">
           <RadioGroup
-            value={resolutions[currentConflict.question_id]?.selected_option || resolutions[currentConflict.question_id]?.resolution_type}
+            value={resolutions[currentConflict.question_id]?.selected_option || resolutions[currentConflict.question_id]?.resolution_type || ''}
             onValueChange={(value) => handleResolutionChange(currentConflict.question_id, value)}
           >
             {/* AI Suggestions */}

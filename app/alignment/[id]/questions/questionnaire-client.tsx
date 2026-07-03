@@ -7,7 +7,7 @@
  * Implements all 6 question types with validation.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlignmentQuestion, ResponseAnswers, AnswerValue, AlignmentStatus } from '@/app/lib/types';
 import { createClient } from '@/app/lib/supabase-browser';
@@ -54,12 +54,10 @@ export function QuestionnaireClient({
   questions,
   existingAnswers,
   alignmentTitle,
-  partnerName,
   currentRound,
-  alignmentStatus,
 }: QuestionnaireClientProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Form state
   const [answers, setAnswers] = useState<{ [questionId: string]: AnswerValue }>(
@@ -69,6 +67,7 @@ export function QuestionnaireClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [errors, setErrors] = useState<{ [questionId: string]: string }>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // AI assistance state
   const [aiAssistance, setAiAssistance] = useState<AIAssistance | null>(null);
@@ -77,6 +76,7 @@ export function QuestionnaireClient({
 
   // Validation
   const [showValidation, setShowValidation] = useState(false);
+  const saveStatusResetTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
@@ -94,7 +94,7 @@ export function QuestionnaireClient({
   /**
    * Auto-save answers to database
    */
-  const saveAnswers = useCallback(async () => {
+  const persistAnswers = useCallback(async (options: { submittedAt?: string } = {}) => {
     try {
       setSaveStatus('saving');
 
@@ -110,16 +110,22 @@ export function QuestionnaireClient({
         },
       };
 
+      const responsePayload: Record<string, unknown> = {
+        alignment_id: alignmentId,
+        user_id: user.id,
+        round: currentRound,
+        answers: responseData as any,
+        metadata: (responseData.metadata || null) as any,
+      };
+
+      if (options.submittedAt) {
+        responsePayload.submitted_at = options.submittedAt;
+      }
+
       const { error } = await supabase
         .from('alignment_responses')
         .upsert(
-          {
-            alignment_id: alignmentId,
-            user_id: user.id,
-            round: currentRound,
-            answers: responseData as any,
-            metadata: (responseData.metadata || null) as any,
-          },
+          responsePayload as any,
           {
             onConflict: 'alignment_id,user_id,round',
           }
@@ -128,12 +134,32 @@ export function QuestionnaireClient({
       if (error) throw error;
 
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      if (saveStatusResetTimerRef.current) {
+        clearTimeout(saveStatusResetTimerRef.current);
+      }
+      saveStatusResetTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Auto-save failed:', error);
       setSaveStatus('idle');
+      throw error;
     }
   }, [alignmentId, answers, currentRound, supabase]);
+
+  useEffect(() => {
+    return () => {
+      if (saveStatusResetTimerRef.current) {
+        clearTimeout(saveStatusResetTimerRef.current);
+      }
+    };
+  }, []);
+
+  const saveAnswers = useCallback(async () => {
+    try {
+      await persistAnswers();
+    } catch {
+      // Autosave errors are intentionally quiet; final submit shows inline errors.
+    }
+  }, [persistAnswers]);
 
   // Auto-save debounced
   useEffect(() => {
@@ -150,6 +176,7 @@ export function QuestionnaireClient({
    * Update answer for a question
    */
   const updateAnswer = (questionId: string, value: AnswerValue['value']) => {
+    setSubmitError(null);
     setAnswers((prev) => ({
       ...prev,
       [questionId]: {
@@ -169,36 +196,60 @@ export function QuestionnaireClient({
   /**
    * Validate current question
    */
-  const validateQuestion = (question: AlignmentQuestion): boolean => {
-    if (!question.required) return true;
+  const getQuestionError = useCallback((question: AlignmentQuestion): string | null => {
+    if (!question.required) return null;
 
     const answer = answers[question.id];
     if (!answer || answer.value === null || answer.value === undefined) {
-      setErrors((prev) => ({
-        ...prev,
-        [question.id]: 'This question is required',
-      }));
-      return false;
+      return 'This question is required';
     }
 
     if (typeof answer.value === 'string' && answer.value.trim() === '') {
-      setErrors((prev) => ({
-        ...prev,
-        [question.id]: 'This question is required',
-      }));
-      return false;
+      return 'This question is required';
     }
 
     if (Array.isArray(answer.value) && answer.value.length === 0) {
-      setErrors((prev) => ({
-        ...prev,
-        [question.id]: 'Please select at least one option',
-      }));
-      return false;
+      return 'Please select at least one option';
     }
 
-    return true;
-  };
+    return null;
+  }, [answers]);
+
+  const validateQuestion = useCallback((question: AlignmentQuestion): boolean => {
+    const questionError = getQuestionError(question);
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (questionError) {
+        next[question.id] = questionError;
+      } else {
+        delete next[question.id];
+      }
+      return next;
+    });
+
+    return !questionError;
+  }, [getQuestionError]);
+
+  const validateAllQuestions = useCallback(() => {
+    const nextErrors: { [questionId: string]: string } = {};
+    let firstInvalidIndex = -1;
+
+    questions.forEach((question, index) => {
+      const questionError = getQuestionError(question);
+      if (!questionError) return;
+
+      nextErrors[question.id] = questionError;
+      if (firstInvalidIndex === -1) {
+        firstInvalidIndex = index;
+      }
+    });
+
+    setErrors(nextErrors);
+    return {
+      valid: firstInvalidIndex === -1,
+      firstInvalidIndex,
+    };
+  }, [getQuestionError, questions]);
 
   /**
    * Navigate to next question
@@ -283,43 +334,33 @@ export function QuestionnaireClient({
   const handleSubmit = async () => {
     setShowValidation(true);
 
-    // Validate all required questions
-    const allValid = questions.every((q) => validateQuestion(q));
+    const { valid, firstInvalidIndex } = validateAllQuestions();
 
-    if (!allValid) {
-      alert('Please answer all required questions before submitting.');
+    if (!valid) {
+      setSubmitError('Please answer all required questions before submitting.');
+      setCurrentQuestionIndex(firstInvalidIndex);
+      setAiAssistance(null);
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Mark as submitted
-      const { error } = await supabase
-        .from('alignment_responses')
-        .update({
-          submitted_at: new Date().toISOString(),
-        })
-        .eq('alignment_id', alignmentId)
-        .eq('user_id', user.id)
-        .eq('round', currentRound);
-
-      if (error) throw error;
+      await persistAnswers({ submittedAt: new Date().toISOString() });
 
       // Update alignment status to 'active'
-      await supabase
+      const { error: statusError } = await supabase
         .from('alignments')
         .update({ status: 'active' })
         .eq('id', alignmentId);
+
+      if (statusError) throw statusError;
 
       // Redirect to waiting page
       router.push(`/alignment/${alignmentId}/waiting`);
     } catch (error) {
       console.error('Submit error:', error);
-      alert('Failed to submit responses. Please try again.');
+      setSubmitError('Failed to submit responses. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -415,6 +456,15 @@ export function QuestionnaireClient({
             </div>
             <Progress value={progressPercentage} className="mt-3" />
           </div>
+
+          {submitError && (
+            <div
+              className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-900/10 dark:text-red-400"
+              role="alert"
+            >
+              {submitError}
+            </div>
+          )}
 
           {/* Question Card */}
           <main className="flex flex-1 flex-col gap-8">
@@ -550,9 +600,11 @@ export function QuestionnaireClient({
               {/* Question Dots - Quick Navigation */}
               <div className="flex flex-wrap justify-center gap-1.5">
                 {questions.map((_, idx) => {
-                  const isAnswered = answers[questions[idx].id]?.value !== undefined &&
-                    answers[questions[idx].id]?.value !== null &&
-                    answers[questions[idx].id]?.value !== '';
+                  const answerValue = answers[questions[idx].id]?.value;
+                  const isAnswered = answerValue !== undefined &&
+                    answerValue !== null &&
+                    !(typeof answerValue === 'string' && answerValue.trim() === '') &&
+                    !(Array.isArray(answerValue) && answerValue.length === 0);
                   return (
                     <button
                       key={idx}

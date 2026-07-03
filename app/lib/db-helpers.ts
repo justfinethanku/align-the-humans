@@ -15,8 +15,16 @@ import type {
   QueryResult,
 } from './types';
 import { isValidStatusTransition } from './types';
+import { AlignmentError } from './errors';
 
 type SupabaseClientType = SupabaseClient<Database>;
+
+export interface DocumentReadiness {
+  alignment: Database['public']['Tables']['alignments']['Row'];
+  analysis: Database['public']['Tables']['alignment_analyses']['Row'];
+  round: number;
+  conflictCount: 0;
+}
 
 // ============================================================================
 // Profile Operations
@@ -174,6 +182,82 @@ export async function getAlignmentDetail(
   };
 }
 
+export async function assertReadyForDocument(
+  supabase: SupabaseClientType,
+  alignmentId: string,
+  userId: string,
+  requestedRound?: number
+): Promise<DocumentReadiness> {
+  const { data: participant } = await supabase
+    .from('alignment_participants')
+    .select('id')
+    .eq('alignment_id', alignmentId)
+    .eq('user_id', userId)
+    .single();
+
+  if (!participant) {
+    throw new AlignmentError('Not authorized to view this alignment', 'ALIGNMENT_UNAUTHORIZED', 403, {
+      alignmentId,
+      userId,
+    });
+  }
+
+  const { data: alignment, error: alignmentError } = await supabase
+    .from('alignments')
+    .select('*')
+    .eq('id', alignmentId)
+    .single();
+
+  if (alignmentError || !alignment) {
+    throw new AlignmentError('Alignment not found', 'ALIGNMENT_NOT_FOUND', 404, { alignmentId });
+  }
+
+  const round = requestedRound ?? alignment.current_round;
+  if (round !== alignment.current_round) {
+    throw new AlignmentError('Document is not ready for this round', 'ROUND_MISMATCH', 409, {
+      currentRound: alignment.current_round,
+      requestedRound: round,
+    });
+  }
+
+  if (alignment.status !== 'resolving' && alignment.status !== 'complete') {
+    throw new AlignmentError('Agreement document is not ready yet', 'DOCUMENT_NOT_READY', 409, {
+      status: alignment.status,
+      alignmentId,
+      round,
+    });
+  }
+
+  const { data: analysis, error: analysisError } = await supabase
+    .from('alignment_analyses')
+    .select('*')
+    .eq('alignment_id', alignmentId)
+    .eq('round', round)
+    .single();
+
+  if (analysisError || !analysis || !analysis.summary) {
+    throw new AlignmentError('Latest analysis is required before signing', 'DOCUMENT_ANALYSIS_MISSING', 409, {
+      alignmentId,
+      round,
+    });
+  }
+
+  const conflicts = Array.isArray((analysis.summary as any).conflicts)
+    ? (analysis.summary as any).conflicts
+    : [];
+
+  if (conflicts.length > 0) {
+    throw new AlignmentError('Resolve all conflicts before signing the agreement', 'DOCUMENT_CONFLICTS_REMAIN', 409, {
+      alignmentId,
+      round,
+      conflictCount: conflicts.length,
+      resolutionUrl: `/alignment/${alignmentId}/resolution`,
+    });
+  }
+
+  return { alignment, analysis, round, conflictCount: 0 as const };
+}
+
 /**
  * Creates a new alignment
  */
@@ -237,6 +321,21 @@ export async function updateAlignmentStatus(
     .eq('id', alignmentId)
     .select()
     .single();
+
+  return { data: data as Alignment | null, error };
+}
+
+export async function completeAlignmentIfResolving(
+  supabase: SupabaseClientType,
+  alignmentId: string
+): Promise<QueryResult<Alignment>> {
+  const { data, error } = await supabase
+    .from('alignments')
+    .update({ status: 'complete' })
+    .eq('id', alignmentId)
+    .eq('status', 'resolving')
+    .select()
+    .maybeSingle();
 
   return { data: data as Alignment | null, error };
 }
@@ -505,6 +604,8 @@ export async function createSignature(
     round: number;
     canonicalSnapshot: Database['public']['Tables']['alignment_signatures']['Row']['canonical_snapshot'];
     signature: string;
+    agreementSnapshotId?: string | null;
+    agreementSnapshotHash?: string | null;
   }
 ): Promise<QueryResult<Database['public']['Tables']['alignment_signatures']['Row']>> {
   const { data: sig, error } = await supabase
@@ -515,6 +616,8 @@ export async function createSignature(
       round: data.round,
       canonical_snapshot: data.canonicalSnapshot,
       signature: data.signature,
+      agreement_snapshot_id: data.agreementSnapshotId ?? null,
+      agreement_snapshot_hash: data.agreementSnapshotHash ?? null,
     })
     .select()
     .single();

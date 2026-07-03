@@ -55,6 +55,17 @@ function resolveSafeDestination(
   return null;
 }
 
+function unwrapCallbackDestination(destination: string, requestUrl: URL): string {
+  const nested = new URL(destination, requestUrl.origin);
+  if (nested.pathname !== '/auth/callback') return destination;
+
+  const nestedNext = resolveSafeDestination(
+    nested.searchParams.get('next'),
+    requestUrl
+  );
+  return nestedNext ?? '/dashboard';
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
@@ -121,7 +132,9 @@ export async function GET(request: NextRequest) {
         resolveSafeDestination(next, requestUrl) ??
         resolveSafeDestination(redirectToParam, requestUrl) ??
         (type === 'recovery' ? '/auth/reset-password' : '/dashboard');
-      return NextResponse.redirect(new URL(destination, request.url));
+      return NextResponse.redirect(
+        new URL(unwrapCallbackDestination(destination, requestUrl), request.url)
+      );
     }
   }
 

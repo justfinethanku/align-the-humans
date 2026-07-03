@@ -38,6 +38,21 @@ function authRateLimitKey(scope: string, email: string): string {
 }
 
 /**
+ * Validates that a redirect destination is a same-site relative path.
+ * Rejects protocol-relative ("//evil.com") and backslash-prefixed
+ * ("/\evil.com") values, both of which some browsers/routers will treat
+ * as absolute/external even though they start with a single "/".
+ */
+function isSafeRedirectPath(dest: string | null | undefined): dest is string {
+  return (
+    !!dest &&
+    dest.startsWith('/') &&
+    !dest.startsWith('//') &&
+    !dest.startsWith('/\\')
+  );
+}
+
+/**
  * Validates signup form data
  */
 function validateSignupData(formData: FormData): {
@@ -125,6 +140,8 @@ export async function signupAction(
     }
 
     const { username, email, password } = validation.data!;
+    const redirectTo = formData.get('redirectTo') as string | null;
+    const destination = isSafeRedirectPath(redirectTo) ? redirectTo : '/dashboard';
 
     // In-memory limiter; production should back this with Vercel KV / Upstash.
     const rateLimitResult = await checkRateLimit(
@@ -140,6 +157,9 @@ export async function signupAction(
 
     // Create Supabase client
     const supabase = createServerClient();
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const callbackUrl = new URL('/auth/callback', appUrl);
+    callbackUrl.searchParams.set('next', destination);
 
     // Create user account with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -149,7 +169,7 @@ export async function signupAction(
         data: {
           display_name: username,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
+        emailRedirectTo: callbackUrl.toString(),
       },
     });
 
@@ -212,7 +232,7 @@ export async function signupAction(
     // Check if email confirmation is required
     if (authData.session) {
       // User is already logged in (email confirmation disabled)
-      redirect('/dashboard');
+      redirect(destination);
     } else {
       // Email confirmation required
       return {

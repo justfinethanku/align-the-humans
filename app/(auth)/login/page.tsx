@@ -185,49 +185,6 @@ export default function LoginPage() {
 
         {/* Submit Button */}
         <SubmitButton />
-
-        {/* Divider */}
-        <div className="relative flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border" />
-          </div>
-          <div className="relative bg-card px-2 text-sm text-muted-foreground">
-            OR
-          </div>
-        </div>
-
-        {/* Google Sign In (Placeholder) */}
-        <Button
-          type="button"
-          variant="outline"
-          disabled
-          className="h-12 w-full rounded-lg border border-input bg-background px-6 text-base font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        >
-          <svg
-            className="h-5 w-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M22.578 12.28c0-.84-.07-1.65-.21-2.44H12v4.6h5.92c-.26 1.48-1.06 2.75-2.24 3.63v3h3.85c2.25-2.08 3.54-5.12 3.54-8.79z"
-              fill="#4285F4"
-            />
-            <path
-              d="M12 23c3.27 0 6.02-1.08 8.02-2.92l-3.85-3c-1.08.73-2.45 1.16-4.17 1.16-3.2 0-5.9-2.15-6.87-5.03H1.2v3.1C3.12 20.43 7.24 23 12 23z"
-              fill="#34A853"
-            />
-            <path
-              d="M5.13 14.01c-.2-.6-.31-1.25-.31-1.91s.11-1.31.31-1.91V7.1H1.2C.43 8.63 0 10.25 0 12s.43 3.37 1.2 4.9l3.93-3.89z"
-              fill="#FBBC05"
-            />
-            <path
-              d="M12 4.84c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.02 1.18 15.27 0 12 0 7.24 0 3.12 2.57 1.2 6.1l3.93 3.01c.97-2.88 3.67-5.03 6.87-5.03z"
-              fill="#EA4335"
-            />
-          </svg>
-          Continue with Google (Coming Soon)
-        </Button>
       </form>
 
       {/* Sign Up Link */}

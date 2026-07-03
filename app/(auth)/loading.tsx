@@ -1,19 +1,11 @@
-import { Loader2 } from 'lucide-react';
-
-/**
- * Auth Routes Loading State
- *
- * Displayed while login/signup pages load
- * Shows centered spinner with branded colors
- */
 export default function AuthLoading() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background-light dark:bg-background-dark">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="size-12 animate-spin text-primary-500" />
-        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-          Loading authentication...
-        </p>
+    <div className="w-full space-y-6" aria-hidden="true">
+      <div className="mx-auto h-7 w-48 rounded bg-muted" />
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="mb-5 h-10 w-full rounded bg-muted" />
+        <div className="mb-4 h-10 w-full rounded bg-muted" />
+        <div className="h-11 w-full rounded bg-primary/20" />
       </div>
     </div>
   );

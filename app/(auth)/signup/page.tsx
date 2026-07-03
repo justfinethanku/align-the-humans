@@ -10,6 +10,7 @@
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useFormState, useFormStatus } from 'react-dom';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,8 @@ function SubmitButton() {
 }
 
 export default function SignupPage() {
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo');
   const [state, formAction] = useFormState(signupAction, null);
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -84,6 +87,10 @@ export default function SignupPage() {
 
       {/* Signup Form */}
       <form action={formAction} className="mt-8 space-y-6">
+        {/* Hidden field for redirect destination */}
+        {redirectTo && (
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+        )}
         <div className="space-y-4">
           {/* Username Input */}
           <div>
@@ -223,7 +230,11 @@ export default function SignupPage() {
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{' '}
         <Link
-          href="/login"
+          href={
+            redirectTo
+              ? `/login?redirectTo=${encodeURIComponent(redirectTo)}`
+              : '/login'
+          }
           className="font-medium text-primary hover:text-primary/80"
         >
           Log in

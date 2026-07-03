@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAlignmentUpdates } from '@/app/lib/hooks/useAlignmentUpdates';
 import { createClient } from '@/app/lib/supabase-browser';
+import { ShareLinkButton } from '@/components/alignment/ShareLinkButton';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Clock, Loader2, Wifi, WifiOff } from 'lucide-react';
@@ -21,6 +22,7 @@ interface WaitingClientProps {
   partnerName: string;
   initialPartnerSubmitted: boolean;
   hasPartnerJoined: boolean;
+  isCreator: boolean;
 }
 
 export function WaitingClient({
@@ -29,6 +31,7 @@ export function WaitingClient({
   partnerName,
   initialPartnerSubmitted,
   hasPartnerJoined,
+  isCreator,
 }: WaitingClientProps) {
   const router = useRouter();
   const [partnerSubmitted, setPartnerSubmitted] = useState(initialPartnerSubmitted);
@@ -202,7 +205,7 @@ export function WaitingClient({
                   {partnerSubmitted
                     ? 'Ready for AI analysis'
                     : !partnerJoined
-                      ? 'Share the invite link with your partner'
+                      ? 'Copy the invite link below and send it to your partner.'
                       : 'They are working on their responses'}
                 </p>
               </div>
@@ -211,6 +214,10 @@ export function WaitingClient({
               )}
             </Card>
           </div>
+
+          {isCreator && !partnerJoined && !partnerSubmitted && (
+            <ShareLinkButton alignmentId={alignmentId} />
+          )}
 
           {/* Connection Status */}
           <div className="flex items-center justify-center gap-2 text-xs text-slate-400">

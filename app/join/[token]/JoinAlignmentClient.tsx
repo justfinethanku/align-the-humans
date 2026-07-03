@@ -15,9 +15,7 @@ import { Card } from '@/components/ui/card';
 interface JoinAlignmentClientProps {
   token: string;
   alignment: {
-    id: string;
     title: string;
-    description: string;
     creatorName: string;
   };
   isAuthenticated: boolean;
@@ -61,8 +59,14 @@ export default function JoinAlignmentClient({
         return;
       }
 
-      // Success - redirect to alignment clarity page
-      router.push(`/alignment/${alignment.id}/clarity`);
+      if (!data.alignment_id) {
+        setError('Failed to join alignment');
+        setIsJoining(false);
+        return;
+      }
+
+      // Success - let the alignment phase router choose the next page
+      router.push(`/alignment/${data.alignment_id}`);
     } catch (err) {
       console.error('Join alignment error:', err);
       setError('An unexpected error occurred. Please try again.');
@@ -123,13 +127,6 @@ export default function JoinAlignmentClient({
               {alignment.title}
             </h2>
 
-            {/* Alignment Description */}
-            {alignment.description && (
-              <p className="text-base text-muted-foreground mb-4 line-clamp-4">
-                {alignment.description}
-              </p>
-            )}
-
             {/* Creator Info */}
             <div className="flex items-center gap-2 mb-4">
               <svg
@@ -146,7 +143,10 @@ export default function JoinAlignmentClient({
                 />
               </svg>
               <span className="text-sm text-muted-foreground">
-                Shared by <span className="font-medium text-foreground">{alignment.creatorName}</span>
+                Shared by{' '}
+                <span className="font-medium text-foreground">
+                  {alignment.creatorName}
+                </span>
               </span>
             </div>
 

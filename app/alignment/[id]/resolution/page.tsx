@@ -93,6 +93,16 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
 
   // 6. Extract conflicts from analysis
   const conflicts: ConflictItem[] = analysis.summary.conflicts || [];
+  const analysisDetails = analysis.details as Record<string, unknown> | null;
+  const sortedParticipants = [...alignment.participants].sort((a, b) =>
+    a.user_id.localeCompare(b.user_id)
+  );
+  const fallbackPersonAUserId = sortedParticipants[0]?.user_id;
+  const personAUserId =
+    typeof analysisDetails?.personAUserId === 'string'
+      ? analysisDetails.personAUserId
+      : fallbackPersonAUserId;
+  const isCurrentUserPersonA = personAUserId === user.id;
 
   // If no conflicts remain, should move to document/signature phase
   if (conflicts.length === 0) {
@@ -151,6 +161,8 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
           currentRound={alignment.current_round}
           maxRounds={MAX_RESOLUTION_ROUNDS}
           partnerName={partnerName}
+          alignmentStatus={alignment.status}
+          isCurrentUserPersonA={isCurrentUserPersonA}
           hasUserSubmitted={hasUserSubmitted}
           hasPartnerSubmitted={hasPartnerSubmitted}
           maxRoundsReached={maxRoundsReached}

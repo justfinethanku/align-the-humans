@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/app/lib/supabase-browser"
+import { InviteStatus } from "@/components/alignment/InviteStatus"
 
 // Types
 interface PreselectedPartner {
@@ -46,6 +47,7 @@ interface ClarityFormProps {
     desiredOutcome?: string
   }
   preselectedPartner?: PreselectedPartner | null
+  isCreator: boolean
 }
 
 interface AISuggestion {
@@ -61,13 +63,12 @@ interface Partner {
 
 export function ClarityForm({
   alignmentId,
-  userId,
   userDisplayName,
   initialTitle,
-  status,
   templateSeed,
   initialClarity,
   preselectedPartner,
+  isCreator,
 }: ClarityFormProps) {
   const router = useRouter()
   const supabase = React.useMemo(() => createClient(), [])
@@ -119,6 +120,9 @@ export function ClarityForm({
 
   // Auto-save timer
   const autoSaveTimerRef = React.useRef<NodeJS.Timeout>()
+  const topicInputRef = React.useRef<HTMLTextAreaElement>(null)
+  const partnerInputRef = React.useRef<HTMLTextAreaElement>(null)
+  const outcomeInputRef = React.useRef<HTMLTextAreaElement>(null)
 
   /**
    * Saves form progress to database (updates alignment clarity draft)
@@ -264,8 +268,27 @@ export function ClarityForm({
   /**
    * Toggles section accordion
    */
-  function toggleSection(section: "topic" | "partner" | "outcome") {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }))
+  function setSectionOpen(section: "topic" | "partner" | "outcome", isOpen: boolean) {
+    setOpenSections((prev) => ({ ...prev, [section]: isOpen }))
+  }
+
+  function getSectionStatus(section: "topic" | "partner" | "outcome") {
+    if (section === "topic") return topic.trim().length > 0
+    if (section === "partner") return partnerText.trim().length > 0 || selectedPartner !== null
+    return desiredOutcome.trim().length > 0
+  }
+
+  function focusSection(section: "topic" | "partner" | "outcome") {
+    setOpenSections((prev) => ({ ...prev, [section]: true }))
+    window.setTimeout(() => {
+      if (section === "topic") {
+        topicInputRef.current?.focus()
+      } else if (section === "partner") {
+        partnerInputRef.current?.focus()
+      } else {
+        outcomeInputRef.current?.focus()
+      }
+    }, 0)
   }
 
   /**
@@ -330,19 +353,19 @@ export function ClarityForm({
     // Validation
     if (!topic.trim()) {
       setError("Please describe what you're aligning over")
-      setOpenSections((prev) => ({ ...prev, topic: true }))
+      focusSection("topic")
       return
     }
 
     if (!partnerText.trim() && !selectedPartner) {
       setError("Please specify who you're aligning with")
-      setOpenSections((prev) => ({ ...prev, partner: true }))
+      focusSection("partner")
       return
     }
 
     if (!desiredOutcome.trim()) {
       setError("Please describe the desired result")
-      setOpenSections((prev) => ({ ...prev, outcome: true }))
+      focusSection("outcome")
       return
     }
 
@@ -391,14 +414,6 @@ export function ClarityForm({
       setIsGenerating(false)
     }
   }
-
-  /**
-   * Checks if form is valid for submission
-   */
-  const isFormValid =
-    topic.trim().length > 0 &&
-    (partnerText.trim().length > 0 || selectedPartner !== null) &&
-    desiredOutcome.trim().length > 0
 
   /**
    * Ensures the selected partner is added to the alignment participants list
@@ -493,13 +508,25 @@ export function ClarityForm({
             <details
               className="group rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900/50"
               open={openSections.topic}
-              onToggle={() => toggleSection("topic")}
+              onToggle={(event) => setSectionOpen("topic", event.currentTarget.open)}
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 p-4">
                 <p className="text-base font-semibold leading-normal text-gray-900 dark:text-gray-100">
                   What decision needs to be made?
                 </p>
-                <ChevronDown className="h-5 w-5 text-gray-600 transition-transform duration-200 group-open:rotate-180 dark:text-gray-400" />
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      getSectionStatus("topic")
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                    )}
+                  >
+                    {getSectionStatus("topic") ? "Done" : "Missing"}
+                  </span>
+                  <ChevronDown className="h-5 w-5 text-gray-600 transition-transform duration-200 group-open:rotate-180 dark:text-gray-400" />
+                </div>
               </summary>
               <div className="px-4 pb-4">
                 <Label htmlFor="topic" className="sr-only">
@@ -510,6 +537,7 @@ export function ClarityForm({
                 </p>
                 <Textarea
                   id="topic"
+                  ref={topicInputRef}
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="e.g., Creating a fair chore schedule for our household"
@@ -577,20 +605,32 @@ export function ClarityForm({
             <details
               className="group rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900/50"
               open={openSections.partner}
-              onToggle={() => toggleSection("partner")}
+              onToggle={(event) => setSectionOpen("partner", event.currentTarget.open)}
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 p-4">
                 <p className="text-base font-semibold leading-normal text-gray-900 dark:text-gray-100">
                   Who are you aligning with?
                 </p>
-                <ChevronDown className="h-5 w-5 text-gray-600 transition-transform duration-200 group-open:rotate-180 dark:text-gray-400" />
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      getSectionStatus("partner")
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                    )}
+                  >
+                    {getSectionStatus("partner") ? "Done" : "Missing"}
+                  </span>
+                  <ChevronDown className="h-5 w-5 text-gray-600 transition-transform duration-200 group-open:rotate-180 dark:text-gray-400" />
+                </div>
               </summary>
               <div className="px-4 pb-4">
                 <Label htmlFor="partner" className="sr-only">
                   Partner
                 </Label>
                 <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                  Who are you making this decision with?
+                  Typing a name or email here only gives context for the questions. Use the invite link below, or the waiting page after you submit, to actually invite them.
                 </p>
 
                 {/* Selected Partner Display */}
@@ -666,6 +706,7 @@ export function ClarityForm({
                     {/* Manual Partner Input */}
                     <Textarea
                       id="partner"
+                      ref={partnerInputRef}
                       value={partnerText}
                       onChange={(e) => setPartnerText(e.target.value)}
                       placeholder="e.g., My roommate, my cofounder, my spouse, partner@example.com"
@@ -731,17 +772,31 @@ export function ClarityForm({
               </div>
             </details>
 
+            {isCreator && <InviteStatus alignmentId={alignmentId} />}
+
             {/* Section 3: What's the desired result? */}
             <details
               className="group rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900/50"
               open={openSections.outcome}
-              onToggle={() => toggleSection("outcome")}
+              onToggle={(event) => setSectionOpen("outcome", event.currentTarget.open)}
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 p-4">
                 <p className="text-base font-semibold leading-normal text-gray-900 dark:text-gray-100">
                   What does success look like?
                 </p>
-                <ChevronDown className="h-5 w-5 text-gray-600 transition-transform duration-200 group-open:rotate-180 dark:text-gray-400" />
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      getSectionStatus("outcome")
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                    )}
+                  >
+                    {getSectionStatus("outcome") ? "Done" : "Missing"}
+                  </span>
+                  <ChevronDown className="h-5 w-5 text-gray-600 transition-transform duration-200 group-open:rotate-180 dark:text-gray-400" />
+                </div>
               </summary>
               <div className="px-4 pb-4">
                 <Label htmlFor="outcome" className="sr-only">
@@ -752,6 +807,7 @@ export function ClarityForm({
                 </p>
                 <Textarea
                   id="outcome"
+                  ref={outcomeInputRef}
                   value={desiredOutcome}
                   onChange={(e) => setDesiredOutcome(e.target.value)}
                   placeholder="e.g., A chore schedule that feels fair to both of us"
@@ -820,7 +876,7 @@ export function ClarityForm({
           <div className="mt-6 flex justify-end px-4">
             <Button
               onClick={handleContinue}
-              disabled={!isFormValid || isGenerating}
+              disabled={isGenerating}
               size="lg"
               className="gap-2"
             >

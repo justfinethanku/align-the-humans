@@ -27,14 +27,28 @@ const resolutionSchema = z.object({
   resolution_type: z.enum(['ai_suggestion', 'accept_own', 'accept_partner', 'custom']),
   selected_option: z.string().optional(),
   custom_solution: z.string().optional(),
+}).superRefine((resolution, ctx) => {
+  if (resolution.resolution_type === 'ai_suggestion' && !resolution.selected_option?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['selected_option'],
+      message: 'AI suggestion resolutions must include a selected option',
+    });
+  }
+
+  if (resolution.resolution_type === 'custom' && !resolution.custom_solution?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['custom_solution'],
+      message: 'Custom resolutions must include a solution',
+    });
+  }
 });
 
 const submitResolutionSchema = z.object({
   round: z.number().int().positive('Round must be a positive integer'),
   resolutions: z.array(resolutionSchema).min(1, 'At least one resolution required'),
 });
-
-type SubmitResolutionRequest = z.infer<typeof submitResolutionSchema>;
 
 // ============================================================================
 // Main Handler
@@ -70,18 +84,6 @@ export async function POST(
     // 4. Parse and validate request body
     const body = await request.json();
     const { round, resolutions } = submitResolutionSchema.parse(body);
-
-    // 5. Validate custom resolutions have content
-    const invalidCustomResolutions = resolutions.filter(
-      r => r.resolution_type === 'custom' && !r.custom_solution?.trim()
-    );
-
-    if (invalidCustomResolutions.length > 0) {
-      throw new ValidationError(
-        'Custom resolutions must include a solution',
-        { invalidResolutions: invalidCustomResolutions }
-      );
-    }
 
     // 6. Get alignment to verify status and round
     const { data: alignment, error: alignmentError } = await supabase

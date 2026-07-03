@@ -241,8 +241,67 @@ export type Database = {
           },
         ]
       }
+      alignment_agreement_snapshots: {
+        Row: {
+          alignment_id: string
+          created_at: string
+          created_by: string | null
+          document_html: string
+          document_inputs: Json
+          document_sections: Json
+          frozen_at: string
+          id: string
+          round: number
+          snapshot: Json
+          snapshot_hash: string
+        }
+        Insert: {
+          alignment_id: string
+          created_at?: string
+          created_by?: string | null
+          document_html: string
+          document_inputs?: Json
+          document_sections?: Json
+          frozen_at?: string
+          id?: string
+          round: number
+          snapshot: Json
+          snapshot_hash: string
+        }
+        Update: {
+          alignment_id?: string
+          created_at?: string
+          created_by?: string | null
+          document_html?: string
+          document_inputs?: Json
+          document_sections?: Json
+          frozen_at?: string
+          id?: string
+          round?: number
+          snapshot?: Json
+          snapshot_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alignment_agreement_snapshots_alignment_id_fkey"
+            columns: ["alignment_id"]
+            isOneToOne: false
+            referencedRelation: "alignment_status_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alignment_agreement_snapshots_alignment_id_fkey"
+            columns: ["alignment_id"]
+            isOneToOne: false
+            referencedRelation: "alignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alignment_signatures: {
         Row: {
+          agreement_snapshot_hash: string | null
+          agreement_snapshot_id: string | null
           alignment_id: string
           canonical_snapshot: Json
           created_at: string
@@ -252,6 +311,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agreement_snapshot_hash?: string | null
+          agreement_snapshot_id?: string | null
           alignment_id: string
           canonical_snapshot: Json
           created_at?: string
@@ -261,6 +322,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agreement_snapshot_hash?: string | null
+          agreement_snapshot_id?: string | null
           alignment_id?: string
           canonical_snapshot?: Json
           created_at?: string
@@ -283,6 +346,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alignments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alignment_signatures_agreement_snapshot_fk"
+            columns: ["alignment_id", "round", "agreement_snapshot_id", "agreement_snapshot_hash"]
+            isOneToOne: false
+            referencedRelation: "alignment_agreement_snapshots"
+            referencedColumns: ["alignment_id", "round", "id", "snapshot_hash"]
           },
         ]
       }
@@ -468,6 +538,29 @@ export type Database = {
       }
     }
     Functions: {
+      get_alignment_invite_preview: {
+        Args: {
+          p_token_hash: string
+        }
+        Returns: {
+          status: string
+          title: string | null
+          creator_name: string | null
+          expires_at: string | null
+          already_participant: boolean
+          redirect_alignment_id: string | null
+        }[]
+      }
+      redeem_alignment_invite: {
+        Args: {
+          p_token_hash: string
+        }
+        Returns: {
+          ok: boolean
+          code: string
+          alignment_id: string | null
+        }[]
+      }
       increment_invite_usage: {
         Args: {
           invite_id: string

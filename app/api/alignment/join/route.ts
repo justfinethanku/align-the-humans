@@ -18,7 +18,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { hashToken, isValidTokenFormat } from '@/app/lib/invite-tokens';
-import { createErrorResponse, ValidationError, AlignmentError, AuthError } from '@/app/lib/errors';
+import {
+  createErrorResponse,
+  ValidationError,
+  AlignmentError,
+  AuthError,
+} from '@/app/lib/errors';
 
 // ============================================================================
 // Rate Limiting
@@ -112,7 +117,7 @@ export async function POST(
     }
 
     // 2. Authenticate user
-    const user = await requireAuth(supabase);
+    await requireAuth(supabase);
 
     // 3. Parse and validate request body
     const body = await request.json();
@@ -135,117 +140,57 @@ export async function POST(
       );
     }
 
-    // 5. Hash token and look up invitation
+    // 5. Hash token and redeem invitation atomically
     const tokenHash = hashToken(token);
+    const { data, error: redeemError } = await supabase.rpc(
+      'redeem_alignment_invite',
+      { p_token_hash: tokenHash }
+    );
+    const result = data?.[0];
 
-    const { data: invitation, error: inviteError } = await supabase
-      .from('alignment_invitations')
-      .select('id, alignment_id, expires_at, max_uses, current_uses, invalidated_at')
-      .eq('token_hash', tokenHash)
-      .single();
-
-    if (inviteError || !invitation) {
-      throw new ValidationError(
-        'Invalid or expired invite link',
-        { tokenHash: tokenHash.substring(0, 8) + '...' }
-      );
-    }
-
-    // 6. Validate invitation status
-    const now = new Date();
-
-    // Check if invalidated
-    if (invitation.invalidated_at) {
-      throw new ValidationError(
-        'This invite link has been revoked',
-        { invalidatedAt: invitation.invalidated_at }
-      );
-    }
-
-    // Check if expired
-    if (invitation.expires_at) {
-      const expiresAt = new Date(invitation.expires_at);
-      if (now > expiresAt) {
-        throw new ValidationError(
-          'This invite link has expired',
-          { expiresAt: invitation.expires_at }
-        );
-      }
-    }
-
-    // Check usage limit proactively
-    const currentUses = invitation.current_uses ?? 0;
-    const maxUses = invitation.max_uses ?? 1;
-    if (currentUses >= maxUses) {
-      throw new ValidationError(
-        'This invite link has reached its usage limit',
-        { maxUses, currentUses }
-      );
-    }
-
-    // 7. Check if user is already a participant
-    const { data: existingParticipant, error: participantCheckError } = await supabase
-      .from('alignment_participants')
-      .select('id')
-      .eq('alignment_id', invitation.alignment_id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (participantCheckError) {
-      console.error('Failed to check existing participant:', participantCheckError);
-      throw new Error('Failed to verify participation status');
-    }
-
-    if (existingParticipant) {
-      throw new AlignmentError(
-        'You are already a participant in this alignment',
-        'ALREADY_PARTICIPANT',
-        409,
-        { alignmentId: invitation.alignment_id }
-      );
-    }
-
-    // 8. Atomically claim usage slot before inserting participant
-    const { data: usageClaimed, error: usageError } = await supabase
-      .rpc('increment_invite_usage', { invite_id: invitation.id });
-
-    if (usageError) {
-      console.error('Failed to claim invite usage:', usageError);
-      throw new Error('Failed to claim invite link');
-    }
-
-    if (!usageClaimed) {
-      throw new ValidationError(
-        'This invite link has reached its usage limit',
-        { maxUses, currentUses }
-      );
-    }
-
-    // 9. Add user as participant with role "partner"
-    const { error: insertError } = await supabase
-      .from('alignment_participants')
-      .insert({
-        alignment_id: invitation.alignment_id,
-        user_id: user.id,
-        role: 'partner',
-      });
-
-    if (insertError) {
-      console.error('Failed to add participant:', insertError);
-      try {
-        await supabase.rpc('decrement_invite_usage', { invite_id: invitation.id });
-      } catch (rollbackError) {
-        console.error('Failed to roll back invite usage:', rollbackError);
-      }
+    if (redeemError || !result) {
+      console.error('Failed to redeem invite:', redeemError);
       throw new Error('Failed to join alignment');
     }
 
-    // 10. Return success with alignment ID for redirect
+    if (!result.ok) {
+      switch (result.code) {
+        case 'unauthorized':
+          throw new AuthError('Please log in to join this alignment');
+        case 'not_found':
+          throw new ValidationError(
+            'Invalid or expired invite link',
+            { tokenHash: tokenHash.substring(0, 8) + '...' }
+          );
+        case 'revoked':
+          throw new ValidationError('This invite link has been revoked');
+        case 'expired':
+          throw new ValidationError('This invite link has expired');
+        case 'used':
+          throw new ValidationError('This invite link has reached its usage limit');
+        case 'closed':
+          throw new AlignmentError(
+            'This alignment has been completed',
+            'ALIGNMENT_CLOSED',
+            409
+          );
+        default:
+          throw new Error('Failed to join alignment');
+      }
+    }
+
+    if (!result.alignment_id) {
+      throw new Error('Failed to join alignment');
+    }
+
+    // 6. Return success with alignment ID for redirect
     return NextResponse.json(
       {
         success: true,
-        alignment_id: invitation.alignment_id,
-        message: 'Successfully joined alignment',
+        alignment_id: result.alignment_id,
+        message: result.code === 'already_participant'
+          ? 'Already joined alignment'
+          : 'Successfully joined alignment',
       },
       { status: 200 }
     );
