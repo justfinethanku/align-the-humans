@@ -297,18 +297,69 @@ export interface ConflictDetailedItem extends ConflictItem {
 }
 
 /**
- * Canonical snapshot of signed content
+ * Deterministic document section extracted from the rendered agreement HTML.
  */
-export interface CanonicalSnapshot {
+export interface DocumentSection {
+  id: string;
+  heading: string;
+  body: string;
+}
+
+/**
+ * Stable hash input for a signed agreement artifact.
+ */
+export interface CanonicalSnapshotHashInput {
+  snapshot_version: 1;
   alignment_id: string;
   round: number;
-  questions: TemplateQuestion[];
-  responses: {
-    [userId: string]: ResponseAnswers;
+  source: {
+    alignment_updated_at: string;
+    analysis_id: string;
+    analysis_created_at: string;
+    template_id: string | null;
+    template_version: number | null;
+    template_content_hash: string | null;
+    document_prompt: {
+      slug: 'document-skeleton';
+      prompt_id: string | null;
+      updated_at: string | null;
+      template_hash: string;
+    };
   };
+  participants: Array<{
+    user_id: string;
+    role: 'owner' | 'partner';
+    display_name: string | null;
+    order: number;
+  }>;
+  responses: Array<{
+    user_id: string;
+    response_id: string;
+    response_version: number;
+    submitted_at: string;
+    answers: ResponseAnswers;
+  }>;
   analysis: AnalysisSummary;
-  timestamp: string;             // ISO 8601
-  hash: string;                  // SHA-256 hash of content
+  document: {
+    html: string;
+    sections: DocumentSection[];
+    inputs: {
+      participant_names: string[];
+      document_date: string;
+      template_name: string;
+      template_category: string;
+      final_positions: Record<string, unknown>;
+      summary: string[];
+    };
+  };
+}
+
+/**
+ * Canonical snapshot of signed content.
+ */
+export interface CanonicalSnapshot extends CanonicalSnapshotHashInput {
+  hash: string;
+  frozen_at: string;
 }
 
 // ============================================================================
@@ -482,7 +533,7 @@ export interface RealtimeEvent<T = unknown> {
 export const VALID_STATUS_TRANSITIONS: Record<AlignmentStatus, AlignmentStatus[]> = {
   draft: ['active'],
   active: ['analyzing'],
-  analyzing: ['resolving'],
+  analyzing: ['active', 'resolving'],
   resolving: ['complete', 'analyzing'],
   complete: [], // Terminal state
 };

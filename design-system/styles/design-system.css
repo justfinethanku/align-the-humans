@@ -296,3 +296,12 @@
     background: hsl(var(--background));
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .particle,
+  .animate-float,
+  .animate-pulse-ring,
+  .animate-fade-up {
+    animation: none !important;
+  }
+}

@@ -1,6 +1,6 @@
 /**
  * Final Agreement Document Page
- * Displays AI-generated agreement document with signature collection
+ * Displays the server-owned agreement document with signature collection.
  *
  * Reference: plan_a.md lines 961-1008, 1024-1045
  * Design: page_design_templates/{dark_mode,light_mode}/final_document_page_for_align_the_humans/
@@ -8,7 +8,12 @@
 
 import { notFound, redirect } from 'next/navigation';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
-import { getAlignmentDetail } from '@/app/lib/db-helpers';
+import { assertReadyForDocument } from '@/app/lib/db-helpers';
+import {
+  buildAgreementSnapshotPreview,
+  loadFrozenAgreementSnapshot,
+} from '@/app/lib/agreement-snapshots';
+import { AlignmentError } from '@/app/lib/errors';
 import { DocumentHeader } from './components/document-header';
 import { ExecutiveSummary } from './components/executive-summary';
 import { DocumentContent } from './components/document-content';
@@ -25,50 +30,124 @@ interface PageProps {
   }>;
 }
 
+type ParticipantRole = 'owner' | 'partner';
+
+interface SignatureParticipantView {
+  userId: string;
+  displayName: string;
+  role: ParticipantRole;
+  signature: {
+    id: string;
+    created_at: string;
+    agreement_snapshot_hash: string | null;
+  } | null;
+}
+
+function roleOrder(role: string): number {
+  return role === 'owner' ? 0 : 1;
+}
+
+function asParticipantRole(role: string): ParticipantRole {
+  return role === 'owner' ? 'owner' : 'partner';
+}
+
+function fallbackName(role: string): string {
+  return role === 'owner' ? 'Owner' : 'Partner';
+}
+
+function redirectForDocumentError(error: AlignmentError, alignmentId: string): never {
+  switch (error.code) {
+    case 'DOCUMENT_CONFLICTS_REMAIN':
+      redirect(`/alignment/${alignmentId}/resolution`);
+    case 'DOCUMENT_ANALYSIS_MISSING':
+      redirect(`/alignment/${alignmentId}/analysis`);
+    case 'DOCUMENT_NOT_READY': {
+      const status = error.details?.status;
+      switch (status) {
+        case 'draft':
+          redirect(`/alignment/${alignmentId}/clarity`);
+        case 'active':
+          redirect(`/alignment/${alignmentId}/waiting`);
+        case 'analyzing':
+          redirect(`/alignment/${alignmentId}/analysis`);
+        default:
+          redirect('/dashboard');
+      }
+    }
+    case 'ALIGNMENT_NOT_FOUND':
+    case 'ALIGNMENT_UNAUTHORIZED':
+      notFound();
+    default:
+      throw error;
+  }
+}
+
 async function getDocumentData(alignmentId: string, userId: string) {
   const supabase = createServerClient();
+  const readiness = await assertReadyForDocument(supabase, alignmentId, userId);
+  const { alignment, analysis, round } = readiness;
 
-  // Get alignment details with template_id
-  const { data: alignment, error } = await getAlignmentDetail(
-    supabase,
-    alignmentId,
-    userId
-  );
+  const { data: participants, error: participantsError } = await supabase
+    .from('alignment_participants')
+    .select('*')
+    .eq('alignment_id', alignmentId);
 
-  if (error || !alignment) {
+  if (participantsError || !participants || participants.length === 0) {
     return null;
   }
 
-  const templateId = (alignment as any)?.template_id ?? null;
+  const orderedParticipants = [...participants].sort((a, b) => {
+    const roleDiff = roleOrder(a.role) - roleOrder(b.role);
+    if (roleDiff !== 0) return roleDiff;
+    const createdDiff = a.created_at.localeCompare(b.created_at);
+    if (createdDiff !== 0) return createdDiff;
+    return a.user_id.localeCompare(b.user_id);
+  });
 
-  // Get participant profiles
-  const participantIds = alignment.participants.map(p => p.user_id);
+  const participantIds = orderedParticipants.map((participant) => participant.user_id);
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, display_name')
     .in('id', participantIds);
+  const profileNames = new Map((profiles || []).map((profile) => [profile.id, profile.display_name]));
 
-  // Get latest analysis for summary
-  const { data: analysis } = await supabase
-    .from('alignment_analyses')
-    .select('summary, details')
-    .eq('alignment_id', alignmentId)
-    .eq('round', alignment.current_round)
-    .single();
+  const frozenSnapshot = await loadFrozenAgreementSnapshot(
+    supabase,
+    alignment.id,
+    round
+  );
+  const agreementSnapshot = frozenSnapshot ?? await buildAgreementSnapshotPreview(
+    supabase,
+    alignment.id,
+    round
+  );
 
-  // Get signatures
   const { data: signatures } = await supabase
     .from('alignment_signatures')
-    .select('*')
+    .select('id, user_id, created_at, agreement_snapshot_hash')
     .eq('alignment_id', alignmentId)
-    .eq('round', alignment.current_round);
+    .eq('round', round);
+  const signaturesByUserId = new Map(
+    (signatures || [])
+      .filter((signature) => signature.agreement_snapshot_hash === agreementSnapshot.hash)
+      .map((signature) => [signature.user_id, signature])
+  );
+
+  const signatureParticipants: SignatureParticipantView[] = orderedParticipants.map((participant) => ({
+    userId: participant.user_id,
+    displayName: profileNames.get(participant.user_id) || fallbackName(participant.role),
+    role: asParticipantRole(participant.role),
+    signature: signaturesByUserId.get(participant.user_id) || null,
+  }));
+  const allSigned = signatureParticipants.length > 0 &&
+    signatureParticipants.every((participant) => !!participant.signature);
 
   return {
     alignment,
-    templateId,
-    profiles: profiles || [],
     analysis,
-    signatures: signatures || [],
+    agreementSnapshot,
+    signatureParticipants,
+    allSigned,
   };
 }
 
@@ -80,104 +159,66 @@ export default async function DocumentPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = createServerClient();
   const user = await requireAuth(supabase);
+  let data: Awaited<ReturnType<typeof getDocumentData>> | null;
 
-  const data = await getDocumentData(id, user.id);
+  try {
+    data = await getDocumentData(id, user.id);
+  } catch (error) {
+    if (error instanceof AlignmentError) {
+      redirectForDocumentError(error, id);
+    }
+    throw error;
+  }
 
   if (!data) {
     notFound();
   }
 
-  const { alignment, templateId, profiles, analysis, signatures } = data;
-
-  // Redirect to appropriate phase if not ready for document
-  if (alignment.status !== 'resolving' && alignment.status !== 'complete') {
-    switch (alignment.status) {
-      case 'draft':
-        redirect(`/alignment/${id}/clarity`);
-        break;
-      case 'active':
-        redirect(`/alignment/${id}/waiting`);
-        break;
-      case 'analyzing':
-        redirect(`/alignment/${id}/analysis`);
-        break;
-      default:
-        redirect('/dashboard');
-    }
-  }
-
-  // Find current user and partner
-  const currentParticipant = alignment.participants.find(p => p.user_id === user.id);
-  const partnerParticipant = alignment.participants.find(p => p.user_id !== user.id);
-
-  if (!currentParticipant || !partnerParticipant) {
-    notFound();
-  }
-
-  const currentProfile = profiles.find(p => p.id === user.id);
-  const partnerProfile = profiles.find(p => p.id === partnerParticipant.user_id);
-
-  const currentUserName = currentProfile?.display_name || 'You';
-  const partnerName = partnerProfile?.display_name || 'Partner';
-
-  // Check signature status
-  const currentUserSignature = signatures.find(s => s.user_id === user.id);
-  const partnerSignature = signatures.find(s => s.user_id === partnerParticipant.user_id);
-
-  const hasUserSigned = !!currentUserSignature;
-  const hasPartnerSigned = !!partnerSignature;
-  const allSigned = hasUserSigned && hasPartnerSigned;
-
-  // Extract key terms from analysis summary
-  const summaryData = analysis?.summary as any;
-  const keyTerms = summaryData?.agreements?.slice(0, 5).map((a: any) => a.description) || [];
+  const { alignment, analysis, agreementSnapshot, signatureParticipants, allSigned } = data;
+  const participantNames = signatureParticipants.map((participant) => participant.displayName);
+  const keyTerms = agreementSnapshot.documentInputs.summary;
+  const dateFinalized = agreementSnapshot.isFrozen
+    ? agreementSnapshot.snapshot.frozen_at
+    : analysis.created_at;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <div className="container max-w-5xl mx-auto px-4 py-8 space-y-8">
 
-        {/* Success Header */}
         <DocumentHeader
           title={alignment.title || 'Alignment Agreement'}
           isComplete={allSigned}
         />
 
-        {/* Executive Summary Card */}
         <ExecutiveSummary
           alignmentTitle={alignment.title || 'Alignment Agreement'}
-          dateFinalized={alignment.updated_at}
-          participants={[currentUserName, partnerName]}
+          dateFinalized={dateFinalized}
+          participants={participantNames}
           keyTerms={keyTerms}
         />
 
-        {/* Official Agreement Document */}
-        <DocumentContent
-          alignmentId={alignment.id}
-          templateId={templateId}
-          alignmentTitle={alignment.title || 'Alignment Agreement'}
-          participants={[currentUserName, partnerName]}
-          dateFinalized={alignment.updated_at}
-          analysis={analysis}
-        />
+        <div id="alignment-document-export" className="space-y-8">
+          <DocumentContent
+            documentHtml={agreementSnapshot.documentHtml}
+            snapshotHash={agreementSnapshot.hash}
+            isFrozen={agreementSnapshot.isFrozen}
+          />
 
-        {/* Digital Signatures */}
-        <SignatureSection
-          alignmentId={alignment.id}
-          round={alignment.current_round}
-          currentUserId={user.id}
-          currentUserName={currentUserName}
-          partnerUserId={partnerParticipant.user_id}
-          partnerName={partnerName}
-          currentUserSignature={currentUserSignature}
-          partnerSignature={partnerSignature}
-          allSigned={allSigned}
-        />
+          <SignatureSection
+            alignmentId={alignment.id}
+            round={alignment.current_round}
+            reviewedSnapshotHash={agreementSnapshot.hash}
+            currentUserId={user.id}
+            participants={signatureParticipants}
+            allSigned={allSigned}
+          />
+        </div>
 
-        {/* Document Actions */}
         {allSigned && (
           <DocumentActions
             alignmentId={alignment.id}
             alignmentTitle={alignment.title || 'Alignment Agreement'}
+            exportElementId="alignment-document-export"
           />
         )}
 

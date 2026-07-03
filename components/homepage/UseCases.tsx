@@ -76,7 +76,6 @@ export function UseCases() {
               key={index}
               className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-[box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-lg"
               aria-label={useCase.ariaLabel}
-              tabIndex={0}
             >
               <div className="relative overflow-hidden">
                 <Image

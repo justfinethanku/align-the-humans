@@ -12,11 +12,11 @@
  * Specification: plan_a.md lines 836-920
  */
 
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { getAlignmentDetail } from '@/app/lib/db-helpers';
+import { AnalysisProgressClient } from './analysis-progress-client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -116,10 +116,12 @@ function SectionHeader({
  */
 function ConflictItem({
   conflict,
-  index,
+  personALabel,
+  personBLabel,
 }: {
   conflict: any;
-  index: number;
+  personALabel: string;
+  personBLabel: string;
 }) {
   const severity = conflict.severity as ConflictSeverity;
   const severityColor = severityColors[severity] || severityColors.moderate;
@@ -149,7 +151,7 @@ function ConflictItem({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <p className="font-bold text-slate-800 dark:text-slate-300">
-              Position A:
+              {personALabel}:
             </p>
             <p className="text-slate-600 dark:text-slate-400">
               {conflict.personA_position}
@@ -157,7 +159,7 @@ function ConflictItem({
           </div>
           <div>
             <p className="font-bold text-slate-800 dark:text-slate-300">
-              Position B:
+              {personBLabel}:
             </p>
             <p className="text-slate-600 dark:text-slate-400">
               {conflict.personB_position}
@@ -210,8 +212,8 @@ export default async function AnalysisPage({ params }: PageProps) {
     redirect('/dashboard');
   }
 
-  let alignmentDetail = alignment;
-  let analysis = alignmentDetail.latest_analysis;
+  const alignmentDetail = alignment;
+  const analysis = alignmentDetail.latest_analysis;
 
   if (!analysis) {
     const { data: responses } = await supabase
@@ -225,30 +227,39 @@ export default async function AnalysisPage({ params }: PageProps) {
       redirect(`/alignment/${id}/questions`);
     }
 
-    await triggerServerAnalysis(id, alignmentDetail.current_round);
-
-    const { data: refreshedAlignment } = await getAlignmentDetail(
-      supabase,
-      id,
-      user.id
+    return (
+      <AnalysisProgressClient
+        alignmentId={id}
+        round={alignmentDetail.current_round}
+        alignmentTitle={alignmentDetail.title || 'Alignment Analysis'}
+      />
     );
-
-    if (!refreshedAlignment || !refreshedAlignment.latest_analysis) {
-      throw new Error('Analysis could not be generated. Please try again.');
-    }
-
-    alignmentDetail = refreshedAlignment;
-    analysis = refreshedAlignment.latest_analysis;
   }
 
   // Parse analysis data
-  const analysisData = analysis.details as any;
-  const alignedItems = analysisData?.alignedItems || [];
-  const conflicts = analysisData?.conflicts || [];
-  const hiddenAssumptions = analysisData?.hiddenAssumptions || [];
-  const gaps = analysisData?.gaps || [];
-  const imbalances = analysisData?.imbalances || [];
+  const analysisDetails = analysis.details;
+  const analysisData = getAnalysisPayload(analysisDetails);
+  const alignedItems = getArrayField(analysisData, 'alignedItems');
+  const conflicts = getArrayField(analysisData, 'conflicts');
+  const hiddenAssumptions = getArrayField(analysisData, 'hiddenAssumptions');
+  const gaps = getArrayField(analysisData, 'gaps');
+  const imbalances = getArrayField(analysisData, 'imbalances');
   const alignmentScore = analysis.summary?.alignment_score || 0;
+  const personAUserId = getStringField(analysisDetails, 'personAUserId');
+  const personBUserId = getStringField(analysisDetails, 'personBUserId');
+  const participantFirstNames =
+    personAUserId || personBUserId
+      ? await getParticipantFirstNames(
+          supabase,
+          alignmentDetail.participants.map(participant => participant.user_id)
+        )
+      : new Map<string, string>();
+  const personALabel = personAUserId
+    ? participantFirstNames.get(personAUserId) || 'Person A'
+    : 'Person A';
+  const personBLabel = personBUserId
+    ? participantFirstNames.get(personBUserId) || 'Person B'
+    : 'Person B';
 
   // Determine action button
   const hasConflicts = conflicts.length > 0;
@@ -353,7 +364,8 @@ export default async function AnalysisPage({ params }: PageProps) {
                       <ConflictItem
                         key={index}
                         conflict={conflict}
-                        index={index}
+                        personALabel={personALabel}
+                        personBLabel={personBLabel}
                       />
                     ))}
                 </div>
@@ -518,38 +530,75 @@ export default async function AnalysisPage({ params }: PageProps) {
   );
 }
 
-async function triggerServerAnalysis(alignmentId: string, round: number) {
-  const baseUrl = getBaseUrl();
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
-    .join('; ');
-
-  const response = await fetch(`${baseUrl}/api/alignment/analyze`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Cookie: cookieHeader,
-    },
-    body: JSON.stringify({ alignmentId, round }),
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`Analysis request failed: ${message}`);
-  }
+function isObject(value: unknown): value is Record<string, any> {
+  return typeof value === 'object' && value !== null;
 }
 
-function getBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL;
+function getAnalysisPayload(details: unknown): Record<string, any> {
+  if (!isObject(details)) {
+    return {};
   }
 
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+  const rawOutput = details.raw_output;
+  if (typeof rawOutput === 'string') {
+    try {
+      const parsed = JSON.parse(rawOutput);
+      return isObject(parsed) ? parsed : {};
+    } catch {
+      return details;
+    }
   }
 
-  return 'http://localhost:3000';
+  if (isObject(rawOutput)) {
+    return rawOutput;
+  }
+
+  return details;
+}
+
+function getArrayField(record: Record<string, any>, key: string): any[] {
+  return Array.isArray(record[key]) ? record[key] : [];
+}
+
+function getStringField(record: unknown, key: string): string | null {
+  if (!isObject(record)) {
+    return null;
+  }
+
+  const value = record[key];
+  return typeof value === 'string' ? value : null;
+}
+
+async function getParticipantFirstNames(
+  supabase: ReturnType<typeof createServerClient>,
+  userIds: string[]
+): Promise<Map<string, string>> {
+  const uniqueUserIds = Array.from(new Set(userIds));
+  if (uniqueUserIds.length === 0) {
+    return new Map();
+  }
+
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id,display_name')
+    .in('id', uniqueUserIds);
+
+  const names = new Map<string, string>();
+  for (const profile of profiles || []) {
+    const firstName = getFirstName(profile.display_name);
+    if (firstName) {
+      names.set(profile.id, firstName);
+    }
+  }
+
+  return names;
+}
+
+function getFirstName(displayName: string | null): string | null {
+  const trimmed = displayName?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed.split(/\s+/)[0];
 }

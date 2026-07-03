@@ -106,6 +106,7 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
             desiredOutcome: (clarityDraft.desiredOutcome as string) || '',
           }}
           preselectedPartner={preselectedPartner}
+          isCreator={alignment.created_by === user.id}
         />
       </div>
     );

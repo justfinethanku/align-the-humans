@@ -6,13 +6,13 @@ import './globals.css'
 
 const inter = Inter({
   subsets: ['latin'],
-  display: 'optional',
+  display: 'swap',
   variable: '--font-inter',
 })
 
 const manrope = Manrope({
   subsets: ['latin'],
-  display: 'optional',
+  display: 'fallback',
   variable: '--font-display',
   weight: ['500', '600', '700', '800'],
 })
@@ -112,6 +112,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"
+          storageKey="align-the-humans-theme-v2"
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange

@@ -15,7 +15,7 @@ import { type Alignment, type UIStatus, type AlignmentStatus } from "@/app/lib/t
 export interface AlignmentCardProps {
   alignment: Alignment & {
     description?: string | null;
-    ui_status?: UIStatus;
+    ui_status?: AlignmentStatus | UIStatus;
     partner_name?: string | null;
     partner_names?: string[];
   };
@@ -212,4 +212,3 @@ export function AlignmentCard({ alignment, onClick, className }: AlignmentCardPr
     </Card>
   );
 }
-

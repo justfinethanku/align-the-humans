@@ -92,7 +92,7 @@ export function PartnersList({
           No partners yet
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Add someone to start aligning with - roommate, cofounder, spouse, or colleague. One structure for any partnership.
+          Partners appear here after you complete an alignment together.
         </p>
       </div>
     );

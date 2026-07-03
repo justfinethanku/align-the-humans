@@ -1,49 +1,16 @@
-/**
- * React hook for fetching dashboard data
- * Provides user's alignments with UI status from alignment_status_view
- *
- * Usage in Client Components:
- * ```tsx
- * 'use client';
- *
- * import { useDashboardData } from '@/app/lib/hooks/useDashboardData';
- *
- * export function DashboardPage() {
- *   const { alignments, loading, error, refetch } = useDashboardData();
- *   // Use data...
- * }
- * ```
- */
-
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/app/lib/supabase-browser';
-import { DatabaseError, logError } from '@/app/lib/errors';
-import type { ClarityDraft, UIStatus } from '@/app/lib/types';
+import { logError } from '@/app/lib/errors';
+import {
+  fetchDashboardAlignments,
+  type AlignmentWithStatus,
+} from '@/app/lib/dashboard-data';
 
-/**
- * Alignment with UI status from alignment_status_view
- */
-export interface AlignmentWithStatus {
-  id: string;
-  partner_id: string | null;
-  template_id: string | null;
-  status: UIStatus | string;
-  ui_status: UIStatus;
-  current_round: number;
-  title: string | null;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  clarity_draft?: ClarityDraft | null;
-  participant_count?: number;
-  submitted_responses?: number;
-  signed_count?: number;
-  participants: Array<{
-    id: string;
-    user_id: string;
-    role: 'owner' | 'partner';
-    created_at: string;
-  }>;
+export type { AlignmentWithStatus } from '@/app/lib/dashboard-data';
+
+export interface UseDashboardDataOptions {
+  userId: string;
+  initialData?: AlignmentWithStatus[];
 }
 
 /**
@@ -58,82 +25,32 @@ export interface UseDashboardDataReturn {
 
 /**
  * Fetches user's alignments with participant info and UI status
- * Uses alignment_status_view for derived UI status labels
  */
-export function useDashboardData(): UseDashboardDataReturn {
-  const [alignments, setAlignments] = useState<AlignmentWithStatus[]>([]);
-  const [loading, setLoading] = useState(true);
+export function useDashboardData({
+  userId,
+  initialData,
+}: UseDashboardDataOptions): UseDashboardDataReturn {
+  const [alignments, setAlignments] = useState<AlignmentWithStatus[]>(
+    initialData ?? []
+  );
+  const [loading, setLoading] = useState(initialData === undefined);
   const [error, setError] = useState<Error | null>(null);
+  const alignmentsRef = useRef(alignments);
+
+  useEffect(() => {
+    alignmentsRef.current = alignments;
+  }, [alignments]);
 
   const fetchAlignments = useCallback(async () => {
     try {
-      // No setLoading(true) here: refetches (e.g. from realtime events)
-      // must not blank the already-rendered list. `loading` starts true
-      // and only ever flips false.
+      if (alignmentsRef.current.length === 0) {
+        setLoading(true);
+      }
       setError(null);
 
       const supabase = createClient();
-
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError) {
-        throw new DatabaseError('Failed to get user session', { cause: userError });
-      }
-
-      if (!user) {
-        throw new DatabaseError('No authenticated user');
-      }
-
-      // First, get alignment IDs where user is a participant
-      const { data: userParticipations, error: participationError } = await supabase
-        .from('alignment_participants')
-        .select('alignment_id')
-        .eq('user_id', user.id);
-
-      if (participationError) {
-        throw new DatabaseError('Failed to fetch user participations', {
-          cause: participationError,
-          details: { userId: user.id }
-        });
-      }
-
-      const alignmentIds = (userParticipations || []).map(p => p.alignment_id);
-
-      // If no alignments, return empty array
-      if (alignmentIds.length === 0) {
-        setAlignments([]);
-        return;
-      }
-
-      // Fetch alignments directly from alignments table
-      const { data: alignmentsData, error: queryError } = await supabase
-        .from('alignments')
-        .select(`
-          *,
-          participants:alignment_participants(
-            id,
-            user_id,
-            role,
-            created_at
-          )
-        `)
-        .in('id', alignmentIds)
-        .order('updated_at', { ascending: false });
-
-      if (queryError) {
-        throw new DatabaseError('Failed to fetch alignments with status', {
-          cause: queryError,
-          details: { userId: user.id }
-        });
-      }
-
-      const alignmentsWithStatus = (alignmentsData || []).map((alignment) => ({
-        ...alignment,
-        ui_status: alignment.status as UIStatus,
-      }));
-
-      setAlignments(alignmentsWithStatus as AlignmentWithStatus[]);
+      const nextAlignments = await fetchDashboardAlignments(supabase, userId);
+      setAlignments(nextAlignments);
     } catch (err) {
       const wrappedError = err instanceof Error ? err : new Error(String(err));
       setError(wrappedError);
@@ -141,12 +58,15 @@ export function useDashboardData(): UseDashboardDataReturn {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
-  // Initial fetch on mount
   useEffect(() => {
+    if (initialData !== undefined) {
+      return;
+    }
+
     fetchAlignments();
-  }, [fetchAlignments]);
+  }, [fetchAlignments, initialData]);
 
   return {
     alignments,

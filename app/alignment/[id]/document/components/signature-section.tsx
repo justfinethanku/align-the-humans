@@ -1,6 +1,6 @@
 /**
  * Signature Section Component
- * Handles digital signature collection and display
+ * Handles digital signature collection and display.
  */
 
 'use client';
@@ -13,27 +13,36 @@ import { Label } from '@/components/ui/label';
 import { Loader2, PenLine, Clock, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+interface SignatureParticipantView {
+  userId: string;
+  displayName: string;
+  role: 'owner' | 'partner';
+  signature: {
+    id: string;
+    created_at: string;
+    agreement_snapshot_hash: string | null;
+  } | null;
+}
+
 interface SignatureSectionProps {
   alignmentId: string;
   round: number;
+  reviewedSnapshotHash: string;
   currentUserId: string;
-  currentUserName: string;
-  partnerUserId: string;
-  partnerName: string;
-  currentUserSignature: any | null;
-  partnerSignature: any | null;
+  participants: SignatureParticipantView[];
   allSigned: boolean;
+}
+
+function roleLabel(role: SignatureParticipantView['role']): string {
+  return role === 'owner' ? 'Owner' : 'Partner';
 }
 
 export function SignatureSection({
   alignmentId,
   round,
+  reviewedSnapshotHash,
   currentUserId,
-  currentUserName,
-  partnerUserId,
-  partnerName,
-  currentUserSignature,
-  partnerSignature,
+  participants,
   allSigned
 }: SignatureSectionProps) {
   const router = useRouter();
@@ -41,8 +50,9 @@ export function SignatureSection({
   const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const hasUserSigned = !!currentUserSignature;
-  const hasPartnerSigned = !!partnerSignature;
+  const currentParticipant = participants.find((participant) => participant.userId === currentUserId);
+  const hasUserSigned = !!currentParticipant?.signature;
+  const remainingParticipants = participants.filter((participant) => !participant.signature);
 
   async function handleSign() {
     if (!agreed) return;
@@ -54,15 +64,27 @@ export function SignatureSection({
       const response = await fetch(`/api/alignment/${alignmentId}/sign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ round })
+        body: JSON.stringify({
+          round,
+          reviewedSnapshotHash,
+        })
       });
 
       if (!response.ok) {
         const data = await response.json();
+        if (data.error?.code === 'DOCUMENT_REVIEW_REQUIRED') {
+          setAgreed(false);
+          setError(
+            data.error?.details?.currentSnapshotHash
+              ? 'This agreement changed after you opened the page. Review the refreshed document before signing.'
+              : data.error?.message || 'Review the current agreement before signing.'
+          );
+          router.refresh();
+          return;
+        }
         throw new Error(data.error?.message || 'Failed to sign agreement');
       }
 
-      // Refresh the page to show updated signature status
       router.refresh();
 
     } catch (err) {
@@ -91,72 +113,60 @@ export function SignatureSection({
       </CardHeader>
       <CardContent className="space-y-6">
 
-        {/* Participant A Signature Box */}
-        <div className="border-2 border-dashed rounded-lg p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold">Participant A: {currentUserName}</p>
-              {hasUserSigned && currentUserSignature && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Signed on {formatTimestamp(currentUserSignature.created_at)}
-                </p>
+        {participants.map((participant) => {
+          const isCurrentUser = participant.userId === currentUserId;
+          const signature = participant.signature;
+
+          return (
+            <div
+              key={participant.userId}
+              className="signature-participant-row border-2 border-dashed rounded-lg p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-semibold">
+                    {roleLabel(participant.role)}: {participant.displayName}
+                    {isCurrentUser ? ' (you)' : ''}
+                  </p>
+                  {signature && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Signed on {formatTimestamp(signature.created_at)}
+                    </p>
+                  )}
+                </div>
+                {signature ? (
+                  <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
+                ) : (
+                  <Clock className="h-6 w-6 text-muted-foreground shrink-0" />
+                )}
+              </div>
+
+              {signature ? (
+                <div className="bg-green-50 dark:bg-green-950/20 rounded p-4 text-center">
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                    Signature confirmed
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-muted/30 rounded p-4 text-center text-muted-foreground">
+                  {isCurrentUser ? (
+                    <>
+                      <PenLine className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Ready for your digital signature</p>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Awaiting signature</p>
+                    </>
+                  )}
+                </div>
               )}
             </div>
-            {hasUserSigned && (
-              <CheckCircle2 className="h-6 w-6 text-green-500" />
-            )}
-          </div>
+          );
+        })}
 
-          {!hasUserSigned && (
-            <div className="bg-muted/30 rounded p-4 text-center text-muted-foreground">
-              <PenLine className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Draw or type your signature here</p>
-            </div>
-          )}
-
-          {hasUserSigned && (
-            <div className="bg-green-50 dark:bg-green-950/20 rounded p-4 text-center">
-              <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                You have signed this agreement
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Participant B Signature Box */}
-        <div className="border-2 border-dashed rounded-lg p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold">Participant B: {partnerName}</p>
-              {hasPartnerSigned && partnerSignature && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Signed on {formatTimestamp(partnerSignature.created_at)}
-                </p>
-              )}
-            </div>
-            {hasPartnerSigned && (
-              <CheckCircle2 className="h-6 w-6 text-green-500" />
-            )}
-          </div>
-
-          {!hasPartnerSigned && (
-            <div className="bg-muted/30 rounded p-4 text-center text-muted-foreground">
-              <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Awaiting signature...</p>
-            </div>
-          )}
-
-          {hasPartnerSigned && (
-            <div className="bg-green-50 dark:bg-green-950/20 rounded p-4 text-center">
-              <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                {partnerName} has signed this agreement
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Signature Action */}
-        {!hasUserSigned && (
+        {!hasUserSigned && currentParticipant && (
           <div className="space-y-4 pt-4 border-t">
             <div className="flex items-start gap-3">
               <Checkbox
@@ -168,9 +178,8 @@ export function SignatureSection({
                 htmlFor="agree-terms"
                 className="text-sm leading-relaxed cursor-pointer"
               >
-                I agree to the terms outlined in this document and understand that my digital
-                signature is legally binding. I have reviewed all sections carefully and consent
-                to be bound by these terms.
+                Confirm your digital signature as {currentParticipant.displayName}. I have reviewed
+                the agreement document and consent to sign these terms.
               </Label>
             </div>
 
@@ -189,26 +198,23 @@ export function SignatureSection({
               {signing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing Agreement...
+                  Confirming Signature...
                 </>
               ) : (
                 <>
                   <PenLine className="mr-2 h-4 w-4" />
-                  Sign Agreement
+                  Confirm Signature
                 </>
               )}
             </Button>
           </div>
         )}
 
-        {hasUserSigned && !hasPartnerSigned && (
+        {hasUserSigned && remainingParticipants.length > 0 && (
           <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 text-center">
             <Clock className="h-6 w-6 mx-auto mb-2 text-blue-500" />
             <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
-              Waiting for {partnerName} to sign
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              They will be notified to review and sign the agreement
+              Waiting for {remainingParticipants.map((participant) => participant.displayName).join(', ')} to sign
             </p>
           </div>
         )}
@@ -220,10 +226,18 @@ export function SignatureSection({
               Agreement Fully Executed
             </p>
             <p className="text-sm text-muted-foreground">
-              Both parties have signed. This agreement is now legally binding.
+              Both parties have signed this agreement.
             </p>
           </div>
         )}
+
+        <style jsx global>{`
+          @media print {
+            .signature-participant-row {
+              page-break-inside: avoid;
+            }
+          }
+        `}</style>
 
       </CardContent>
     </Card>

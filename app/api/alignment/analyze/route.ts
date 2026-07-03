@@ -13,7 +13,7 @@
  * Requirements:
  * - Both participants must have submitted responses
  * - User must be a participant in the alignment
- * - Alignment must be in 'active' status
+ * - Alignment must be in 'active' or 'resolving' status
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -27,7 +27,7 @@ import { AlignmentError, ValidationError, RateLimitError, createErrorResponse } 
 import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { sendAnalysisCompleteEmail } from '@/app/lib/email-service';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import type { AlignmentResponse } from '@/app/lib/types';
+import type { AlignmentAnalysis, AlignmentResponse } from '@/app/lib/types';
 
 // ============================================================================
 // Request/Response Schemas
@@ -78,6 +78,110 @@ const analysisSchema = z.object({
 
 type AnalysisResult = z.infer<typeof analysisSchema>;
 
+const ANALYSIS_LOCK_STALE_AFTER_MS = 5 * 60 * 1000;
+const ANALYSIS_RETRY_AFTER_SECONDS = 3;
+
+type SupabaseServerClient = ReturnType<typeof createServerClient>;
+type RollbackStatus = 'active' | 'resolving';
+
+function emptyAnalysisPayload(): AnalysisResult {
+  return {
+    alignedItems: [],
+    conflicts: [],
+    hiddenAssumptions: [],
+    gaps: [],
+    imbalances: [],
+    overall_alignment_score: 0,
+  };
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function normalizeAnalysisPayload(details: unknown): unknown {
+  if (!isObject(details)) {
+    return emptyAnalysisPayload();
+  }
+
+  const rawOutput = details.raw_output;
+  if (typeof rawOutput === 'string') {
+    try {
+      return JSON.parse(rawOutput);
+    } catch {
+      return details;
+    }
+  }
+
+  if (isObject(rawOutput)) {
+    return rawOutput;
+  }
+
+  return details;
+}
+
+async function fetchExistingAnalysis(
+  supabase: SupabaseServerClient,
+  alignmentId: string,
+  round: number
+): Promise<AlignmentAnalysis | null> {
+  const { data, error } = await supabase
+    .from('alignment_analyses')
+    .select('*')
+    .eq('alignment_id', alignmentId)
+    .eq('round', round)
+    .maybeSingle();
+
+  if (error) {
+    throw new AlignmentError(
+      'Failed to fetch existing analysis',
+      'ANALYSIS_FETCH_ERROR',
+      500,
+      { alignmentId, round }
+    );
+  }
+
+  return data as AlignmentAnalysis | null;
+}
+
+function createCompleteResponse(
+  alignmentId: string,
+  round: number,
+  analysis: AlignmentAnalysis | { details: unknown }
+) {
+  return NextResponse.json({
+    data: {
+      status: 'complete',
+      inProgress: false,
+      alignmentId,
+      round,
+      analysis: normalizeAnalysisPayload(analysis.details),
+    },
+  }, { status: 200 });
+}
+
+function createInProgressResponse(alignmentId: string, round: number) {
+  return NextResponse.json({
+    data: {
+      status: 'in_progress',
+      inProgress: true,
+      alignmentId,
+      round,
+      retryAfterSeconds: ANALYSIS_RETRY_AFTER_SECONDS,
+      message: 'Analysis is already in progress.',
+    },
+  }, {
+    status: 202,
+    headers: {
+      'Retry-After': String(ANALYSIS_RETRY_AFTER_SECONDS),
+    },
+  });
+}
+
+function isRollbackStatus(status: string): status is RollbackStatus {
+  return status === 'active' || status === 'resolving';
+}
+
 // ============================================================================
 // Main Handler
 // ============================================================================
@@ -85,6 +189,11 @@ type AnalysisResult = z.infer<typeof analysisSchema>;
 export async function POST(request: NextRequest) {
   const timer = new PerformanceTimer();
   const supabase = createServerClient();
+  let lockAcquired = false;
+  let rollbackStatus: RollbackStatus | null = null;
+  let rollbackAlignmentId: string | null = null;
+  let rollbackRound: number | null = null;
+  let telemetryUserId: string | undefined;
 
   try {
     // 1. Authenticate user
@@ -96,8 +205,103 @@ export async function POST(request: NextRequest) {
         401
       );
     }
+    telemetryUserId = user.id;
 
-    // 2. Rate limit (heavy AI operation): ~10/min/user
+    // 2. Parse and validate request body
+    const body = await request.json();
+    const { alignmentId, round } = analyzeRequestSchema.parse(body);
+
+    // 3. Verify user is a participant
+    const isUserParticipant = await isParticipant(supabase, alignmentId, user.id);
+    if (!isUserParticipant) {
+      throw AlignmentError.unauthorized(alignmentId, user.id);
+    }
+
+    // 4. Fetch alignment to check status and stale-lock age
+    const { data: alignment, error: alignmentError } = await supabase
+      .from('alignments')
+      .select('id,status,current_round,updated_at,title')
+      .eq('id', alignmentId)
+      .single();
+
+    if (alignmentError || !alignment) {
+      throw AlignmentError.notFound(alignmentId);
+    }
+
+    if (round !== alignment.current_round) {
+      throw new AlignmentError(
+        'Cannot analyze a non-current round.',
+        'ROUND_MISMATCH',
+        409,
+        {
+          currentRound: alignment.current_round,
+          requestedRound: round,
+        }
+      );
+    }
+
+    const existingAnalysis = await fetchExistingAnalysis(supabase, alignmentId, round);
+    if (existingAnalysis) {
+      return createCompleteResponse(alignmentId, round, existingAnalysis);
+    }
+
+    let effectiveStatus = alignment.status;
+
+    if (effectiveStatus === 'analyzing') {
+      const staleCutoff = new Date(Date.now() - ANALYSIS_LOCK_STALE_AFTER_MS).toISOString();
+      const isStale =
+        new Date(alignment.updated_at).getTime() < Date.now() - ANALYSIS_LOCK_STALE_AFTER_MS;
+
+      if (!isStale) {
+        return createInProgressResponse(alignmentId, round);
+      }
+
+      const recoveredStatus: RollbackStatus =
+        alignment.current_round > 1 ? 'resolving' : 'active';
+      const { data: recoveredLock, error: recoveryError } = await supabase
+        .from('alignments')
+        .update({ status: recoveredStatus })
+        .eq('id', alignmentId)
+        .eq('status', 'analyzing')
+        .eq('current_round', round)
+        .lt('updated_at', staleCutoff)
+        .select('id,status')
+        .maybeSingle();
+
+      if (recoveryError) {
+        throw new AlignmentError(
+          'Failed to recover stale analysis lock',
+          'ANALYSIS_STALE_RECOVERY_ERROR',
+          500,
+          { alignmentId, round }
+        );
+      }
+
+      if (!recoveredLock) {
+        const recoveredAnalysis = await fetchExistingAnalysis(supabase, alignmentId, round);
+        if (recoveredAnalysis) {
+          return createCompleteResponse(alignmentId, round, recoveredAnalysis);
+        }
+
+        return createInProgressResponse(alignmentId, round);
+      }
+
+      effectiveStatus = recoveredStatus;
+    }
+
+    if (!isRollbackStatus(effectiveStatus)) {
+      throw new AlignmentError(
+        `Cannot analyze alignment in '${alignment.status}' status.`,
+        'INVALID_STATUS',
+        409,
+        {
+          currentStatus: alignment.status,
+          expectedStatus: 'active_resolving_or_analyzing_in_progress',
+        }
+      );
+    }
+
+    // Rate limit only requests that may perform the heavy AI operation.
     const rateLimitResult = await checkRateLimit(
       rateLimitKeyForUser(user.id, 'alignment.analyze'),
       { limit: 10, windowMs: 60_000 }
@@ -108,83 +312,38 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 3. Parse and validate request body
-    const body = await request.json();
-    const { alignmentId, round } = analyzeRequestSchema.parse(body);
-
-    // 4. Verify user is a participant
-    const isUserParticipant = await isParticipant(supabase, alignmentId, user.id);
-    if (!isUserParticipant) {
-      throw AlignmentError.unauthorized(alignmentId, user.id);
-    }
-
-    // 4. Fetch alignment to check status
-    const { data: alignment, error: alignmentError } = await supabase
-      .from('alignments')
-      .select('*')
-      .eq('id', alignmentId)
-      .single();
-
-    if (alignmentError || !alignment) {
-      throw AlignmentError.notFound(alignmentId);
-    }
-
-    // Verify alignment is in correct status
-    if (alignment.status !== 'active' && alignment.status !== 'resolving') {
-      // If already analyzing or beyond, check for existing analysis
-      if (alignment.status === 'analyzing' || alignment.status === 'complete') {
-        const { data: existingAnalysis } = await supabase
-          .from('alignment_analyses')
-          .select('*')
-          .eq('alignment_id', alignmentId)
-          .eq('round', round)
-          .single();
-
-        if (existingAnalysis) {
-          return NextResponse.json({
-            data: { analysis: existingAnalysis.details },
-          }, { status: 200 });
-        }
-      }
-      throw new AlignmentError(
-        `Cannot analyze alignment in '${alignment.status}' status. Must be 'active' or 'resolving'.`,
-        'INVALID_STATUS',
-        409,
-        { currentStatus: alignment.status, expectedStatus: 'active_or_resolving' }
-      );
-    }
-
-    // Atomically transition to 'analyzing' to prevent duplicate analyses
+    // Atomically transition to 'analyzing' to prevent duplicate analyses.
     const { data: lockResult, error: lockError } = await supabase
       .from('alignments')
       .update({ status: 'analyzing' })
       .eq('id', alignmentId)
+      .eq('current_round', round)
       .in('status', ['active', 'resolving'])
-      .select('id')
-      .single();
+      .select('id,status')
+      .maybeSingle();
 
-    if (lockError || !lockResult) {
-      // Another process already started analysis - return existing if available
-      const { data: existingAnalysis } = await supabase
-        .from('alignment_analyses')
-        .select('*')
-        .eq('alignment_id', alignmentId)
-        .eq('round', round)
-        .single();
-
-      if (existingAnalysis) {
-        return NextResponse.json({
-          data: { analysis: existingAnalysis.details },
-        }, { status: 200 });
-      }
-
+    if (lockError) {
       throw new AlignmentError(
-        'Analysis is already in progress',
-        'ANALYSIS_IN_PROGRESS',
-        409,
-        { alignmentId }
+        'Failed to acquire analysis lock',
+        'ANALYSIS_LOCK_ERROR',
+        500,
+        { alignmentId, round }
       );
     }
+
+    if (!lockResult) {
+      const completedAnalysis = await fetchExistingAnalysis(supabase, alignmentId, round);
+      if (completedAnalysis) {
+        return createCompleteResponse(alignmentId, round, completedAnalysis);
+      }
+
+      return createInProgressResponse(alignmentId, round);
+    }
+
+    lockAcquired = true;
+    rollbackStatus = effectiveStatus;
+    rollbackAlignmentId = alignmentId;
+    rollbackRound = round;
 
     // 5. Fetch both participants' responses
     const { data: responses, error: responsesError } = await getRoundResponses(
@@ -220,6 +379,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const personAUserId = responses[0].user_id;
+    const personBUserId = responses[1].user_id;
+
     // 7. Log start of AI analysis
     const promptConfig = await getPrompt('analyze-responses');
 
@@ -236,7 +398,7 @@ export async function POST(request: NextRequest) {
     const analysis = await analyzeResponses(responses, alignmentId);
 
     // 9. Save analysis to database
-    const { data: savedAnalysis, error: saveError } = await saveAnalysis(supabase, {
+    const { error: saveError } = await saveAnalysis(supabase, {
       alignmentId,
       round,
       summary: {
@@ -264,6 +426,8 @@ export async function POST(request: NextRequest) {
         prompt_tokens: 0, // Will be populated from usage if available
         completion_tokens: 0,
         raw_output: JSON.stringify(analysis),
+        personAUserId,
+        personBUserId,
         conflicts_detailed: analysis.conflicts.map(c => ({
           question_id: c.question_id,
           severity: c.severity,
@@ -284,6 +448,29 @@ export async function POST(request: NextRequest) {
     });
 
     if (saveError) {
+      if ((saveError as { code?: string }).code === '23505') {
+        const completedAnalysis = await fetchExistingAnalysis(supabase, alignmentId, round);
+        if (completedAnalysis) {
+          const { error: statusError } = await updateAlignmentStatus(
+            supabase,
+            alignmentId,
+            'resolving'
+          );
+
+          if (statusError) {
+            telemetry.logError({
+              errorCode: 'STATUS_UPDATE_FAILED',
+              errorMessage: 'Failed to update alignment status to resolving',
+              userId: user.id,
+              context: { alignmentId, statusError },
+            });
+          }
+
+          lockAcquired = false;
+          return createCompleteResponse(alignmentId, round, completedAnalysis);
+        }
+      }
+
       throw new AlignmentError(
         'Failed to save analysis',
         'ANALYSIS_SAVE_ERROR',
@@ -307,6 +494,7 @@ export async function POST(request: NextRequest) {
         context: { alignmentId, statusError },
       });
     }
+    lockAcquired = false;
 
     // 11. Log successful completion and send email notifications
     const latencyMs = timer.stop();
@@ -359,6 +547,10 @@ export async function POST(request: NextRequest) {
     // 12. Return analysis results
     return NextResponse.json({
       data: {
+        status: 'complete',
+        inProgress: false,
+        alignmentId,
+        round,
         analysis: {
           alignedItems: analysis.alignedItems,
           conflicts: analysis.conflicts,
@@ -371,19 +563,41 @@ export async function POST(request: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
+    if (lockAcquired && rollbackAlignmentId && rollbackRound && rollbackStatus) {
+      const { error: rollbackError } = await supabase
+        .from('alignments')
+        .update({ status: rollbackStatus })
+        .eq('id', rollbackAlignmentId)
+        .eq('status', 'analyzing')
+        .eq('current_round', rollbackRound);
+
+      if (rollbackError) {
+        telemetry.logError({
+          errorCode: 'ANALYSIS_ROLLBACK_FAILED',
+          errorMessage: rollbackError.message,
+          userId: undefined,
+          context: {
+            alignmentId: rollbackAlignmentId,
+            round: rollbackRound,
+            rollbackStatus,
+          },
+        });
+      }
+    }
+
     // Log error with telemetry
     if (error instanceof AlignmentError || error instanceof ValidationError) {
       telemetry.logError({
         errorCode: error.code,
         errorMessage: error.message,
-        userId: (await getCurrentUser(supabase))?.id,
+        userId: telemetryUserId,
         context: { error: error.details },
       });
     } else {
       telemetry.logError({
         errorCode: 'UNKNOWN_ERROR',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        userId: (await getCurrentUser(supabase))?.id,
+        userId: telemetryUserId,
       });
     }
 

@@ -6,12 +6,14 @@
 export { useDashboardData } from './useDashboardData';
 export type {
   AlignmentWithStatus,
+  UseDashboardDataOptions,
   UseDashboardDataReturn,
 } from './useDashboardData';
 
 export { usePartners } from './usePartners';
 export type {
   PartnerWithCount,
+  UsePartnersOptions,
   UsePartnersReturn,
 } from './usePartners';
 

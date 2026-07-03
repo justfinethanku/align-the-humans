@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UserCheck, Clock, Loader2, AlertCircle } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase-browser';
+import { useAlignmentUpdates } from '@/app/lib/hooks/useAlignmentUpdates';
 import { ShareLinkButton } from './ShareLinkButton';
 
 interface InviteStatusProps {
@@ -26,14 +27,9 @@ export function InviteStatus({ alignmentId, showRegenerateButton = true }: Invit
   const [loading, setLoading] = useState(true);
   const [participants, setParticipants] = useState<ParticipantInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  useEffect(() => {
-    fetchParticipants();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alignmentId]);
-
-  const fetchParticipants = async () => {
+  const fetchParticipants = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -71,7 +67,31 @@ export function InviteStatus({ alignmentId, showRegenerateButton = true }: Invit
     } finally {
       setLoading(false);
     }
-  };
+  }, [alignmentId, supabase]);
+
+  useEffect(() => {
+    void fetchParticipants();
+  }, [fetchParticipants]);
+
+  const handlePartnerJoin = useCallback(() => {
+    void fetchParticipants();
+  }, [fetchParticipants]);
+
+  useAlignmentUpdates({
+    alignmentId,
+    onPartnerJoin: handlePartnerJoin,
+  });
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchParticipants();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [fetchParticipants]);
 
   if (loading) {
     return (

@@ -7,11 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AlignmentCard } from '@/components/dashboard/AlignmentCard';
 import { PartnersList, type PartnerWithDetails } from '@/components/dashboard/PartnersList';
-import { AddPartnerModal } from '@/components/dashboard/AddPartnerModal';
 import { useDashboardData } from '@/app/lib/hooks/useDashboardData';
 import { usePartners } from '@/app/lib/hooks/usePartners';
 import { useAlignmentUpdates } from '@/app/lib/hooks/useAlignmentUpdates';
-import { Bell, Plus, Search, UserPlus, Loader2, HeartHandshake, LogOut, User, ChevronDown } from 'lucide-react';
+import type {
+  AlignmentWithStatus,
+  PartnerWithCount,
+} from '@/app/lib/dashboard-data';
+import { Bell, Plus, Search, Loader2, HeartHandshake, LogOut, User, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,12 +24,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { createClient } from '@/app/lib/supabase-browser';
-import { cn } from '@/app/lib/utils';
 
 interface DashboardClientProps {
   userId: string;
   userEmail: string;
   displayName: string | null;
+  initialAlignments: AlignmentWithStatus[];
+  initialPartners: PartnerWithCount[];
 }
 
 /**
@@ -35,7 +39,6 @@ interface DashboardClientProps {
  * Client component with all interactive features:
  * - Real-time alignment updates
  * - Search functionality
- * - Modal interactions
  * - Navigation
  *
  * Layout matches design template:
@@ -44,11 +47,16 @@ interface DashboardClientProps {
  * - Responsive design
  * - Dark/light mode support
  */
-export function DashboardClient({ userId, userEmail, displayName }: DashboardClientProps) {
+export function DashboardClient({
+  userId,
+  userEmail,
+  displayName,
+  initialAlignments,
+  initialPartners,
+}: DashboardClientProps) {
   const router = useRouter();
   const supabase = createClient();
   const [partnerSearchQuery, setPartnerSearchQuery] = React.useState('');
-  const [isAddPartnerModalOpen, setIsAddPartnerModalOpen] = React.useState(false);
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   // Handle logout
@@ -71,20 +79,21 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
     loading: alignmentsLoading,
     error: alignmentsError,
     refetch: refetchAlignments
-  } = useDashboardData();
+  } = useDashboardData({ userId, initialData: initialAlignments });
 
   // Fetch partners data
   const {
     partners: rawPartners,
     loading: partnersLoading,
     error: partnersError,
-    refetch: refetchPartners
-  } = usePartners();
+    refetch: refetchPartners,
+  } = usePartners({ userId, initialData: initialPartners });
 
   // Subscribe to real-time alignment updates
   const handleAlignmentChange = React.useCallback(() => {
     refetchAlignments();
-  }, [refetchAlignments]);
+    refetchPartners();
+  }, [refetchAlignments, refetchPartners]);
 
   useAlignmentUpdates({
     enabled: true,
@@ -125,14 +134,8 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
   }, [displayName, userEmail]);
 
   // Handle alignment click
-  const handleAlignmentClick = (alignment: any) => {
+  const handleAlignmentClick = (alignment: { id: string }) => {
     router.push(`/alignment/${alignment.id}`);
-  };
-
-  // Handle partner added
-  const handlePartnerAdded = () => {
-    refetchPartners();
-    setIsAddPartnerModalOpen(false);
   };
 
   // Handle new alignment button
@@ -231,7 +234,7 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
                 className="flex h-11 w-full shrink-0 items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-primary-500 px-5 text-base font-semibold text-white shadow-md shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-lg hover:shadow-primary-500/30 sm:w-auto"
               >
                 <Plus className="size-5" />
-                <span className="truncate">Start New Alignment</span>
+                <span className="truncate">Start an alignment</span>
               </Button>
             </div>
 
@@ -314,7 +317,7 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
                 {alignments.map((alignment) => (
                   <AlignmentCard
                     key={alignment.id}
-                    alignment={alignment as any}
+                    alignment={alignment}
                     onClick={handleAlignmentClick}
                   />
                 ))}
@@ -330,12 +333,12 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
                 Your Partners
               </h2>
               <Button
-                onClick={() => setIsAddPartnerModalOpen(true)}
+                onClick={handleNewAlignment}
                 variant="outline"
                 className="flex h-10 w-full shrink-0 items-center justify-center gap-2 overflow-hidden rounded-lg border-slate-300 bg-background px-4 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:shadow-md dark:border-slate-700/60 dark:bg-surface-dark dark:text-slate-200 dark:shadow-none dark:hover:bg-slate-700/40 sm:w-auto"
               >
-                <UserPlus className="size-4" />
-                <span className="truncate">Add Partner</span>
+                <Plus className="size-4" />
+                <span className="truncate">Start an alignment</span>
               </Button>
             </div>
 
@@ -382,13 +385,6 @@ export function DashboardClient({ userId, userEmail, displayName }: DashboardCli
           </div>
         </div>
       </main>
-
-      {/* Add Partner Modal */}
-      <AddPartnerModal
-        open={isAddPartnerModalOpen}
-        onOpenChange={setIsAddPartnerModalOpen}
-        onPartnerAdded={handlePartnerAdded}
-      />
     </div>
   );
 }

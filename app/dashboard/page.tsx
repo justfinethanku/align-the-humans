@@ -1,5 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
+import {
+  fetchDashboardAlignments,
+  fetchDashboardPartners,
+} from '@/app/lib/dashboard-data';
 import { DashboardClient } from './DashboardClient';
 
 /**
@@ -27,18 +31,23 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  // Fetch user profile for header display
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  const [profileResult, initialAlignments, initialPartners] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single(),
+    fetchDashboardAlignments(supabase, user.id),
+    fetchDashboardPartners(supabase, user.id),
+  ]);
 
   return (
     <DashboardClient
       userId={user.id}
       userEmail={user.email || ''}
-      displayName={profile?.display_name || null}
+      displayName={profileResult.data?.display_name || null}
+      initialAlignments={initialAlignments}
+      initialPartners={initialPartners}
     />
   );
 }
