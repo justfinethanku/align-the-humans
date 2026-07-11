@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/app/lib/supabase-browser"
 import { InviteStatus } from "@/components/alignment/InviteStatus"
+import { toast } from "sonner"
 
 // Types
 interface PreselectedPartner {
@@ -405,11 +406,11 @@ export function ClarityForm({
       router.push(`/alignment/${alignmentId}/questions`)
     } catch (err) {
       console.error("Question generation error:", err)
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to generate questions. Please try again."
-      )
+      const message = err instanceof Error
+        ? err.message
+        : "Failed to generate questions. Please try again."
+      setError(message)
+      toast.error(message)
     } finally {
       setIsGenerating(false)
     }

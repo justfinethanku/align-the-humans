@@ -170,28 +170,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .single();
 
     if (templateError) {
-      console.error('Failed to store template', templateError);
-      // Non-fatal error - continue with response
+      throw new AlignmentError(
+        'Failed to save generated questions. Please try again.',
+        'QUESTION_TEMPLATE_SAVE_ERROR',
+        500,
+        { alignmentId: validatedRequest.alignmentId }
+      );
     }
 
     // 6b. Attach template to alignment and advance status if needed
-    if (template?.id) {
-      const alignmentUpdates: Record<string, any> = {
-        template_id: template.id,
-      };
+    if (!template?.id) {
+      throw new AlignmentError(
+        'Generated questions were not saved. Please try again.',
+        'QUESTION_TEMPLATE_MISSING',
+        500,
+        { alignmentId: validatedRequest.alignmentId }
+      );
+    }
 
-      if (alignment.status === 'draft') {
-        alignmentUpdates.status = 'active';
-      }
+    const alignmentUpdates: Record<string, any> = {
+      template_id: template.id,
+    };
 
-      const { error: alignmentUpdateError } = await supabase
-        .from('alignments')
-        .update(alignmentUpdates)
-        .eq('id', validatedRequest.alignmentId);
+    if (alignment.status === 'draft') {
+      alignmentUpdates.status = 'active';
+    }
 
-      if (alignmentUpdateError) {
-        console.error('Failed to update alignment with template_id', alignmentUpdateError);
-      }
+    const { error: alignmentUpdateError } = await supabase
+      .from('alignments')
+      .update(alignmentUpdates)
+      .eq('id', validatedRequest.alignmentId);
+
+    if (alignmentUpdateError) {
+      throw new AlignmentError(
+        'Failed to attach generated questions to this alignment. Please try again.',
+        'QUESTION_TEMPLATE_ATTACH_ERROR',
+        500,
+        { alignmentId: validatedRequest.alignmentId, templateId: template.id }
+      );
     }
 
     // 7. Log success
@@ -209,8 +225,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 8. Return response
     const response: GenerateQuestionsResponse = {
       data: {
-        templateId: template?.id || 'fallback',
-        version: template?.version || 1,
+        templateId: template.id,
+        version: template.version,
         source,
         questions: sanitizedQuestions,
       },

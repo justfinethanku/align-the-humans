@@ -47,6 +47,22 @@ export default async function QuestionsPage({
     notFound();
   }
 
+  // Submitted answers are immutable. Direct navigation must follow the same
+  // phase routing as the alignment entry page instead of reopening the form.
+  if (alignment.user_response?.submitted_at) {
+    switch (alignment.status) {
+      case 'analyzing':
+        redirect(`/alignment/${id}/analysis`);
+      case 'resolving':
+        redirect(`/alignment/${id}/resolution`);
+      case 'complete':
+        redirect(`/alignment/${id}/document`);
+      case 'active':
+      default:
+        redirect(`/alignment/${id}/waiting`);
+    }
+  }
+
   // Load template/questions for this alignment
   let questions: AlignmentQuestion[] = [];
 

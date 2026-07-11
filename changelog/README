@@ -159,3 +159,4 @@ High-level non-verbose succinct description of that's in the session summary.
 *Last updated: 2026-02-17 18:00
 - [2026-07-02-2200-journey-audit-flicker-fixes](2026-07-02-2200-journey-audit-flicker-fixes.md) — 7-worker Ringer journey audit; P0 invite-token + DB-trigger fixes, dashboard/theme flicker fixes, waiting/router/resolution flow fixes
 - [2026-07-02-2230-pass2-swarm-fixes](2026-07-02-2230-pass2-swarm-fixes.md) — pass-2 swarm: invite RPCs, analyze resilience, immutable agreement snapshots, flow/UX, dashboard hydration, theme polish
+- [2026-07-11-1932-journey-integrity-fixes](2026-07-11-1932-journey-integrity-fixes.md) — atomic completion/creation, submitted-answer immutability, analysis status repair, and visible question-persistence failures

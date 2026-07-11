@@ -88,7 +88,7 @@ Type-safe helper functions for common database operations:
 **Alignment Operations:**
 - `getUserAlignments(supabase, userId)` - Get all user's alignments
 - `getAlignmentDetail(supabase, alignmentId, userId)` - Get full alignment details
-- `createAlignment(supabase, data)` - Create new alignment
+- `createAlignmentWithOwner(supabase, data)` - Atomically create an alignment and owner participant
 - `updateAlignmentStatus(supabase, alignmentId, status)` - Update status
 
 **Participant Operations:**

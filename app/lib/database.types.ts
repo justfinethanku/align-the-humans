@@ -538,6 +538,24 @@ export type Database = {
       }
     }
     Functions: {
+      complete_alignment_if_all_signed: {
+        Args: {
+          p_alignment_id: string
+          p_content_hash: string
+          p_round: number
+        }
+        Returns: {
+          alignment_status: string
+          all_signed: boolean
+          did_complete: boolean
+        }[]
+      }
+      create_alignment_with_owner: {
+        Args: {
+          p_title: string
+        }
+        Returns: Database["public"]["Tables"]["alignments"]["Row"]
+      }
       get_alignment_invite_preview: {
         Args: {
           p_token_hash: string

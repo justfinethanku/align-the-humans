@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase-browser';
+import { createAlignmentWithOwner } from '@/app/lib/db-helpers';
 
 interface PreselectedPartner {
   id: string;
@@ -71,7 +72,7 @@ const templates: Template[] = [
   },
 ];
 
-export function NewAlignmentClient({ userId, preselectedPartner }: NewAlignmentClientProps) {
+export function NewAlignmentClient({ preselectedPartner }: NewAlignmentClientProps) {
   const router = useRouter();
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [customDescription, setCustomDescription] = useState('');
@@ -87,17 +88,13 @@ export function NewAlignmentClient({ userId, preselectedPartner }: NewAlignmentC
     setIsSubmitting(true);
 
     try {
-      // Create alignment record with draft status (no partner required for solo start)
-      const { data: alignment, error: alignmentError } = await supabase
-        .from('alignments')
-        .insert({
+      // Create the alignment and owner participant in one database transaction.
+      const { data: alignment, error: alignmentError } = await createAlignmentWithOwner(
+        supabase,
+        {
           title: templates.find((t) => t.id === templateId)?.title || 'New Alignment',
-          status: 'draft',
-          created_by: userId,
-          partner_id: null,
-        })
-        .select()
-        .single();
+        }
+      );
 
       if (alignmentError) {
         throw new Error(alignmentError.message);
@@ -105,19 +102,6 @@ export function NewAlignmentClient({ userId, preselectedPartner }: NewAlignmentC
 
       if (!alignment) {
         throw new Error('Failed to create alignment');
-      }
-
-      // Add creator as participant
-      const { error: participantError } = await supabase
-        .from('alignment_participants')
-        .insert({
-          alignment_id: alignment.id,
-          user_id: userId,
-          role: 'owner',
-        });
-
-      if (participantError) {
-        throw new Error(participantError.message);
       }
 
       // Navigate to clarity page with template and partner in query params
@@ -144,17 +128,11 @@ export function NewAlignmentClient({ userId, preselectedPartner }: NewAlignmentC
     setIsSubmitting(true);
 
     try {
-      // Create alignment record with custom description (no partner required for solo start)
-      const { data: alignment, error: alignmentError } = await supabase
-        .from('alignments')
-        .insert({
-          title: customDescription.slice(0, 100), // Use first 100 chars as title
-          status: 'draft',
-          created_by: userId,
-          partner_id: null,
-        })
-        .select()
-        .single();
+      // Create the alignment and owner participant in one database transaction.
+      const { data: alignment, error: alignmentError } = await createAlignmentWithOwner(
+        supabase,
+        { title: customDescription.slice(0, 100) }
+      );
 
       if (alignmentError) {
         throw new Error(alignmentError.message);
@@ -162,19 +140,6 @@ export function NewAlignmentClient({ userId, preselectedPartner }: NewAlignmentC
 
       if (!alignment) {
         throw new Error('Failed to create alignment');
-      }
-
-      // Add creator as participant
-      const { error: participantError } = await supabase
-        .from('alignment_participants')
-        .insert({
-          alignment_id: alignment.id,
-          user_id: userId,
-          role: 'owner',
-        });
-
-      if (participantError) {
-        throw new Error(participantError.message);
       }
 
       // Navigate to clarity page with custom template, description, and partner
