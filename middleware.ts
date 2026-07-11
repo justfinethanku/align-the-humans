@@ -29,6 +29,7 @@ const PUBLIC_ROUTES = [
   '/signup',
   '/terms',
   '/privacy',
+  '/pricing',
   '/auth/forgot-password',
   '/auth/reset-password',
   '/auth/callback',

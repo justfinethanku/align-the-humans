@@ -25,8 +25,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/app/lib/supabase-browser"
 import { InviteStatus } from "@/components/alignment/InviteStatus"
+import { UpgradeDialog } from "@/components/monetization/UpgradeDialog"
 import { toast } from "sonner"
 
 // Types
@@ -72,7 +72,6 @@ export function ClarityForm({
   isCreator,
 }: ClarityFormProps) {
   const router = useRouter()
-  const supabase = React.useMemo(() => createClient(), [])
 
   // Form state - initialize with preselected partner if provided
   const [topic, setTopic] = React.useState(initialClarity.topic || initialTitle)
@@ -118,6 +117,7 @@ export function ClarityForm({
   const [isSaving, setIsSaving] = React.useState(false)
   const [isGenerating, setIsGenerating] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = React.useState(false)
 
   // Auto-save timer
   const autoSaveTimerRef = React.useRef<NodeJS.Timeout>()
@@ -376,11 +376,6 @@ export function ClarityForm({
       // First, save final clarity data
       await saveProgress()
 
-      // Generate questions using AI
-      if (selectedPartner) {
-        await ensurePartnerParticipant(selectedPartner)
-      }
-
       const response = await fetch("/api/alignment/generate-questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -397,6 +392,10 @@ export function ClarityForm({
 
       if (!response.ok) {
         const errorData = await response.json()
+        if (errorData.error?.code === "FREE_LIMIT_REACHED") {
+          setUpgradeDialogOpen(true)
+          return
+        }
         throw new Error(errorData.error?.message || "Failed to generate questions")
       }
 
@@ -416,48 +415,13 @@ export function ClarityForm({
     }
   }
 
-  /**
-   * Ensures the selected partner is added to the alignment participants list
-   */
-  async function ensurePartnerParticipant(partner: Partner) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Authentication required")
-      if (partner.id === user.id) return
-
-      const { data: existingParticipant, error: existingError } = await supabase
-        .from("alignment_participants")
-        .select("id")
-        .eq("alignment_id", alignmentId)
-        .eq("user_id", partner.id)
-        .maybeSingle()
-
-      if (existingError) {
-        console.error("Failed to check existing participant", existingError)
-        throw existingError
-      }
-
-      if (!existingParticipant) {
-        const { error: insertError } = await supabase
-          .from("alignment_participants")
-          .insert({
-            alignment_id: alignmentId,
-            user_id: partner.id,
-            role: "partner",
-          })
-
-        if (insertError) {
-          console.error("Failed to add partner participant", insertError)
-          throw insertError
-        }
-      }
-    } catch (partnerError) {
-      throw partnerError
-    }
-  }
-
   return (
     <div className="flex min-h-screen flex-col">
+      <UpgradeDialog
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        context="clarity_activation_gate"
+      />
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900 sm:px-10">
         <div className="mx-auto flex max-w-3xl items-center gap-4">

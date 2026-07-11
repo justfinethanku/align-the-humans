@@ -96,6 +96,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       throw AlignmentError.unauthorized(validatedRequest.alignmentId, userId);
     }
 
+    // A draft is activated by its creator. Claim access before any AI work so
+    // concurrent requests cannot spend the same free run or paid credit twice.
+    if (alignment.status === 'draft') {
+      if (alignment.created_by !== userId) {
+        throw AlignmentError.unauthorized(validatedRequest.alignmentId, userId);
+      }
+
+      const { data: activationClaim, error: activationClaimError } = await supabase
+        .rpc('claim_alignment_activation', {
+          p_alignment_id: validatedRequest.alignmentId,
+        })
+        .single();
+
+      if (activationClaimError || !activationClaim) {
+        throw new AlignmentError(
+          'We could not verify alignment access. Please try again.',
+          'ALIGNMENT_ACTIVATION_CLAIM_ERROR',
+          500,
+          {
+            alignmentId: validatedRequest.alignmentId,
+            databaseMessage: activationClaimError?.message,
+          }
+        );
+      }
+
+      if (!activationClaim.allowed) {
+        throw new AlignmentError(
+          'You have used your free creator alignment.',
+          'FREE_LIMIT_REACHED',
+          402,
+          {
+            alignmentId: validatedRequest.alignmentId,
+            reason: activationClaim.reason,
+          }
+        );
+      }
+    }
+
     // 4. Generate questions using AI
     const promptConfig = await getPrompt('generate-questions');
     let questions: AlignmentQuestion[];

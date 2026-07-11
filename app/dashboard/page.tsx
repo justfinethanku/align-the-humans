@@ -31,12 +31,17 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const [profileResult, initialAlignments, initialPartners] = await Promise.all([
+  const [profileResult, entitlementResult, initialAlignments, initialPartners] = await Promise.all([
     supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single(),
+    supabase
+      .from('account_entitlements')
+      .select('free_alignment_claimed_at')
+      .eq('user_id', user.id)
+      .maybeSingle(),
     fetchDashboardAlignments(supabase, user.id),
     fetchDashboardPartners(supabase, user.id),
   ]);
@@ -46,6 +51,7 @@ export default async function DashboardPage() {
       userId={user.id}
       userEmail={user.email || ''}
       displayName={profileResult.data?.display_name || null}
+      initialFreeAlignmentClaimed={Boolean(entitlementResult.data?.free_alignment_claimed_at)}
       initialAlignments={initialAlignments}
       initialPartners={initialPartners}
     />
