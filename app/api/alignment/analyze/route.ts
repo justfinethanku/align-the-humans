@@ -657,6 +657,24 @@ async function analyzeResponses(
   // Load prompt config from DB/seeds (model, temperature, maxTokens are admin-configurable)
   const promptConfig = await getPrompt('analyze-responses');
 
+  // Round 2+ analyses include resolution context and reliably exceed 8k output
+  // tokens; a low admin-configured cap truncates the JSON mid-object and every
+  // analysis fails with a parse error. 16384 is the empirically verified value
+  // (8192 fails, 16384 succeeds on real round-2 payloads). Config stays
+  // authoritative above the floor, but never below it.
+  const ANALYZE_MAX_TOKENS_FLOOR = 16384;
+  if ((promptConfig.maxTokens ?? 0) < ANALYZE_MAX_TOKENS_FLOOR) {
+    console.warn(
+      JSON.stringify({
+        event: 'analyze.max_tokens_floor_engaged',
+        alignmentId,
+        configuredMaxTokens: promptConfig.maxTokens,
+        floor: ANALYZE_MAX_TOKENS_FLOOR,
+      })
+    );
+    promptConfig.maxTokens = ANALYZE_MAX_TOKENS_FLOOR;
+  }
+
   // Render the DB-managed analysis template with both participants' answers
   const prompt = renderPrompt(promptConfig.userPromptTemplate, {
     responseA: JSON.stringify(responseA.answers, null, 2),

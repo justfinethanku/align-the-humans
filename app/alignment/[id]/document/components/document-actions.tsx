@@ -45,6 +45,16 @@ export function DocumentActions({
           image: { type: 'jpeg', quality: 0.95 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+          // Without this, html2canvas slices the render wherever a page ends,
+          // clipping text (e.g. the disclaimer) across page boundaries.
+          pagebreak: {
+            mode: ['css', 'legacy'],
+            // Break before the disclaimer, not .document-footer: frozen
+            // snapshots stored before 'footer' entered the sanitizer
+            // allowlist have no footer wrapper, but the <p> class survives.
+            before: ['.document-disclaimer'],
+            avoid: ['h1', 'h2', 'h3', 'tr', '.signature-participant-row', '.document-disclaimer', '.document-footer', '.document-meta'],
+          },
         })
         .from(content)
         .save();

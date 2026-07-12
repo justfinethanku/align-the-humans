@@ -20,7 +20,7 @@ export function DocumentContent({
   isFrozen
 }: DocumentContentProps) {
   const sanitizedHtml = DOMPurify.sanitize(documentHtml, {
-    ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'br', 'div', 'section', 'article', 'span', 'blockquote', 'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td'],
+    ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'br', 'div', 'section', 'article', 'span', 'blockquote', 'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'footer'],
     ALLOWED_ATTR: ['class', 'id'],
     KEEP_CONTENT: true,
     ALLOW_DATA_ATTR: false
@@ -108,6 +108,12 @@ export function DocumentContent({
 
           .document-content section {
             margin-bottom: 2rem;
+          }
+
+          .document-content .document-footer,
+          .document-content .document-disclaimer {
+            page-break-inside: avoid;
+            break-inside: avoid;
           }
 
           @media print {

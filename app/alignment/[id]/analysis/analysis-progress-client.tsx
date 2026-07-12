@@ -34,6 +34,7 @@ export function AnalysisProgressClient({
 }: AnalysisProgressClientProps) {
   const router = useRouter();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const refreshTriggeredRef = useRef(false);
   const [state, setState] = useState<ProgressState>('starting');
   const [message, setMessage] = useState('Starting analysis...');
@@ -74,7 +75,21 @@ export function AnalysisProgressClient({
 
           if (!refreshTriggeredRef.current) {
             refreshTriggeredRef.current = true;
+            // The server page can race the just-saved analysis and keep
+            // rendering this card; keep nudging until the report swaps in
+            // (this component unmounts when it does).
             router.refresh();
+            let attempts = 0;
+            refreshIntervalRef.current = setInterval(() => {
+              attempts += 1;
+              if (cancelled || attempts > 5) {
+                if (refreshIntervalRef.current) {
+                  clearInterval(refreshIntervalRef.current);
+                }
+                return;
+              }
+              router.refresh();
+            }, 2000);
           }
           return;
         }
@@ -108,6 +123,9 @@ export function AnalysisProgressClient({
       controller.abort();
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
       }
     };
   }, [alignmentId, round, router, retryNonce]);
@@ -200,6 +218,12 @@ export function AnalysisProgressClient({
                   <Link href="/dashboard">Back to Dashboard</Link>
                 </Button>
               </div>
+            )}
+
+            {isComplete && (
+              <Button onClick={() => window.location.reload()}>
+                View Report
+              </Button>
             )}
           </Card>
         </div>

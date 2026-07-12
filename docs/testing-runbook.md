@@ -1,5 +1,62 @@
 # Human Alignment Testing Runbook
 
+## Recovery checkpoint: round 3 through signed agreement
+
+Status: tested locally against the production database on 2026-07-11; deployed-production verification remains pending
+
+Purpose: Complete an existing two-person alignment from the round-3 analysis checkpoint through document generation, both signatures, completed status, and PDF export. This exercises the current branch through localhost against the production database; it does not prove that the deployed production application has the same fixes or configuration.
+
+Role/account: Use the labeled creator and partner test accounts for alignment `287267e1-8c5e-4480-bcad-85c959f36d10`. Retrieve credentials from the operator handoff; never record passwords in this runbook.
+
+Safe actions:
+
+- Use the normal login, analysis, document, signature, and PDF interfaces for this labeled test alignment.
+- Capture screenshots containing only the two test identities and their alignment content.
+- Retry an idempotent UI action only after recording the first failure and confirming that the prior request did not succeed.
+
+Unsafe actions:
+
+- Do not edit alignment rows, analyses, responses, signatures, or status directly.
+- Do not create or hand-mint invite rows during this checkpoint.
+- Do not treat localhost success as verification of the deployed production application.
+- Do not commit local AI configuration clamps or credentials.
+
+Verification steps:
+
+1. Confirm localhost serves the intended branch and record any uncommitted diagnostic diff before starting.
+2. Log in through the visible form as the creator and open `/alignment/287267e1-8c5e-4480-bcad-85c959f36d10/analysis`.
+3. Trigger or observe round-3 analysis. Record the HTTP/UI result and capture the resulting score, agreements, and remaining conflict count.
+4. If conflicts remain, stop and report the product state; do not bypass the resolution workflow or mutate rows directly.
+5. Open the generated agreement through the normal UI. Confirm the document renders and record its reviewed snapshot hash if the UI exposes it.
+6. Sign as the creator. Confirm the application records the signature but does not mark the alignment complete while the partner signature is missing.
+7. Log in through the visible form as the partner, open the same agreement, and sign the identical frozen snapshot.
+8. Confirm the alignment becomes complete and both signatures appear on the completed agreement.
+9. Export the PDF through the visible UI and verify that the downloaded file opens, contains the agreement content, and shows both signatures.
+
+Cleanup:
+
+- Preserve the completed labeled alignment as a checkpoint unless Jon asks for deletion.
+- Remove local screenshots only after final demo assets have been selected and copied to their durable destination.
+
+Checkpoint seed data:
+
+- Production-backed test alignment `287267e1-8c5e-4480-bcad-85c959f36d10`, expected to begin at `status=resolving`, `current_round=3`, with both round-3 resolution submissions present and no round-3 analysis yet.
+
+Known selector/flow lessons:
+
+- The password visibility button also matches a broad `/password/i` label query. Use the exact textbox role/name for the password field.
+- The round-3 analysis produced one remaining conflict at 62/100. Both users then submitted the same explicit custom compromise through the normal resolution form; round 4 completed at 95/100 with zero conflicts.
+- After the analyze API returns `200`, the progress client can remain on an `Analysis complete` card until a fresh navigation. Reload the analysis route before asserting the full report.
+- The document begins as a preview. The first signature freezes snapshot hash `7c6824170c7e975c743ed56b8630f65fce086ae52ee7e87e6e7461bf23497090`; the partner saw and signed the identical frozen hash.
+- The first signature returned `allSigned=false` and kept the alignment `resolving`. The second returned `allSigned=true` and changed it to `complete`.
+- PDF export downloaded a valid two-page letter PDF containing both signatures. Visual QA failed because the page break clips the disclaimer between pages 1 and 2. The agreement body displays July 12 while the summary and signature timestamps display July 11.
+- The exported PDF is image-based; `pdftotext` produced no extractable agreement text.
+- Follow-up export review on 2026-07-11 used the completed checkpoint through the updated `html2pdf.js` options. UTC date rendering was consistent for this fixture (`July 12, 2026`; both signatures at `12:43 AM UTC`), but the disclaimer remained clipped across pages 1 and 2. The new page-break configuration therefore did not clear the PDF visual gate.
+- The exporter rule references `.signature-block`, but the rendered signature rows use `.signature-participant-row`; use the real selector when testing signature pagination.
+- Round-2 follow-up verification on 2026-07-11 confirmed the summary and body both display `July 12, 2026`, and both signature timestamps display `July 12, 2026 at 12:43 AM UTC`. PDF pagination still failed: `.document-footer` was absent in the live DOM and the disclaimer remained clipped across pages.
+- The agreement is sanitized twice. Adding `footer` only to `DocumentContent` is insufficient because `sanitizeAgreementDocumentHtml()` strips it before snapshot storage unless `AGREEMENT_DOCUMENT_ALLOWED_TAGS` in `app/lib/agreement-document.ts` also includes `footer`. Existing frozen snapshots have already lost the wrapper, so a compatible forced break should target the surviving `.document-disclaimer` element directly.
+- Round-3 follow-up verification on 2026-07-11 passed against the existing legacy frozen snapshot. Forcing a break before `.document-disclaimer` moved the complete disclaimer to the top of page 2, kept both signature rows intact, and preserved the consistent UTC dates. This clears the local PDF visual gate; repeat on the deployed production build before final demo capture.
+
 ## Monetization activation gate and invite-only enrollment
 
 Status: starter (static verification passed; database integration test pending migration review/application)

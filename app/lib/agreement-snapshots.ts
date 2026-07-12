@@ -10,6 +10,7 @@ import type {
   ResponseAnswers,
 } from './types';
 import { AlignmentError } from './errors';
+import { formatAgreementDate } from './document-dates';
 import { getPrompt } from './prompts';
 import { renderAgreementDocument } from './agreement-document';
 
@@ -79,12 +80,7 @@ function assertParticipantRole(role: string): ParticipantRole {
 }
 
 function formatDocumentDate(createdAt: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: 'UTC',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(createdAt));
+  return formatAgreementDate(createdAt);
 }
 
 function getTemplateCategory(template: TemplateRow | null): string {
