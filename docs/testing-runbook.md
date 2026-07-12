@@ -1,5 +1,58 @@
 # Human Alignment Testing Runbook
 
+## Deployed production journey and capture gate
+
+Status: needs repair (production invite and round-2 analysis passed; deployed document route returns 500)
+
+Purpose: Verify the deployed `alignthehumans.com` build through invite generation, multi-round analysis, report transition, agreement signatures, and PDF export before creating a separate clean demo-capture alignment.
+
+Role/account: Use the labeled comped creator and partner test accounts from the operator handoff. Never record their passwords here.
+
+Safe actions:
+
+- Create clearly labeled production test alignments through the visible UI.
+- Generate and redeem an invite through the normal creator and partner interfaces.
+- Run the paid AI steps required for one explicitly authorized end-to-end verification alignment and one final capture alignment.
+- Preserve screenshots, browser recordings, and the completed verification alignment as evidence.
+
+Unsafe actions:
+
+- Do not use localhost as evidence for this recipe.
+- Do not mint invite rows, edit journey rows, or repair statuses directly.
+- Do not reuse the recovery alignment or verification alignment as the clean final capture source.
+- Do not expose credentials or invite tokens in captures.
+
+Verification steps:
+
+1. Confirm `/pricing` and the deployed application load from `https://alignthehumans.com`.
+2. Create a new labeled verification alignment as the creator.
+3. Generate the invite through the visible UI, redeem it as the partner, and confirm both participants are enrolled.
+4. Submit materially different independent answers, run initial analysis, and resolve at least one conflict.
+5. Confirm a round-2-or-later analysis completes on production and automatically swaps the progress card for the fresh report.
+6. Reach a conflict-free report, review the frozen document, and sign the identical snapshot as both users.
+7. Download the deployed PDF, render every page, and confirm clean pagination, consistent agreement dates, and explicit UTC signature timestamps.
+8. Only after steps 1-7 pass, create a separate fresh alignment and record the final clips in the locked capture-plan order.
+
+Cleanup:
+
+- Preserve completed labeled production alignments unless Jon requests deletion.
+- Keep final capture footage separate from verification artifacts.
+
+Checkpoint seed data:
+
+- Existing completed recovery alignment `287267e1-8c5e-4480-bcad-85c959f36d10` remains evidence only.
+- New production verification and capture alignment IDs must be recorded after creation.
+
+Known selector/flow lessons:
+
+- Production verification alignment: `6167f229-c180-43a2-b3f0-753129a95372`.
+- Visible invite generation returned `201`, the generated URL persisted in the UI, and the partner enrollment succeeded through invite redemption.
+- The deployed custom questionnaire generated eight questions and both production users submitted through the visible form.
+- Round 1 analysis returned `200`, score `12`, and seven conflicts. After both users submitted matching resolutions, round 2 returned `200`, score `95`, and zero conflicts.
+- Both analysis progress views swapped automatically to the fresh report in under 0.9 seconds; the `View Report` fallback did not appear.
+- The deployed document gate failed before signatures: authenticated `GET /alignment/6167f229-c180-43a2-b3f0-753129a95372/document` returned `500`.
+- Vercel production logs report `ERR_REQUIRE_ESM`: `jsdom` requires ESM-only `parse5/dist/index.js` through `isomorphic-dompurify`. The installed chain is `isomorphic-dompurify@2.31.0 -> jsdom@27.1.0 -> parse5@8.0.0`. Resolve this production runtime incompatibility before signature/PDF verification or final capture.
+
 ## Recovery checkpoint: round 3 through signed agreement
 
 Status: tested locally against the production database on 2026-07-11; deployed-production verification remains pending
