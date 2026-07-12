@@ -2,7 +2,7 @@
 
 ## Deployed production journey and capture gate
 
-Status: needs repair (production invite and round-2 analysis passed; deployed document route returns 500)
+Status: needs repair (all production journey gates pass except longer-document PDF pagination)
 
 Purpose: Verify the deployed `alignthehumans.com` build through invite generation, multi-round analysis, report transition, agreement signatures, and PDF export before creating a separate clean demo-capture alignment.
 
@@ -52,6 +52,9 @@ Known selector/flow lessons:
 - Both analysis progress views swapped automatically to the fresh report in under 0.9 seconds; the `View Report` fallback did not appear.
 - The deployed document gate failed before signatures: authenticated `GET /alignment/6167f229-c180-43a2-b3f0-753129a95372/document` returned `500`.
 - Vercel production logs report `ERR_REQUIRE_ESM`: `jsdom` requires ESM-only `parse5/dist/index.js` through `isomorphic-dompurify`. The installed chain is `isomorphic-dompurify@2.31.0 -> jsdom@27.1.0 -> parse5@8.0.0`. Resolve this production runtime incompatibility before signature/PDF verification or final capture.
+- After pinning `isomorphic-dompurify@2.26.0`, the deployed document route passed. Both users signed frozen snapshot `3ca31c17fe4290f37bbc62f85551bb01f20b8884d6ac88131c70d48d5f9e479e`; the first signature kept status `resolving`, and the second changed it to `complete`.
+- Production agreement dates matched (`July 12, 2026`) and both signature timestamps displayed `July 12, 2026 at 2:43 AM UTC`. The forced disclaimer break and signature rows rendered intact.
+- The four-page deployed PDF still fails the visual gate on ordinary term content: page 1 is sliced through Term 1's value paragraph and page 2 begins with the clipped remainder. The capture alignment remains intentionally uncreated until longer document pagination avoids mid-line raster slicing.
 
 ## Recovery checkpoint: round 3 through signed agreement
 

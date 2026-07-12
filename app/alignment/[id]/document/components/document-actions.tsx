@@ -53,7 +53,7 @@ export function DocumentActions({
             // snapshots stored before 'footer' entered the sanitizer
             // allowlist have no footer wrapper, but the <p> class survives.
             before: ['.document-disclaimer'],
-            avoid: ['h1', 'h2', 'h3', 'tr', '.signature-participant-row', '.document-disclaimer', '.document-footer', '.document-meta'],
+            avoid: ['h1', 'h2', 'h3', 'tr', '.term', '.signature-participant-row', '.document-disclaimer', '.document-footer', '.document-meta'],
           },
         })
         .from(content)

@@ -111,7 +111,8 @@ export function DocumentContent({
           }
 
           .document-content .document-footer,
-          .document-content .document-disclaimer {
+          .document-content .document-disclaimer,
+          .document-content .term {
             page-break-inside: avoid;
             break-inside: avoid;
           }
