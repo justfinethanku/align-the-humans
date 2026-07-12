@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, createAdminClient, requireAuth } from '@/app/lib/supabase-server';
 import {
   assertReadyForDocument,
-  completeAlignmentIfResolving,
+  completeAlignmentIfAllSigned,
   createSignature,
 } from '@/app/lib/db-helpers';
 import {
@@ -87,22 +87,6 @@ async function getExistingSignature(
   return data;
 }
 
-async function getParticipantIds(
-  supabase: SupabaseRouteClient,
-  alignmentId: string
-): Promise<Set<string>> {
-  const { data, error } = await supabase
-    .from('alignment_participants')
-    .select('user_id')
-    .eq('alignment_id', alignmentId);
-
-  if (error) {
-    throw error;
-  }
-
-  return new Set((data || []).map((participant) => participant.user_id));
-}
-
 async function assertNoLegacySignature(
   supabase: SupabaseRouteClient,
   alignmentId: string,
@@ -125,53 +109,28 @@ async function assertNoLegacySignature(
   }
 }
 
-async function computeAllSigned(
-  supabase: SupabaseRouteClient,
-  alignmentId: string,
-  round: number,
-  snapshotHash: string,
-  participantIds: Set<string>
-): Promise<boolean> {
-  const { data: signatures, error } = await supabase
-    .from('alignment_signatures')
-    .select('user_id')
-    .eq('alignment_id', alignmentId)
-    .eq('round', round)
-    .eq('agreement_snapshot_hash', snapshotHash);
-
-  if (error) {
-    throw error;
-  }
-
-  const signedUserIds = new Set((signatures || []).map((signature) => signature.user_id));
-  return participantIds.size > 0 &&
-    participantIds.size === signedUserIds.size &&
-    Array.from(participantIds).every((id) => signedUserIds.has(id));
-}
-
 async function completeIfReady(params: {
   supabase: SupabaseRouteClient;
   alignmentId: string;
-  allSigned: boolean;
-  currentStatus: AlignmentStatus;
-}): Promise<{ didComplete: boolean; finalStatus: AlignmentStatus }> {
-  const { supabase, alignmentId, allSigned, currentStatus } = params;
-  let didComplete = false;
-  let finalStatus = currentStatus;
+  round: number;
+  snapshotHash: string;
+}): Promise<{ allSigned: boolean; didComplete: boolean; finalStatus: AlignmentStatus }> {
+  const { supabase, alignmentId, round, snapshotHash } = params;
+  const { data: completion, error } = await completeAlignmentIfAllSigned(supabase, {
+    alignmentId,
+    round,
+    contentHash: snapshotHash,
+  });
 
-  if (allSigned) {
-    const { data: completed, error: completeError } =
-      await completeAlignmentIfResolving(supabase, alignmentId);
-
-    if (completeError) {
-      throw completeError;
-    }
-
-    finalStatus = 'complete';
-    didComplete = !!completed;
+  if (error || !completion) {
+    throw error || new Error('Signature completion check returned no result');
   }
 
-  return { didComplete, finalStatus };
+  return {
+    allSigned: completion.all_signed,
+    didComplete: completion.did_complete,
+    finalStatus: completion.alignment_status as AlignmentStatus,
+  };
 }
 
 function sendCompletionEmails(params: {
@@ -259,7 +218,6 @@ export async function POST(
     const body = await request.json();
     const { round, reviewedSnapshotHash } = SignRequestSchema.parse(body);
     const readiness = await assertReadyForDocument(supabase, alignmentId, user.id, round);
-    const participantIds = await getParticipantIds(supabase, alignmentId);
 
     await assertNoLegacySignature(supabase, alignmentId, round);
 
@@ -269,18 +227,11 @@ export async function POST(
         throw legacySignatureRequiresReview(alignmentId, round);
       }
 
-      const allSigned = await computeAllSigned(
+      const { allSigned, didComplete, finalStatus } = await completeIfReady({
         supabase,
         alignmentId,
         round,
-        existingSignature.agreement_snapshot_hash,
-        participantIds
-      );
-      const { didComplete, finalStatus } = await completeIfReady({
-        supabase,
-        alignmentId,
-        allSigned,
-        currentStatus: readiness.alignment.status as AlignmentStatus,
+        snapshotHash: existingSignature.agreement_snapshot_hash,
       });
 
       if (didComplete) {
@@ -350,18 +301,11 @@ export async function POST(
 
     const snapshotHash = finalSignature.agreement_snapshot_hash ?? snapshot.hash;
     const snapshotId = finalSignature.agreement_snapshot_id ?? snapshot.id;
-    const allSigned = await computeAllSigned(
+    const { allSigned, didComplete, finalStatus } = await completeIfReady({
       supabase,
       alignmentId,
       round,
       snapshotHash,
-      participantIds
-    );
-    const { didComplete, finalStatus } = await completeIfReady({
-      supabase,
-      alignmentId,
-      allSigned,
-      currentStatus: readiness.alignment.status as AlignmentStatus,
     });
 
     if (didComplete) {

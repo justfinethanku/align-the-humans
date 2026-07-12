@@ -29,6 +29,7 @@ interface DashboardClientProps {
   userId: string;
   userEmail: string;
   displayName: string | null;
+  initialFreeAlignmentClaimed: boolean;
   initialAlignments: AlignmentWithStatus[];
   initialPartners: PartnerWithCount[];
 }
@@ -51,6 +52,7 @@ export function DashboardClient({
   userId,
   userEmail,
   displayName,
+  initialFreeAlignmentClaimed,
   initialAlignments,
   initialPartners,
 }: DashboardClientProps) {
@@ -226,9 +228,16 @@ export function DashboardClient({
           <div className="flex flex-col gap-8 lg:col-span-2">
             {/* Header */}
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
-                Current Alignments
-              </h1>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+                  Current Alignments
+                </h1>
+                {initialFreeAlignmentClaimed && (
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    1 of 1 free alignments used
+                  </p>
+                )}
+              </div>
               <Button
                 onClick={handleNewAlignment}
                 className="flex h-11 w-full shrink-0 items-center justify-center gap-2.5 overflow-hidden rounded-lg bg-primary-500 px-5 text-base font-semibold text-white shadow-md shadow-primary-500/30 transition-all hover:bg-primary-600 hover:shadow-lg hover:shadow-primary-500/30 sm:w-auto"

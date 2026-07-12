@@ -177,9 +177,10 @@ export default async function DocumentPage({ params }: PageProps) {
   const { alignment, analysis, agreementSnapshot, signatureParticipants, allSigned } = data;
   const participantNames = signatureParticipants.map((participant) => participant.displayName);
   const keyTerms = agreementSnapshot.documentInputs.summary;
-  const dateFinalized = agreementSnapshot.isFrozen
-    ? agreementSnapshot.snapshot.frozen_at
-    : analysis.created_at;
+  // Use the exact date string frozen into the document body so the summary can
+  // never disagree with the agreement text (frozen_at can cross UTC midnight
+  // relative to the analysis-derived body date).
+  const dateFinalized = agreementSnapshot.documentInputs.document_date;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">

@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface ExecutiveSummaryProps {
   alignmentTitle: string;
+  /** Pre-formatted date string frozen into the document body (documentInputs.document_date). */
   dateFinalized: string;
   participants: string[];
   keyTerms: string[];
@@ -19,11 +20,7 @@ export function ExecutiveSummary({
   participants,
   keyTerms
 }: ExecutiveSummaryProps) {
-  const formattedDate = new Date(dateFinalized).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  const formattedDate = dateFinalized;
 
   return (
     <Card>

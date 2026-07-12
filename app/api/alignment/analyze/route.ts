@@ -22,7 +22,7 @@ import { generateObject } from 'ai';
 import { resolveModel } from '@/app/lib/ai-config';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { createServerClient, createAdminClient, getCurrentUser } from '@/app/lib/supabase-server';
-import { getRoundResponses, saveAnalysis, updateAlignmentStatus, isParticipant } from '@/app/lib/db-helpers';
+import { getRoundResponses, saveAnalysis, isParticipant } from '@/app/lib/db-helpers';
 import { AlignmentError, ValidationError, RateLimitError, createErrorResponse } from '@/app/lib/errors';
 import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { sendAnalysisCompleteEmail } from '@/app/lib/email-service';
@@ -182,6 +182,67 @@ function isRollbackStatus(status: string): status is RollbackStatus {
   return status === 'active' || status === 'resolving';
 }
 
+async function ensureAnalysisIsResolving(
+  supabase: SupabaseServerClient,
+  alignmentId: string,
+  round: number,
+  userId: string
+): Promise<void> {
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const { data: transitioned, error: transitionError } = await supabase
+      .from('alignments')
+      .update({ status: 'resolving' })
+      .eq('id', alignmentId)
+      .eq('current_round', round)
+      .eq('status', 'analyzing')
+      .select('status')
+      .maybeSingle();
+
+    if (transitioned?.status === 'resolving') {
+      return;
+    }
+
+    if (transitionError) {
+      lastError = transitionError;
+    } else {
+      const { data: current, error: currentError } = await supabase
+        .from('alignments')
+        .select('status,current_round')
+        .eq('id', alignmentId)
+        .single();
+
+      if (!currentError && current?.current_round === round &&
+          (current.status === 'resolving' || current.status === 'complete')) {
+        return;
+      }
+
+      lastError = currentError || new Error(
+        `Alignment remained in '${current?.status || 'unknown'}' after analysis was saved.`
+      );
+    }
+
+    telemetry.logError({
+      errorCode: 'ANALYSIS_STATUS_TRANSITION_RETRY',
+      errorMessage: `Analysis status transition attempt ${attempt} failed`,
+      userId,
+      context: { alignmentId, round, attempt },
+    });
+  }
+
+  throw new AlignmentError(
+    'Analysis was saved, but the alignment could not advance to resolution. Please retry.',
+    'ANALYSIS_STATUS_TRANSITION_ERROR',
+    503,
+    {
+      alignmentId,
+      round,
+      cause: lastError instanceof Error ? lastError.message : String(lastError),
+    }
+  );
+}
+
 // ============================================================================
 // Main Handler
 // ============================================================================
@@ -242,6 +303,9 @@ export async function POST(request: NextRequest) {
 
     const existingAnalysis = await fetchExistingAnalysis(supabase, alignmentId, round);
     if (existingAnalysis) {
+      if (alignment.status === 'analyzing') {
+        await ensureAnalysisIsResolving(supabase, alignmentId, round, user.id);
+      }
       return createCompleteResponse(alignmentId, round, existingAnalysis);
     }
 
@@ -334,6 +398,7 @@ export async function POST(request: NextRequest) {
     if (!lockResult) {
       const completedAnalysis = await fetchExistingAnalysis(supabase, alignmentId, round);
       if (completedAnalysis) {
+        await ensureAnalysisIsResolving(supabase, alignmentId, round, user.id);
         return createCompleteResponse(alignmentId, round, completedAnalysis);
       }
 
@@ -451,22 +516,8 @@ export async function POST(request: NextRequest) {
       if ((saveError as { code?: string }).code === '23505') {
         const completedAnalysis = await fetchExistingAnalysis(supabase, alignmentId, round);
         if (completedAnalysis) {
-          const { error: statusError } = await updateAlignmentStatus(
-            supabase,
-            alignmentId,
-            'resolving'
-          );
-
-          if (statusError) {
-            telemetry.logError({
-              errorCode: 'STATUS_UPDATE_FAILED',
-              errorMessage: 'Failed to update alignment status to resolving',
-              userId: user.id,
-              context: { alignmentId, statusError },
-            });
-          }
-
           lockAcquired = false;
+          await ensureAnalysisIsResolving(supabase, alignmentId, round, user.id);
           return createCompleteResponse(alignmentId, round, completedAnalysis);
         }
       }
@@ -479,22 +530,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 10. Update alignment status to 'resolving' now that analysis is complete
-    const { error: statusError } = await updateAlignmentStatus(
-      supabase,
-      alignmentId,
-      'resolving'
-    );
-
-    if (statusError) {
-      telemetry.logError({
-        errorCode: 'STATUS_UPDATE_FAILED',
-        errorMessage: 'Failed to update alignment status to resolving',
-        userId: user.id,
-        context: { alignmentId, statusError },
-      });
-    }
+    // 10. Once persistence succeeds, leave an analyzing status in place if
+    // transition attempts fail so the next request can repair it from cache.
     lockAcquired = false;
+    await ensureAnalysisIsResolving(supabase, alignmentId, round, user.id);
 
     // 11. Log successful completion and send email notifications
     const latencyMs = timer.stop();
@@ -617,6 +656,24 @@ async function analyzeResponses(
 
   // Load prompt config from DB/seeds (model, temperature, maxTokens are admin-configurable)
   const promptConfig = await getPrompt('analyze-responses');
+
+  // Round 2+ analyses include resolution context and reliably exceed 8k output
+  // tokens; a low admin-configured cap truncates the JSON mid-object and every
+  // analysis fails with a parse error. 16384 is the empirically verified value
+  // (8192 fails, 16384 succeeds on real round-2 payloads). Config stays
+  // authoritative above the floor, but never below it.
+  const ANALYZE_MAX_TOKENS_FLOOR = 16384;
+  if ((promptConfig.maxTokens ?? 0) < ANALYZE_MAX_TOKENS_FLOOR) {
+    console.warn(
+      JSON.stringify({
+        event: 'analyze.max_tokens_floor_engaged',
+        alignmentId,
+        configuredMaxTokens: promptConfig.maxTokens,
+        floor: ANALYZE_MAX_TOKENS_FLOOR,
+      })
+    );
+    promptConfig.maxTokens = ANALYZE_MAX_TOKENS_FLOOR;
+  }
 
   // Render the DB-managed analysis template with both participants' answers
   const prompt = renderPrompt(promptConfig.userPromptTemplate, {

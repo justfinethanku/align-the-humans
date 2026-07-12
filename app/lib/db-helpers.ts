@@ -259,26 +259,18 @@ export async function assertReadyForDocument(
 }
 
 /**
- * Creates a new alignment
+ * Atomically creates an alignment and its owner participant row.
  */
-export async function createAlignment(
+export async function createAlignmentWithOwner(
   supabase: SupabaseClientType,
   data: {
-    partnerId?: string | null;
     title: string;
-    createdBy: string;
   }
 ): Promise<QueryResult<Alignment>> {
   const { data: alignment, error } = await supabase
-    .from('alignments')
-    .insert({
-      partner_id: data.partnerId ?? null,
-      title: data.title,
-      status: 'draft',
-      created_by: data.createdBy,
-    })
-    .select()
-    .single();
+    .rpc('create_alignment_with_owner', {
+      p_title: data.title,
+    });
 
   return { data: alignment as Alignment | null, error };
 }
@@ -325,19 +317,26 @@ export async function updateAlignmentStatus(
   return { data: data as Alignment | null, error };
 }
 
-export async function completeAlignmentIfResolving(
+/**
+ * Uses the authoritative participant set to atomically complete a signed alignment.
+ */
+export async function completeAlignmentIfAllSigned(
   supabase: SupabaseClientType,
-  alignmentId: string
-): Promise<QueryResult<Alignment>> {
-  const { data, error } = await supabase
-    .from('alignments')
-    .update({ status: 'complete' })
-    .eq('id', alignmentId)
-    .eq('status', 'resolving')
-    .select()
-    .maybeSingle();
+  data: {
+    alignmentId: string;
+    round: number;
+    contentHash: string;
+  }
+) {
+  const { data: result, error } = await supabase
+    .rpc('complete_alignment_if_all_signed', {
+      p_alignment_id: data.alignmentId,
+      p_round: data.round,
+      p_content_hash: data.contentHash,
+    })
+    .single();
 
-  return { data: data as Alignment | null, error };
+  return { data: result, error };
 }
 
 /**

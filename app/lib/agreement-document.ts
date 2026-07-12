@@ -28,6 +28,7 @@ export const AGREEMENT_DOCUMENT_ALLOWED_TAGS = [
   'tr',
   'th',
   'td',
+  'footer',
 ];
 
 export const AGREEMENT_DOCUMENT_ALLOWED_ATTR = ['class', 'id'];

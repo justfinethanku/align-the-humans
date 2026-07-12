@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, PenLine, Clock, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { formatAgreementTimestamp } from '@/app/lib/document-dates';
 
 interface SignatureParticipantView {
   userId: string;
@@ -95,16 +96,7 @@ export function SignatureSection({
     }
   }
 
-  const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
+  const formatTimestamp = formatAgreementTimestamp;
 
   return (
     <Card>

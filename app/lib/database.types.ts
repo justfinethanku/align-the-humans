@@ -39,6 +39,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_entitlements: {
+        Row: {
+          comped_until: string | null
+          created_at: string
+          free_alignment_claimed_at: string | null
+          free_alignment_id: string | null
+          paid_alignment_credits: number
+          plan: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comped_until?: string | null
+          created_at?: string
+          free_alignment_claimed_at?: string | null
+          free_alignment_id?: string | null
+          paid_alignment_credits?: number
+          plan?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comped_until?: string | null
+          created_at?: string
+          free_alignment_claimed_at?: string | null
+          free_alignment_id?: string | null
+          paid_alignment_credits?: number
+          plan?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_entitlements_free_alignment_id_fkey"
+            columns: ["free_alignment_id"]
+            isOneToOne: false
+            referencedRelation: "alignment_status_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_entitlements_free_alignment_id_fkey"
+            columns: ["free_alignment_id"]
+            isOneToOne: false
+            referencedRelation: "alignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alignment_activation_claims: {
+        Row: {
+          alignment_id: string
+          claim_source: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          alignment_id: string
+          claim_source: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          alignment_id?: string
+          claim_source?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alignment_activation_claims_alignment_id_fkey"
+            columns: ["alignment_id"]
+            isOneToOne: false
+            referencedRelation: "alignment_status_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alignment_activation_claims_alignment_id_fkey"
+            columns: ["alignment_id"]
+            isOneToOne: false
+            referencedRelation: "alignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alignment_analyses: {
         Row: {
           alignment_id: string
@@ -501,6 +585,30 @@ export type Database = {
         }
         Relationships: []
       }
+      upgrade_interest: {
+        Row: {
+          context: string
+          created_at: string
+          id: string
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          context?: string
+          created_at?: string
+          id?: string
+          tier: string
+          user_id: string
+        }
+        Update: {
+          context?: string
+          created_at?: string
+          id?: string
+          tier?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       alignment_status_view: {
@@ -538,6 +646,33 @@ export type Database = {
       }
     }
     Functions: {
+      claim_alignment_activation: {
+        Args: {
+          p_alignment_id: string
+        }
+        Returns: {
+          allowed: boolean
+          reason: string
+        }[]
+      }
+      complete_alignment_if_all_signed: {
+        Args: {
+          p_alignment_id: string
+          p_content_hash: string
+          p_round: number
+        }
+        Returns: {
+          alignment_status: string
+          all_signed: boolean
+          did_complete: boolean
+        }[]
+      }
+      create_alignment_with_owner: {
+        Args: {
+          p_title: string
+        }
+        Returns: Database["public"]["Tables"]["alignments"]["Row"]
+      }
       get_alignment_invite_preview: {
         Args: {
           p_token_hash: string
