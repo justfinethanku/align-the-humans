@@ -2,21 +2,26 @@ export function WebApplicationSchema() {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'Human Alignment',
+    name: 'Align the Humans',
     url: 'https://alignthehumans.com',
     description:
-      'Infrastructure for collaborative decision-making at any scale. From household chores to cofounder equity, structured collaboration that turns any decision into clarity.',
+      'A structured process for business partners and co-owners. Each partner answers on their own, an AI comparison surfaces different expectations and unspoken assumptions, and the pair builds a shared brief to review with their lawyer. Not legal advice.',
     applicationCategory: 'BusinessApplication',
-    operatingSystem: 'Web Browser',
+    operatingSystem: 'Web browser',
+    audience: {
+      '@type': 'BusinessAudience',
+      audienceType: 'Business partners and co-owners',
+    },
     offers: {
       '@type': 'Offer',
-      price: '0',
+      name: 'Partnership alignment pilot',
+      price: '299',
       priceCurrency: 'USD',
-      description: 'Free tier with basic alignment features',
+      description: 'One partnership alignment for two partners.',
     },
-    author: {
+    publisher: {
       '@type': 'Organization',
-      name: 'Human Alignment',
+      name: 'Align the Humans',
       url: 'https://alignthehumans.com',
     },
   }
@@ -24,9 +29,7 @@ export function WebApplicationSchema() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(schema).replace(/</g, '\\u003c'),
-      }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }}
     />
   )
 }

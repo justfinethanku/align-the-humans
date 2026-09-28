@@ -1,51 +1,32 @@
-export type UpgradeTierId = 'alignment_pass' | 'pro' | 'team'
+/**
+ * Offer shown on the marketing site and in the in-app upgrade dialog.
+ *
+ * Positioning (2026-09-27): one paid partnership-alignment pilot per pair,
+ * instead of the earlier $12 pass / $19 Pro / $59 Team ladder. Billing is not
+ * live; the call to action records early-access interest.
+ */
+export const PILOT_OFFER = {
+  id: 'partnership_pilot',
+  name: 'Partnership alignment pilot',
+  price: '$299',
+  cadence: 'per pair',
+  description:
+    'Pilot pricing is $299 for you and your partner together: a question set for each of you, the AI comparison, guided rounds on what differs, and a shared brief for your lawyer.',
+  billingNote:
+    'Billing isn’t live yet. Request a pilot spot and we’ll confirm the details with you before anything is charged.',
+  features: [
+    'One partnership alignment for two partners',
+    'A separate question set for each of you, built for your situation',
+    'AI comparison: agreements, differences, unspoken assumptions, skipped topics',
+    'Guided rounds to work through what differs',
+    'A shared partnership brief you both confirm, with a PDF copy',
+    'Your partner joins free through your invite link',
+  ],
+  excludes: [
+    'Legal advice. We’re not a law firm.',
+    'A finished operating agreement, contract, or equity paperwork. Your lawyer drafts those from your brief.',
+    'A promise that you’ll agree. Sometimes the useful answer is that you don’t.',
+  ],
+} as const
 
-export interface MonetizationTier {
-  id: UpgradeTierId
-  name: string
-  price: string
-  cadence: string
-  description: string
-  features: readonly string[]
-  badge?: string
-}
-
-export const MONETIZATION_TIERS: readonly MonetizationTier[] = [
-  {
-    id: 'alignment_pass',
-    name: 'Alignment Pass',
-    price: '$12',
-    cadence: 'one time',
-    description: 'For the next decision that needs a real agreement.',
-    features: [
-      'One more creator alignment',
-      'One agreement check-in',
-      'No subscription',
-    ],
-  },
-  {
-    id: 'pro',
-    name: 'Align Pro',
-    price: '$19',
-    cadence: 'per month · $180/year',
-    description: 'For agreements that need to stay healthy as life changes.',
-    features: [
-      'Up to 10 new alignments per month',
-      'Recurring check-ins and drift alerts',
-      'Health dashboard, reminders, and renewals',
-    ],
-    badge: 'Best for ongoing agreements',
-  },
-  {
-    id: 'team',
-    name: 'Team',
-    price: '$59',
-    cadence: 'per month · coming later',
-    description: 'For small teams managing several working agreements.',
-    features: [
-      'Shared workspace',
-      'Five internal members',
-      'Multi-party alignments',
-    ],
-  },
-] as const
+export type UpgradeTierId = typeof PILOT_OFFER.id

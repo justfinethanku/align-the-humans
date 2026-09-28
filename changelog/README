@@ -2,8 +2,12 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 18**
+**Total Changelogs: 19**
 
+
+### [2026-09-27-2045 - website-narrow-focus-business-partners](./2026-09-27-2045-website-narrow-focus-business-partners.md)
+**Keywords:** [POSITIONING] [REDESIGN] [DESIGN-SYSTEM] [MOTION] [IMAGERY] [SEO] [PRICING] [TEMPLATES]
+Narrowed the public site to business partners and co-owners, with a new "registration" design system, code-built motion graphics, 6 new photoreal images, an /example page, $299-per-pair pilot pricing, rewritten SEO/JSON-LD/llms.txt, and a new "Bringing Someone In" template.
 
 ### [2026-07-11-1944 - monetization-gate-enrollment](./2026-07-11-1944-monetization-gate-enrollment.md)
 **Keywords:** [MONETIZATION] [ENTITLEMENTS] [RLS] [PRICING] [INVITES]

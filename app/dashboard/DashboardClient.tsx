@@ -308,7 +308,7 @@ export function DashboardClient({
 
                 <div className="mb-6 rounded-lg bg-amber-50 p-4 dark:bg-amber-900/20">
                   <p className="text-sm text-amber-800 dark:text-amber-200">
-                    <strong>Pro tip:</strong> Start with something simple like a chore schedule or weekend plans. Build trust in the process before tackling bigger decisions.
+                    <strong>Pro tip:</strong> Start with the decision that is actually in front of you: a new partner, a change in pay, or who owns which clients.
                   </p>
                 </div>
 

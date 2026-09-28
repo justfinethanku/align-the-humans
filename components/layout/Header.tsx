@@ -1,143 +1,85 @@
 'use client'
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import Link from 'next/link'
+import { Menu, X } from 'lucide-react'
+import { useState } from 'react'
+
+import { RegistrationMark } from '@/components/site/RegistrationMark'
+
+const navLinks = [
+  { label: 'How it works', href: '/#how-it-works' },
+  { label: 'Example', href: '/example' },
+  { label: 'Pricing', href: '/pricing' },
+]
 
 export function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const close = () => setMobileMenuOpen(false)
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link
-              href="/"
-              className="text-xl font-bold text-foreground hover:text-primary-400 transition-colors"
-              aria-label="Align the Humans home"
-            >
-              Align<span className="text-primary-500">theHumans</span>
+    <header className="site fixed inset-x-0 top-0 z-50 border-b border-rule bg-paper/90 backdrop-blur-md">
+      <nav className="mx-auto max-w-6xl px-5 sm:px-8" aria-label="Main navigation">
+        <div className="flex h-16 items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 text-[1.05rem] font-bold text-ink"
+            aria-label="Align the Humans home"
+            onClick={close}
+          >
+            <RegistrationMark size={24} animate />
+            <span className="type-heading">Align the Humans</span>
+          </Link>
+
+          <div className="hidden items-center gap-8 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-[0.95rem] text-ink-soft transition-colors hover:text-ink"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-5 md:flex">
+            <Link href="/login" className="text-[0.95rem] text-ink-soft transition-colors hover:text-ink">
+              Sign in
+            </Link>
+            <Link href="/signup" className="btn-ink btn-sm">
+              Start an alignment
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <a
-              href="#about"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              About
-            </a>
-            <a
-              href="#how-it-works"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              How It Works
-            </a>
-            <a
-              href="#use-cases"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Use Cases
-            </a>
-          </div>
-
-          {/* Desktop CTA Buttons */}
-          <div className="hidden md:flex items-center gap-3">
-            <ThemeToggle />
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground hover:bg-accent"
-            >
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              className="bg-primary-600 hover:bg-primary-700 text-primary-foreground"
-            >
-              <Link href="/signup">Get Started</Link>
-            </Button>
-          </div>
-
-          {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+            type="button"
+            className="-mr-2 p-2 text-ink md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle mobile menu"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
+            {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
-            <div className="flex flex-col gap-4">
-              <a
-                href="#about"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                About
-              </a>
-              <a
-                href="#how-it-works"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                How It Works
-              </a>
-              <a
-                href="#use-cases"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Use Cases
-              </a>
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <div className="flex items-center justify-between px-1 pb-1">
-                  <span className="text-sm text-muted-foreground">Theme</span>
-                  <ThemeToggle />
-                </div>
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground hover:bg-accent justify-start"
-                >
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                    Sign In
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  className="bg-primary-600 hover:bg-primary-700 text-primary-foreground justify-start"
-                >
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                    Get Started
-                  </Link>
-                </Button>
-              </div>
+          <div className="border-t border-rule py-4 md:hidden">
+            <div className="flex flex-col">
+              {navLinks.map((link) => (
+                <Link key={link.href} href={link.href} onClick={close} className="py-3 text-base text-ink">
+                  {link.label}
+                </Link>
+              ))}
+              <Link href="/login" onClick={close} className="py-3 text-base text-ink">
+                Sign in
+              </Link>
+              <Link href="/signup" onClick={close} className="btn-ink mt-3">
+                Start an alignment
+              </Link>
             </div>
           </div>
         )}
       </nav>
     </header>
-  );
+  )
 }

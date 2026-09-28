@@ -498,14 +498,14 @@ export function ClarityForm({
                   Topic
                 </Label>
                 <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                  What do you need to decide together? Works for anything from chore schedules to strategic direction.
+                  What do you and your partner need to decide together?
                 </p>
                 <Textarea
                   id="topic"
                   ref={topicInputRef}
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g., Creating a fair chore schedule for our household"
+                  placeholder="e.g., Terms for bringing Sam in as a partner in the studio"
                   className="min-h-28 resize-y"
                 />
 
@@ -674,7 +674,7 @@ export function ClarityForm({
                       ref={partnerInputRef}
                       value={partnerText}
                       onChange={(e) => setPartnerText(e.target.value)}
-                      placeholder="e.g., My roommate, my cofounder, my spouse, partner@example.com"
+                      placeholder="e.g., My business partner, my cofounder, partner@example.com"
                       className="min-h-28 resize-y"
                     />
                   </>
@@ -775,7 +775,7 @@ export function ClarityForm({
                   ref={outcomeInputRef}
                   value={desiredOutcome}
                   onChange={(e) => setDesiredOutcome(e.target.value)}
-                  placeholder="e.g., A chore schedule that feels fair to both of us"
+                  placeholder="e.g., A clear split of pay, ownership, and client responsibilities we both agree to"
                   className="min-h-28 resize-y"
                 />
 

@@ -1,0 +1,200 @@
+/*
+ * Marketing site styles — the "registration" design.
+ *
+ * Each partner is one ink plate: plate A (cobalt) and plate B (vermilion).
+ * Printed on top of each other with multiply they make ink. When the plates
+ * line up the type is crisp ("in register"); when they don't you see the
+ * colored fringes — the visual for a hidden difference.
+ *
+ * `.site` always renders on paper, whatever the app theme is, and re-points
+ * the shadcn tokens so shared UI (buttons, toasts, legal pages) matches.
+ */
+
+.site {
+  --background: 75 12% 95%;
+  --foreground: 232 28% 14%;
+  --card: 75 12% 97%;
+  --card-foreground: 232 28% 14%;
+  --popover: 75 12% 97%;
+  --popover-foreground: 232 28% 14%;
+  --primary: 225 76% 50%;
+  --primary-foreground: 75 12% 97%;
+  --secondary: 80 9% 90%;
+  --secondary-foreground: 232 28% 14%;
+  --muted: 80 9% 90%;
+  --muted-foreground: 227 13% 33%;
+  --accent: 80 9% 90%;
+  --accent-foreground: 232 28% 14%;
+  --border: 80 8% 82%;
+  --input: 80 8% 82%;
+  --ring: 225 76% 50%;
+  --plate-a: #1f4fe0;
+  --plate-b: #ee4a2c;
+
+  color-scheme: light;
+  background-color: #f3f4f0;
+  color: #1a1d2e;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-variation-settings: 'wdth' 100;
+}
+
+/* Expanded poster width for display type; body stays at normal width. */
+.site .type-display {
+  font-variation-settings: 'wdth' 118;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+}
+
+.site .type-heading {
+  font-variation-settings: 'wdth' 112;
+  font-weight: 750;
+  letter-spacing: -0.012em;
+  line-height: 1.08;
+}
+
+.site .type-condensed {
+  font-variation-settings: 'wdth' 84;
+}
+
+.site ::selection {
+  background: rgb(31 79 224 / 0.18);
+}
+
+.site :focus-visible {
+  outline: 2px solid var(--plate-a);
+  outline-offset: 3px;
+}
+
+/* ---------- Plate text (two inks, multiplied) ---------- */
+
+.plate-stack {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.plate-stack > .plate {
+  display: block;
+  mix-blend-mode: multiply;
+  transition: transform 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.plate-stack > .plate-a {
+  color: var(--plate-a);
+  transform: translate(var(--ax, 0px), var(--ay, 0px));
+}
+
+.plate-stack > .plate-b {
+  position: absolute;
+  inset: 0;
+  color: var(--plate-b);
+  transform: translate(var(--bx, 0px), var(--by, 0px));
+}
+
+/* ---------- Buttons: plates collapse into register on hover ----------
+ * Scoped under .site (0,2,0) so they beat shadcn Button utilities regardless
+ * of CSS chunk order. Recolor for dark sections with --btn-bg / --btn-fg.
+ */
+
+.site .btn-ink,
+.site .btn-paper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: auto;
+  min-height: 3.25rem;
+  padding: 0 1.5rem;
+  border-radius: 999px;
+  font-weight: 650;
+  font-size: 1rem;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.site .btn-ink,
+.site .btn-ink:hover {
+  background: var(--btn-bg, #1a1d2e);
+  color: var(--btn-fg, #f3f4f0);
+}
+
+.site .btn-ink {
+  box-shadow:
+    -3px 0 0 0 var(--plate-a),
+    3px 0 0 0 var(--plate-b);
+}
+
+.site .btn-ink:hover {
+  box-shadow:
+    0 0 0 0 var(--plate-a),
+    0 0 0 0 var(--plate-b);
+}
+
+.site .btn-paper {
+  background: transparent;
+  color: var(--btn-fg, #1a1d2e);
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
+.site .btn-paper:hover {
+  background: var(--btn-fg, #1a1d2e);
+  color: var(--btn-bg, #f3f4f0);
+}
+
+.site .btn-sm {
+  min-height: 2.5rem;
+  padding: 0 1.25rem;
+}
+
+.link-ink {
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--plate-a);
+}
+
+.link-ink:hover {
+  text-decoration-color: var(--plate-b);
+}
+
+/* ---------- Printer's crop marks around a "proof" ---------- */
+
+.proof {
+  position: relative;
+}
+
+.proof::before,
+.proof::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+.proof::before {
+  top: -14px;
+  left: -14px;
+  border-top: 1px solid #1a1d2e;
+  border-left: 1px solid #1a1d2e;
+}
+
+.proof::after {
+  bottom: -14px;
+  right: -14px;
+  border-bottom: 1px solid #1a1d2e;
+  border-right: 1px solid #1a1d2e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plate-stack > .plate,
+  .site .btn-ink,
+  .site .btn-paper {
+    transition: none;
+  }
+}

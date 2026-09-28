@@ -1,13 +1,22 @@
 import type { Metadata } from 'next'
-import { Inter, Manrope } from 'next/font/google'
+import { Archivo, Inter, Manrope } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import './globals.css'
+import '@/components/site/site.css'
 
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
+})
+
+// Marketing site face. Variable width axis: expanded for display, normal for body.
+const archivo = Archivo({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-archivo',
+  axes: ['wdth'],
 })
 
 const manrope = Manrope({
@@ -17,30 +26,32 @@ const manrope = Manrope({
   weight: ['500', '600', '700', '800'],
 })
 
+const SITE_TITLE = 'Align the Humans | Agree on the partnership before you commit to it'
+const SITE_DESCRIPTION =
+  'Find out what you and your business partner are actually agreeing to. Each of you answers on your own, you see where your expectations differ, and you build a shared brief to take to your lawyer.'
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://alignthehumans.com'),
   title: {
-    default: 'Align the Humans - Agree on the Hard Things, Without the Fight',
-    template: '%s | Align the Humans'
+    default: SITE_TITLE,
+    template: '%s | Align the Humans',
   },
-  description: 'Agree on the hard things - without the fight. From cofounder equity to household decisions: answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter.',
+  description: SITE_DESCRIPTION,
   keywords: [
-    'alignment',
-    'collaborative decision-making',
-    'structured thinking',
-    'partnership decisions',
-    'team alignment',
-    'household decisions',
-    'cofounder agreement',
-    'AI collaboration',
-    'independent thinking',
-    'collective intelligence',
-    'decision infrastructure',
-    'proactive alignment'
+    'business partnership agreement',
+    'business partner expectations',
+    'questions to ask a business partner',
+    'partnership terms',
+    'co-owner agreement preparation',
+    'agency partnership',
+    'bringing on a business partner',
+    'equity split conversation',
+    'partner compensation',
+    'operating agreement preparation',
   ],
-  authors: [{ name: 'Human Alignment Team' }],
-  creator: 'Human Alignment',
-  publisher: 'Human Alignment',
+  authors: [{ name: 'Align the Humans' }],
+  creator: 'Align the Humans',
+  publisher: 'Align the Humans',
   formatDetection: {
     email: false,
     address: false,
@@ -50,22 +61,22 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    siteName: 'Human Alignment',
-    title: 'Human Alignment - Structure for Every Decision That Matters',
-    description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity. Think independently, align collectively, decide confidently.',
+    siteName: 'Align the Humans',
+    title: 'Agree on the partnership before you commit to it',
+    description: SITE_DESCRIPTION,
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Human Alignment - Structure for Every Decision'
-      }
-    ]
+        alt: 'Align the Humans: agree on the partnership before you commit to it',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Human Alignment - Structure for Every Decision That Matters',
-    description: 'From household chores to cofounder equity - structured collaboration that turns any decision into clarity.',
+    title: 'Agree on the partnership before you commit to it',
+    description: SITE_DESCRIPTION,
     images: ['/og-image.jpg'],
   },
   robots: {
@@ -92,15 +103,16 @@ export default function RootLayout({
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Human Alignment',
+    name: 'Align the Humans',
     url: 'https://alignthehumans.com',
-    logo: 'https://alignthehumans.com/logo.png',
-    description: 'Infrastructure for collaborative decision-making at any scale - from household chores to cofounder equity',
+    logo: 'https://alignthehumans.com/icon.svg',
+    description:
+      'A structured process that helps business partners uncover different expectations about ownership, money, work, decisions, and exits before they commit.',
     foundingDate: '2025',
   }
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${manrope.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${manrope.variable} ${archivo.variable}`}>
       <head>
         <script
           type="application/ld+json"

@@ -1,76 +1,68 @@
 import Link from 'next/link'
 
-const productLinks = [
-  { label: 'How it works', href: '/#how-it-works' },
-  { label: "Who it's for", href: '/#use-cases' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'Start an alignment', href: '/signup' },
-]
+import { RegistrationMark } from '@/components/site/RegistrationMark'
 
-const legalLinks = [
-  { label: 'Terms', href: '/terms' },
-  { label: 'Privacy', href: '/privacy' },
+const columns = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'How it works', href: '/#how-it-works' },
+      { label: 'See an example', href: '/example' },
+      { label: 'Pricing', href: '/pricing' },
+      { label: 'Start an alignment', href: '/signup' },
+    ],
+  },
+  {
+    title: 'Account',
+    links: [
+      { label: 'Sign in', href: '/login' },
+      { label: 'Create account', href: '/signup' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { label: 'Terms', href: '/terms' },
+      { label: 'Privacy', href: '/privacy' },
+    ],
+  },
 ]
-
-const accountLinks = [
-  { label: 'Sign in', href: '/login' },
-  { label: 'Create account', href: '/signup' },
-]
-
-function FooterColumn({
-  title,
-  links,
-}: {
-  title: string
-  links: { label: string; href: string }[]
-}) {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold text-foreground mb-4">{title}</h3>
-      <ul className="space-y-3">
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
 
 export function Footer() {
   return (
-    <footer className="w-full border-t border-border bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <Link
-              href="/"
-              className="font-display text-lg font-bold text-foreground hover:text-primary transition-colors"
-            >
-              Align the Humans
+    <footer className="site w-full border-t border-rule bg-paper">
+      <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-16">
+        <div className="grid grid-cols-2 gap-10 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
+          <div className="col-span-2 lg:col-span-1">
+            <Link href="/" className="flex items-center gap-2.5 font-bold text-ink">
+              <RegistrationMark size={22} />
+              <span className="type-heading">Align the Humans</span>
             </Link>
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Agree on the hard things — without the fight.
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">
+              Get clear with your business partner before money, ownership, and expectations make it
+              painful. We&apos;re not a law firm, and nothing here is legal advice.
             </p>
           </div>
 
-          <FooterColumn title="Product" links={productLinks} />
-          <FooterColumn title="Legal" links={legalLinks} />
-          <FooterColumn title="Account" links={accountLinks} />
+          {columns.map((column) => (
+            <div key={column.title}>
+              <h3 className="text-sm font-semibold text-ink">{column.title}</h3>
+              <ul className="mt-4 space-y-3">
+                {column.links.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="text-sm text-ink-soft transition-colors hover:text-ink">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border">
-          <p className="text-sm text-muted-foreground">
-            © 2026 Align the Humans. All rights reserved.
-          </p>
-        </div>
+        <p className="mt-14 border-t border-rule pt-8 text-sm text-ink-soft">
+          © {new Date().getFullYear()} Align the Humans
+        </p>
       </div>
     </footer>
   )

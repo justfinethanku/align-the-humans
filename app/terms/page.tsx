@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — Align the Humans',
+  title: 'Terms of Service',
   description: 'Terms of service for Align the Humans, an AI-assisted mutual agreement platform.',
 }
 
@@ -17,7 +17,7 @@ function LegalDraftNote() {
 
 export default function TermsPage() {
   return (
-    <>
+    <div className="site">
       <Header />
       <main className="min-h-screen bg-background pt-24 pb-16">
         <article className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -166,6 +166,6 @@ export default function TermsPage() {
           </div>
         </article>
       </main>
-    </>
+    </div>
   )
 }

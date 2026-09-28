@@ -5,7 +5,7 @@ import { DatabaseError, ValidationError, createErrorResponse } from '@/app/lib/e
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server'
 
 const UpgradeInterestSchema = z.object({
-  tier: z.enum(['alignment_pass', 'pro', 'team']),
+  tier: z.enum(['partnership_pilot']),
   context: z.string().trim().min(1).max(120),
 })
 

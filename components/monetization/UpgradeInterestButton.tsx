@@ -35,7 +35,7 @@ export function UpgradeInterestButton({
       })
 
       if (response.status === 401) {
-        toast.error('Create an account to join the early-access list.')
+        toast.error('Create an account to request a pilot spot.')
         router.push('/signup?redirectTo=/pricing')
         return
       }
@@ -45,7 +45,7 @@ export function UpgradeInterestButton({
         throw new Error(body?.error?.message || 'Could not record your interest')
       }
 
-      toast.success("You're on the early-access list")
+      toast.success('Pilot spot requested. We’ll be in touch before anything is charged.')
       onSuccess?.()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not record your interest')
@@ -62,7 +62,7 @@ export function UpgradeInterestButton({
       className={className}
     >
       {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-      Get early access
+      Request a pilot spot
     </Button>
   )
 }

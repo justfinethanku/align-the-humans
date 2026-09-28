@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — Align the Humans',
+  title: 'Privacy Policy',
   description: 'Privacy policy for Align the Humans, an AI-assisted mutual agreement platform.',
 }
 
@@ -17,7 +17,7 @@ function LegalDraftNote() {
 
 export default function PrivacyPage() {
   return (
-    <>
+    <div className="site">
       <Header />
       <main className="min-h-screen bg-background pt-24 pb-16">
         <article className="container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -182,6 +182,6 @@ export default function PrivacyPage() {
           </div>
         </article>
       </main>
-    </>
+    </div>
   )
 }

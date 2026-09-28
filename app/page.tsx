@@ -1,63 +1,43 @@
-import { Metadata } from 'next';
-import { Hero } from '@/components/homepage/Hero';
-import { ProblemSection } from '@/components/homepage/ProblemSection';
-import { FlowVisualization } from '@/components/homepage/FlowVisualization';
-import { WhyItWorks } from '@/components/homepage/WhyItWorks';
-import { UseCases } from '@/components/homepage/UseCases';
-import { CTASection } from '@/components/homepage/CTASection';
-import { Footer } from '@/components/layout/Footer';
-import { Header } from '@/components/layout/Header';
-import { WebApplicationSchema } from '@/components/seo/WebApplicationSchema';
-import { HowToSchema } from '@/components/seo/HowToSchema';
+import { Metadata } from 'next'
+
+import { Boundary } from '@/components/homepage/Boundary'
+import { FAQ } from '@/components/homepage/FAQ'
+import { Hero } from '@/components/homepage/Hero'
+import { HiddenDifference } from '@/components/homepage/HiddenDifference'
+import { HowItWorks } from '@/components/homepage/HowItWorks'
+import { PilotCTA } from '@/components/homepage/PilotCTA'
+import { Situations } from '@/components/homepage/Situations'
+import { WalkAway } from '@/components/homepage/WalkAway'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { FAQSchema } from '@/components/seo/FAQSchema'
+import { HowToSchema } from '@/components/seo/HowToSchema'
+import { WebApplicationSchema } from '@/components/seo/WebApplicationSchema'
 
 export const metadata: Metadata = {
-  title: 'Align the Humans - Agree on the Hard Things, Without the Fight',
-  description: 'Answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter - from cofounder equity to household decisions.',
-  keywords: ['alignment', 'collaborative decision-making', 'structured thinking', 'partnership decisions', 'team alignment', 'household decisions', 'cofounder agreement', 'AI collaboration'],
-  openGraph: {
-    title: 'Align the Humans - Agree on the Hard Things, Without the Fight',
-    description: 'Answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter - from cofounder equity to household decisions.',
-    type: 'website',
-  },
-};
+  description:
+    'For business partners and co-owners: work through ownership, money, roles, decisions, and exits. Answer separately, uncover different expectations, and build a shared brief for your lawyer.',
+  alternates: { canonical: '/' },
+}
 
 export default function Home() {
   return (
-    <>
+    <div className="site">
       <WebApplicationSchema />
       <HowToSchema />
+      <FAQSchema />
       <Header />
-      <main className="flex min-h-screen flex-col">
-        {/* Hero Section */}
-        <section id="hero">
-          <Hero />
-        </section>
-
-        {/* Problem Section */}
-        <ProblemSection />
-
-        {/* 5-Step Process */}
-        <section id="how-it-works" className="scroll-mt-16">
-          <FlowVisualization />
-        </section>
-
-        {/* Why it works */}
-        <section id="why" className="scroll-mt-16">
-          <WhyItWorks />
-        </section>
-
-        {/* Use Cases */}
-        <section id="use-cases" className="scroll-mt-16 bg-surface-dark">
-          <UseCases />
-        </section>
-
-        {/* Final CTA */}
-        <section id="cta" className="scroll-mt-16">
-          <CTASection />
-        </section>
-
-        <Footer />
+      <main>
+        <Hero />
+        <HiddenDifference />
+        <Situations />
+        <HowItWorks />
+        <WalkAway />
+        <Boundary />
+        <FAQ />
+        <PilotCTA />
       </main>
-    </>
-  );
+      <Footer />
+    </div>
+  )
 }

@@ -390,6 +390,16 @@ function buildFocusAreas(templateSeed: string): string {
 - Vesting schedules`;
   }
 
+  if (templateSeed === 'new_partner') {
+    return `Focus Areas Based on Template:
+- The incoming partner's role and decision-making authority
+- Ownership or equity offered, and how it is earned
+- First-year compensation and how it changes
+- Existing clients, work in progress, and what the new partner brings
+- Time commitment and first-year expectations
+- What happens if the arrangement is not working`;
+  }
+
   return `Focus Areas:
 - Core goals and objectives
 - Expectations from each party

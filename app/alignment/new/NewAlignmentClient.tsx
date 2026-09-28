@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Briefcase,
   Sparkles,
+  UserPlus,
 } from 'lucide-react';
 import { createClient } from '@/app/lib/supabase-browser';
 import { createAlignmentWithOwner } from '@/app/lib/db-helpers';
@@ -36,27 +37,21 @@ interface Template {
 const templates: Template[] = [
   {
     id: 'operating_agreement',
-    title: 'Operating Agreement',
-    description: 'Business partnership foundations - roles, responsibilities, decision-making, and exit scenarios',
+    title: 'Partnership Terms',
+    description: 'Starting or revisiting a partnership - ownership, pay, roles, decisions, and what happens if someone leaves',
     icon: FileText,
   },
   {
+    id: 'new_partner',
+    title: 'Bringing Someone In',
+    description: 'A new partner or senior person joining - equity, pay, authority, and first-year expectations',
+    icon: UserPlus,
+  },
+  {
     id: 'cofounder_equity',
-    title: 'Cofounder Equity Split',
-    description: 'Equity splits built on explicit shared values, not rushed compromise',
+    title: 'Equity Split',
+    description: 'How ownership is divided and earned, based on what each of you actually contributes',
     icon: PieChart,
-  },
-  {
-    id: 'roommate_agreement',
-    title: 'Roommate Agreement',
-    description: 'Household logistics - chores, expenses, shared spaces, and expectations',
-    icon: Home,
-  },
-  {
-    id: 'marketing_strategy',
-    title: 'Marketing Strategy',
-    description: 'Strategic direction from competing priorities and visions',
-    icon: TrendingUp,
   },
   {
     id: 'business_operations',
@@ -65,9 +60,21 @@ const templates: Template[] = [
     icon: Briefcase,
   },
   {
+    id: 'marketing_strategy',
+    title: 'Marketing Strategy',
+    description: 'Strategic direction from competing priorities and visions',
+    icon: TrendingUp,
+  },
+  {
+    id: 'roommate_agreement',
+    title: 'Roommate Agreement',
+    description: 'Household logistics - chores, expenses, shared spaces, and expectations',
+    icon: Home,
+  },
+  {
     id: 'custom',
     title: 'Custom',
-    description: 'Any decision that needs structure - describe your situation',
+    description: 'Something else you need to agree on - describe your situation',
     icon: Sparkles,
   },
 ];
@@ -190,7 +197,7 @@ export function NewAlignmentClient({ preselectedPartner }: NewAlignmentClientPro
               Start a New Alignment
             </h1>
             <p className="max-w-2xl text-lg text-slate-600 dark:text-slate-400">
-              Choose a decision type below, or describe your specific situation. Same structure, any scale - from household logistics to business strategy.
+              Pick the situation closest to yours, or describe it in your own words. You and your partner will each answer on your own.
             </p>
           </div>
 
