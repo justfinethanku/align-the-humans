@@ -97,6 +97,12 @@ Partners join via shareable invite links (`/join/[token]`). Security model:
 
 `app/lib/templates.ts` has curated fallback templates (operating agreement, cofounder equity, roommate, marketing, business ops, custom). Used when AI generation fails. `templateRegistry` maps seed types to question arrays.
 
+## Marketing Site Positioning
+
+The public site (`/`, `/example`, `/pricing`, legal and auth pages) targets **two business partners or co-owners** facing a real commitment: starting a business together, bringing someone into the company, or changing how they already work. It sells the process that happens *before* legal drafting, never a replacement for a lawyer or a finished operating agreement. Pricing is a $299-per-pair pilot (`PILOT_OFFER` in `app/lib/monetization.ts`); billing is not live.
+
+Design: "registration" — each partner is one ink plate (cobalt `plate-a`, vermilion `plate-b`); multiplied together they print as ink. Marketing pages wrap in `.site` (always light, Archivo variable font, tokens in `components/site/site.css` + `tailwind.config.ts`). The engine stays general-purpose; only the front door is narrow.
+
 ## Alignment Workflow
 
 ### Status State Machine
@@ -118,7 +124,8 @@ Transitions enforced by `VALID_STATUS_TRANSITIONS` in `app/lib/types.ts`. Use `i
 ```
 components/
 ├── ui/              # shadcn/ui primitives (button, card, input, dialog, etc.)
-├── homepage/        # Hero, FlowVisualization, StatsSection, UseCases, Testimonials, CTASection
+├── homepage/        # Hero, HiddenDifference, Situations, HowItWorks, WalkAway, Boundary, FAQ, PilotCTA
+├── site/            # Marketing design system: PlateText, RegistrationMark, motion/ (FiftyFifty scroll piece), site.css
 ├── dashboard/       # AlignmentCard, StatusBadge, PartnersList, AddPartnerModal
 ├── alignment/       # ShareLinkButton, InviteStatus
 ├── layout/          # Header

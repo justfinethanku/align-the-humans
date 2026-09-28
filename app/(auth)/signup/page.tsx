@@ -59,7 +59,7 @@ export default function SignupPage() {
           Create Your Account
         </h1>
         <p className="text-base font-normal leading-normal text-muted-foreground pt-2">
-          Start aligning on decisions that matter - from household logistics to business strategy.
+          Get clear with your business partner before you commit.
         </p>
       </div>
 

@@ -593,6 +593,7 @@ export interface AlignmentQuestion {
  */
 export type TemplateSeed =
   | 'operating_agreement'
+  | 'new_partner'
   | 'cofounder_equity'
   | 'roommate_agreement'
   | 'marketing_strategy'

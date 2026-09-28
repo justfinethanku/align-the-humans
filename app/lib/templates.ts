@@ -157,6 +157,65 @@ export const operatingAgreementTemplate: AlignmentQuestion[] = [
 ];
 
 /**
+ * Bringing a new partner or senior person into an existing business
+ */
+export const newPartnerTemplate: AlignmentQuestion[] = [
+  {
+    id: 'role_and_authority',
+    prompt: 'What role will the new partner take, and what can they decide on their own?',
+    description: 'Think about responsibilities, who they report to (if anyone), and spending or hiring authority.',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'roles', importance: 'critical' },
+  },
+  {
+    id: 'ownership_offer',
+    prompt: 'What ownership or equity comes with joining, if any, and how is it earned?',
+    description: 'Consider whether it is granted up front, earned over time, bought in, or tied to milestones.',
+    type: 'long_text',
+    required: true,
+    aiHints: {
+      explainPrompt: 'Explain common ways established businesses offer ownership to an incoming partner',
+      examplePrompt: 'Show examples of buy-in, vesting, and milestone-based ownership for a new partner',
+      suggestionPrompt: 'Suggest an ownership approach that fits the contributions described',
+    },
+    metadata: { category: 'equity', importance: 'critical' },
+  },
+  {
+    id: 'first_year_pay',
+    prompt: 'How will the new partner be paid in the first year, and how does that change later?',
+    description: 'Salary, draws, profit share, commission, or a mix. Include when and how it gets revisited.',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'compensation', importance: 'critical' },
+  },
+  {
+    id: 'clients_and_existing_work',
+    prompt: 'How are existing clients, work in progress, and anything the new partner brings with them handled?',
+    description: 'Cover client relationships, tools, templates, or intellectual property on both sides.',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'legal', importance: 'high' },
+  },
+  {
+    id: 'first_year_expectations',
+    prompt: 'What does a successful first year look like, and what time commitment is expected?',
+    description: 'Be specific: hours per week, revenue or delivery goals, and what you would each count as success.',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'expectations', importance: 'high' },
+  },
+  {
+    id: 'if_it_does_not_work',
+    prompt: 'If it is not working after six or twelve months, what happens to the role, the pay, and any ownership?',
+    description: 'Agreeing on this now is much easier than negotiating it once things are tense.',
+    type: 'long_text',
+    required: true,
+    metadata: { category: 'legal', importance: 'critical' },
+  },
+];
+
+/**
  * Custom template - minimal starter for any topic
  */
 export const customTemplate: AlignmentQuestion[] = [
@@ -475,6 +534,7 @@ export const businessOperationsTemplate: AlignmentQuestion[] = [
  */
 export const templateRegistry: Record<string, AlignmentQuestion[]> = {
   operating_agreement: operatingAgreementTemplate,
+  new_partner: newPartnerTemplate,
   cofounder_equity: cofounderEquityTemplate,
   roommate_agreement: roommateAgreementTemplate,
   marketing_strategy: marketingStrategyTemplate,

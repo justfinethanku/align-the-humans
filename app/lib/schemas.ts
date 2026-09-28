@@ -80,6 +80,7 @@ export const ClarityContextSchema = z.object({
  */
 export const TemplateSeedSchema = z.enum([
   'operating_agreement',
+  'new_partner',
   'cofounder_equity',
   'roommate_agreement',
   'marketing_strategy',

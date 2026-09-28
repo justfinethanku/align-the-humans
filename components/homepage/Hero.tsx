@@ -1,72 +1,55 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import Image from 'next/image'
+import Link from 'next/link'
+
+import { PlateText } from '@/components/site/PlateText'
 
 export function Hero() {
   return (
-    <section className="relative flex w-full items-center justify-center overflow-hidden px-4 pb-16 pt-32 sm:px-6 lg:px-8">
-      {/* Restrained cinematic depth */}
-      <div
-        className="pointer-events-none absolute inset-0 bg-radial-spotlight opacity-30 dark:opacity-50"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute -left-32 top-1/4 h-[420px] w-[420px] rounded-full bg-primary-500/5 blur-3xl dark:bg-primary-500/15"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute -right-32 bottom-1/4 h-[480px] w-[480px] rounded-full bg-primary-500/5 blur-3xl dark:bg-primary-500/20"
-        aria-hidden="true"
-      />
+    <section className="px-5 pb-20 pt-32 sm:px-8 sm:pt-40 lg:pb-28">
+      <div className="mx-auto max-w-6xl">
+        <PlateText
+          as="h1"
+          className="type-display max-w-[14ch] text-[clamp(2.75rem,7.4vw,6.6rem)]"
+          from={14}
+          delayMs={250}
+        >
+          Agree on the partnership before you commit to&nbsp;it.
+        </PlateText>
 
-      <div className="relative w-full max-w-6xl">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Text */}
-          <div className="flex flex-col gap-6 lg:gap-8">
-            <h1 className="font-display text-5xl font-bold leading-[1.08] tracking-tight text-foreground sm:text-6xl">
-              Agree on the hard things.
-              <br />
-              <span className="bg-gradient-to-r from-primary to-primary-400 bg-clip-text text-transparent">
-                Without the fight.
-              </span>
-            </h1>
-            <p className="max-w-prose text-lg leading-relaxed text-muted-foreground">
-              The biggest decisions — equity, money, the future — usually go to whoever argues hardest. Align the Humans separates the thinking from the fighting: answer independently, let AI find where you already agree, and resolve only the conflicts that actually matter.
-            </p>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Button asChild size="lg" className="h-12 shadow-glow">
-                <Link href="/signup">Start your first alignment</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12">
-                <Link href="#how-it-works">See how it works</Link>
-              </Button>
-            </div>
-          </div>
-
-          {/* Image */}
-          <div className="relative">
-            <div className="blurred-spotlight opacity-30 dark:opacity-50" aria-hidden="true" />
-            <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow ring-1 ring-border">
-              <Image
-                src="/images/hero-cofounders.jpg"
-                alt="Two cofounders reaching agreement across a table at night"
-                width={1920}
-                height={1080}
-                priority
-                className="aspect-video w-full object-cover"
-              />
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-l from-background/50 via-background/10 to-transparent"
-                aria-hidden="true"
-              />
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-transparent lg:from-transparent"
-                aria-hidden="true"
-              />
-            </div>
+        <div className="mt-10 grid gap-8 lg:mt-12 lg:grid-cols-[minmax(0,34rem)_1fr] lg:items-end lg:gap-16">
+          <p className="text-lg leading-relaxed text-ink-soft sm:text-xl">
+            Work through ownership, money, responsibilities, decisions, and what happens if someone
+            leaves. You each answer on your own, find where your expectations differ, and build a
+            shared brief to review with your lawyer.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
+            <Link href="/signup" className="btn-ink">
+              Start your partnership alignment
+            </Link>
+            <Link href="/example" className="btn-paper">
+              See an example
+            </Link>
           </div>
         </div>
+
+        <figure className="mt-16 sm:mt-20">
+          <div className="proof">
+            <Image
+              src="/images/partners-studio.jpg"
+              alt="Two business partners at opposite ends of a long studio worktable, each writing their own answers"
+              width={2400}
+              height={1200}
+              priority
+              sizes="(min-width: 1152px) 1152px, 100vw"
+              className="aspect-[4/3] w-full object-cover sm:aspect-[2/1]"
+            />
+          </div>
+          <figcaption className="mt-5 max-w-xl text-sm leading-relaxed text-ink-soft">
+            Each of you answers on your own. Neither of you sees the other&apos;s answers until you
+            both finish, so nobody&apos;s first answer is shaped by the other&apos;s.
+          </figcaption>
+        </figure>
       </div>
     </section>
-  );
+  )
 }
