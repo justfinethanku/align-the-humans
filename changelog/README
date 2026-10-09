@@ -2,7 +2,12 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 19**
+**Total Changelogs: 20**
+
+### [2026-10-08-2137 - resend-password-reset-audit](./2026-10-08-2137-resend-password-reset-audit.md)
+**Keywords:** [RESEND] [AUTH] [TESTING] [AUDIT]
+Recorded the owner-approved production recovery-email test, missing-signature failure, and safe retest recipe. No auth behavior changed.
+
 
 
 ### [2026-09-27-2045 - website-narrow-focus-business-partners](./2026-09-27-2045-website-narrow-focus-business-partners.md)

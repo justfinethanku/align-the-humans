@@ -213,3 +213,54 @@ Known selector/flow lessons:
 - Resolution submissions live at `responseRound = current analysis round + 1` and carry `metadata.resolution_submission = true`.
 - The sign API requires the exact reviewed 64-character snapshot hash.
 - The waiting page polls, so realtime is not part of this regression pass.
+
+## Production password-reset email (Resend migration follow-up)
+
+Status: needs repair — real production request failed before email delivery,
+2026-10-08 at 21:35:52 America/New_York (2026-10-09 01:35:52 UTC).
+
+Purpose: test the real Auth send-email hook after a Resend key migration. The
+production login uses a password; it has no sign-in-email action. With explicit
+owner approval, use password recovery as the production email path instead.
+
+Role/account: the owner's existing authorized account. Obtain its address from
+the private Fleet handoff; do not create an account or publish tokens here.
+
+Safe actions: read current production deployment and hook source, submit one
+authorized reset request, inspect sanitized server logs and recipient mailbox.
+Unsafe actions: changing the password, following recovery links, logging out the
+owner's normal session, disabling signature checks, forging hook requests, or
+altering Auth configuration merely to make a test pass.
+
+### Verification recipe
+
+1. Record production deployment/commit and inspect `app/api/auth/email/route.ts`.
+2. Open a separate private browser window at `https://www.alignthehumans.com/login`.
+   The owner's regular authenticated browser redirects this route to dashboard.
+3. Select **Forgot password?**, enter only the approved existing account, and
+   select **Send Reset Link** once. Do not submit a new password.
+4. Match the request time to Vercel production logs, including `/api/auth/email`,
+   and inspect the matching Resend send and actual recipient mailbox/Spam. An API
+   key test or generic UI message alone is not proof that this flow sent email.
+5. If received, record private message ID, original labels, From/Reply-To, and
+   authentication results in Fleet without the reset token or link.
+6. Close the private window. Preserve the regular session and all account data.
+
+### Observed failure
+
+Production deployment `dpl_BjiisDLTMn9HHEafhp6ymAFSszPF`, commit
+`3eeac480ff8604c15dad846f3651232b293fec01`, returned 401 from
+`/api/auth/email` with `[Auth Email] Verification failed: Missing webhook signature`.
+The upstream request reported `Hook requires authorization token`. No matching
+Resend send or recipient email was found. No password was changed.
+
+The handler expects `x-supabase-webhook-signature` and a raw-body HMAC. Current
+Supabase send-email hooks use Standard Webhooks (`webhook-id`,
+`webhook-timestamp`, `webhook-signature`). See the
+[official send-email hook guide](https://supabase.com/docs/guides/auth/auth-hooks/send-email-hook).
+A separately approved repair should use the supported verifier, keep rejection
+of missing/invalid/stale signatures, and repeat the actual recovery request.
+This audit did not change the handler, key, hook configuration, or account.
+
+Checkpoint/cleanup: reuse the existing owner account only with approval for each
+new email test. No disposable rows were created; the private window was closed.
