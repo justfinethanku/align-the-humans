@@ -2,7 +2,7 @@
 
 **Keywords:** [AUTH] [EMAIL] [WEBHOOK] [SECURITY]
 **Session:** 2026-10-23
-**Commit:** recorded on this branch
+**Commit:** `3481d5c8f30880f0c7491310a549e1ff610d87e4`
 
 ## What Changed
 `POST /api/auth/email` now verifies Supabase Send Email hooks with the Standard Webhooks headers (`webhook-id`, `webhook-timestamp`, `webhook-signature`) and `SUPABASE_AUTH_HOOK_SECRET`. Unit tests cover a valid signature, a missing signature, a wrong signature, a stale signature, and each email action type the route handles.
@@ -20,7 +20,7 @@ Vercel no longer retains the 2026-10-09 production log line. The route's 401 tex
 None added.
 
 ## Testing Notes
-`npm test` covers the signature cases and the signup, email change, magic link, recovery, invite, and reauthentication plans. Lint, type-check, and build are run with the repo scripts. A live production reset was not sent.
+`npm test` passed 7 tests: valid, missing, wrong, and stale signatures, a future timestamp, production with no secret, and signup, email change, magic link, recovery, invite, and reauthentication. `npm run lint`, `npm run type-check`, and `npm run build` passed. A signature from `standardwebhooks` 1.0.0 was accepted by the compiled verifier, including Supabase's comma-space multi-secret header. A live production reset was not sent.
 
 ## Next Steps
 Confirm the dashboard hook URL and that `SUPABASE_AUTH_HOOK_SECRET` is the same `v1,whsec_` value Supabase uses, deploy, then repeat one approved password-reset request.
