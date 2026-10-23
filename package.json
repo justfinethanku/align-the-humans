@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --outDir /tmp/align-auth-email-tests --rootDir app/api/auth/email app/api/auth/email/hook.ts app/api/auth/email/hook.test.ts && node --test /tmp/align-auth-email-tests/hook.test.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
