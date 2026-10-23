@@ -2,8 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 19**
+**Total Changelogs: 20**
 
+### [2026-10-23-1622 - auth-email-webhook-signature](./2026-10-23-1622-auth-email-webhook-signature.md)
+**Keywords:** [AUTH] [EMAIL] [WEBHOOK] [SECURITY]
+Verify Supabase Send Email hooks with Standard Webhooks headers so password-reset and the other auth emails this route handles are no longer rejected before Resend.
 
 ### [2026-09-27-2045 - website-narrow-focus-business-partners](./2026-09-27-2045-website-narrow-focus-business-partners.md)
 **Keywords:** [POSITIONING] [REDESIGN] [DESIGN-SYSTEM] [MOTION] [IMAGERY] [SEO] [PRICING] [TEMPLATES]
