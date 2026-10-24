@@ -24,7 +24,7 @@ interface ClarityPageProps {
 export default async function ClarityPage({ params, searchParams }: ClarityPageProps) {
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     // 1. Authenticate user

@@ -3,10 +3,10 @@ import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { NewAlignmentClient } from './NewAlignmentClient';
 
 interface NewAlignmentPageProps {
-  searchParams?: {
+  searchParams: Promise<{
     partnerId?: string;
     partnerName?: string;
-  };
+  }>;
 }
 
 /**
@@ -24,8 +24,9 @@ interface NewAlignmentPageProps {
  * - Navigation to clarity page on selection
  */
 export default async function NewAlignmentPage({ searchParams }: NewAlignmentPageProps) {
+  const { partnerId, partnerName } = await searchParams;
   // Server-side auth check
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const user = await getCurrentUser(supabase);
 
   // Redirect to login if not authenticated
@@ -34,10 +35,10 @@ export default async function NewAlignmentPage({ searchParams }: NewAlignmentPag
   }
 
   // Extract partner info from URL params if provided
-  const preselectedPartner = searchParams?.partnerId && searchParams?.partnerName
+  const preselectedPartner = partnerId && partnerName
     ? {
-        id: searchParams.partnerId,
-        name: decodeURIComponent(searchParams.partnerName),
+        id: partnerId,
+        name: decodeURIComponent(partnerName),
       }
     : null;
 

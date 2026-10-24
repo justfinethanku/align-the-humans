@@ -17,7 +17,7 @@
  */
 
 import { PROMPT_SEEDS } from './db/seed-prompts';
-import { createAdminClient } from './supabase-server';
+import { createAdminClient, type SupabaseAdminClient } from './supabase-server';
 
 // ============================================================================
 // Types
@@ -133,7 +133,7 @@ function mapRowToConfig(row: PromptRow): PromptConfig {
 // types, so we access it through an untyped query-builder boundary (matching
 // the codebase's existing `as any` convention for not-yet-typed tables).
 // Type safety is enforced downstream by mapRowToConfig() + PromptRow.
-function promptsTable(client: ReturnType<typeof createAdminClient>): any {
+function promptsTable(client: SupabaseAdminClient): any {
   return (client as any).from('prompts');
 }
 
@@ -152,7 +152,7 @@ export async function getPrompt(slug: string): Promise<PromptConfig> {
 
   // 2. Try database
   try {
-    const supabase = createAdminClient();
+    const supabase = await createAdminClient();
     const { data, error } = await promptsTable(supabase)
       .select('*')
       .eq('slug', slug)
@@ -184,7 +184,7 @@ export async function getPrompt(slug: string): Promise<PromptConfig> {
  */
 export async function getAllPrompts(): Promise<PromptConfig[]> {
   try {
-    const supabase = createAdminClient();
+    const supabase = await createAdminClient();
     const { data, error } = await promptsTable(supabase)
       .select('*')
       .eq('is_active', true)

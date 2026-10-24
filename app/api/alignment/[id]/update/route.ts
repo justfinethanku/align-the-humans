@@ -38,7 +38,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     // 1. Authenticate user

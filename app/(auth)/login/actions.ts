@@ -21,13 +21,13 @@ export type LoginState = {
 
 const RATE_LIMIT_MESSAGE = 'Too many attempts, please wait a minute.';
 
-function getClientIp(): string {
-  const forwardedFor = headers().get('x-forwarded-for');
+async function getClientIp(): Promise<string> {
+  const forwardedFor = (await headers()).get('x-forwarded-for');
   return forwardedFor?.split(',')[0]?.trim() || 'unknown';
 }
 
-function authRateLimitKey(scope: string, email: string): string {
-  return `auth:${scope}:${email.toLowerCase()}:ip:${getClientIp()}`;
+async function authRateLimitKey(scope: string, email: string): Promise<string> {
+  return `auth:${scope}:${email.toLowerCase()}:ip:${await getClientIp()}`;
 }
 
 /**
@@ -80,7 +80,7 @@ export async function loginAction(
 
     // In-memory limiter; production should back this with Vercel KV / Upstash.
     const rateLimitResult = await checkRateLimit(
-      authRateLimitKey('login', email),
+      await authRateLimitKey('login', email),
       { limit: 10, windowMs: 60_000 }
     );
     if (!rateLimitResult.ok) {
@@ -91,7 +91,7 @@ export async function loginAction(
     }
 
     // Create Supabase client and attempt login
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -170,7 +170,7 @@ export async function forgotPasswordAction(
 
     // In-memory limiter; production should back this with Vercel KV / Upstash.
     const rateLimitResult = await checkRateLimit(
-      authRateLimitKey('forgot-password', normalizedEmail),
+      await authRateLimitKey('forgot-password', normalizedEmail),
       { limit: 5, windowMs: 60_000 }
     );
     if (!rateLimitResult.ok) {
@@ -178,7 +178,7 @@ export async function forgotPasswordAction(
     }
 
     // Create Supabase client and send reset email
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: `${appUrl}/auth/callback?next=/auth/reset-password`,

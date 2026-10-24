@@ -10,7 +10,7 @@ const UpgradeInterestSchema = z.object({
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   try {
     const user = await requireAuth(supabase)

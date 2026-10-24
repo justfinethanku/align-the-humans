@@ -18,7 +18,7 @@ export function useReducedMotion(): boolean {
 
 /** True once the element has scrolled into view (never flips back). */
 export function useInViewOnce(
-  ref: RefObject<Element>,
+  ref: RefObject<Element | null>,
   { enabled = true, rootMargin = '0px 0px -15% 0px' } = {}
 ): boolean {
   const [seen, setSeen] = useState(false)
@@ -47,7 +47,7 @@ export function useInViewOnce(
  * 0 when the container's top reaches the viewport top, 1 when its bottom
  * reaches the viewport bottom.
  */
-export function useStickyProgress(ref: RefObject<HTMLElement>): number {
+export function useStickyProgress(ref: RefObject<HTMLElement | null>): number {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {

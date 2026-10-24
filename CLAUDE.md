@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Human Alignment** is a Next.js 14 web application that facilitates mutual agreement between partners through AI-guided structured conversations. Two parties independently answer questions about a topic, then Claude AI analyzes responses, identifies conflicts, and guides iterative resolution toward consensus.
+**Human Alignment** is a Next.js 16 web application that facilitates mutual agreement between partners through AI-guided structured conversations. Two parties independently answer questions about a topic, then Claude AI analyzes responses, identifies conflicts, and guides iterative resolution toward consensus.
 
 **Domain:** https://alignthehumans.com
 
@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev          # Start dev server (localhost:3000)
 npm run build        # Production build
-npm run lint         # ESLint
+npm run lint         # ESLint CLI (flat config in eslint.config.mjs)
 npm run type-check   # TypeScript check (tsc --noEmit)
 npm start            # Run production build
 ```
@@ -29,7 +29,7 @@ Copy `.env.example` to `.env.local`. Required:
 
 ## Tech Stack
 
-- **Framework:** Next.js 14 (App Router, `app/` directory)
+- **Framework:** Next.js 16 (App Router, `app/` directory, Turbopack builds) with React 19
 - **Language:** TypeScript (strict mode, `@/*` path alias maps to project root)
 - **Styling:** Tailwind CSS, dark mode by default (`<html class="dark">`)
 - **UI Components:** shadcn/ui in `components/ui/`
@@ -44,7 +44,7 @@ Copy `.env.example` to `.env.local`. Required:
 ### Supabase Client Pattern
 
 Two client factories, never use raw `@supabase/ssr` directly:
-- **Server** (`app/lib/supabase-server.ts`): `createServerClient()` for Server Components, Route Handlers, Server Actions. Also `createAdminClient()` to bypass RLS. Auth helpers: `getCurrentUser()`, `requireAuth()`.
+- **Server** (`app/lib/supabase-server.ts`): `await createServerClient()` for Server Components, Route Handlers, Server Actions. Also `await createAdminClient()` to bypass RLS. Both are async because `cookies()` is async. Auth helpers: `getCurrentUser()`, `requireAuth()`.
 - **Browser** (`app/lib/supabase-browser.ts`): `createClient()` for Client Components and realtime subscriptions.
 
 Both are typed via `Database` type from `app/lib/database.types.ts` (generated from Supabase schema).
@@ -61,9 +61,9 @@ Both are typed via `Database` type from `app/lib/database.types.ts` (generated f
 - `AlignmentError` has static factories: `.invalidTransition()`, `.incompleteParticipation()`, `.unauthorized()`, `.notFound()`
 - Use `createErrorResponse(error)` in API routes to return standardized error responses
 
-### Middleware
+### Proxy (formerly middleware)
 
-`middleware.ts` handles auth routing:
+`proxy.ts` handles auth routing:
 - Public routes: `/`, `/login`, `/signup`, `/auth/*`, `/join/*`
 - Authenticated users hitting `/login` or `/signup` redirect to `/dashboard`
 - Unauthenticated users hitting protected routes redirect to `/login?redirectTo=...`

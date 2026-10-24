@@ -35,7 +35,7 @@ Human Alignment transforms how people make decisions together by:
 
 ## Tech Stack
 
-- **Framework**: Next.js 14+ (App Router)
+- **Framework**: Next.js 16 (App Router), React 19
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui

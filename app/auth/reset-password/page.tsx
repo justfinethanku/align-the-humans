@@ -4,7 +4,7 @@
  * session via /auth/callback. Lets them set a new password.
  *
  * Must live at the literal URL /auth/reset-password (not /reset-password)
- * because that's the path already whitelisted in middleware.ts and built
+ * because that's the path already whitelisted in proxy.ts and built
  * into the recovery email links (app/api/auth/email/route.ts), so it lives
  * under app/auth/ (a real path segment) rather than inside the
  * app/(auth) route group, and reuses the same shadcn components + visual

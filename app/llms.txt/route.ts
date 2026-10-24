@@ -1,3 +1,5 @@
+export const dynamic = 'force-static';
+
 export async function GET() {
   const llmsTxt = `# Align the Humans
 

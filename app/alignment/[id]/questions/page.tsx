@@ -26,7 +26,7 @@ export default async function QuestionsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // Get current user
   const { data: { user }, error: authError } = await supabase.auth.getUser();

@@ -79,7 +79,7 @@ type CompromiseOption = z.infer<typeof CompromiseOptionSchema>;
  */
 export async function POST(request: NextRequest) {
   const timer = new PerformanceTimer();
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     // 1. Authenticate user

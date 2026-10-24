@@ -122,7 +122,7 @@ function calculateConfidence(
  */
 export async function POST(request: NextRequest): Promise<Response> {
   const timer = new PerformanceTimer();
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   let modelName = 'db-config';
   let telemetryAlignmentId = 'suggestion-request';
   let telemetryUserId: string | undefined;

@@ -41,7 +41,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<GenerateInviteResponse | { error: unknown }>> {
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     // 1. Authenticate user

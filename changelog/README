@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 21**
+**Total Changelogs: 22**
+
+### [2026-10-24-1857 - nextjs-16-react-19-upgrade](./2026-10-24-1857-nextjs-16-react-19-upgrade.md)
+**Keywords:** [SECURITY] [DEPENDENCIES] [NEXTJS] [REACT] [ESLINT] [TURBOPACK]
+ATH-6: Next 14.2.35 → 16.4.3 and React 19 via official codemods; async Supabase server clients, proxy.ts, ESLint 9 flat config; prod audit 2 → 0.
 
 ### [2026-10-24-1741 - security-jspdf-zod-dompurify](./2026-10-24-1741-security-jspdf-zod-dompurify.md)
 **Keywords:** [SECURITY] [DEPENDENCIES] [ZOD] [JSPDF] [DOMPURIFY] [AI-SDK]

@@ -78,8 +78,7 @@ function getClientIP(request: NextRequest): string {
     return realIP;
   }
 
-  // Fallback to direct connection IP
-  return request.ip || 'unknown';
+  return 'unknown';
 }
 
 // ============================================================================
@@ -103,7 +102,7 @@ interface JoinResponse {
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<JoinResponse | { error: unknown }>> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     // 1. Rate limiting check

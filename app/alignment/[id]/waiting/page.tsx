@@ -15,7 +15,7 @@ interface PageProps {
 
 export default async function WaitingPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const user = await getCurrentUser(supabase);
 
   if (!user) {

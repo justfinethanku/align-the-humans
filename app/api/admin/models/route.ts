@@ -13,7 +13,7 @@ import { discoverModels, discoverAnthropicModels } from '@/app/lib/ai-config';
 
 export async function GET(request: Request): Promise<Response> {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const user = await requireAuth(supabase);
 
     // Verify admin

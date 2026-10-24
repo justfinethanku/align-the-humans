@@ -4,7 +4,7 @@
  * Matches the visual design of /login and /signup (which live in the
  * app/(auth) route group). This page must live at the literal URL
  * /auth/forgot-password (not /forgot-password) because that's the path
- * already whitelisted in middleware.ts and linked from login/page.tsx, so
+ * already whitelisted in proxy.ts and linked from login/page.tsx, so
  * it lives under app/auth/ (a real path segment) rather than inside the
  * app/(auth) route group, and reuses the same shadcn components + visual
  * chrome as app/(auth)/layout.tsx inline.

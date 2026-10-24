@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cloud Agent install script for Human Alignment (Next.js 14 + Supabase).
+# Cloud Agent install script for Human Alignment (Next.js 16 + Supabase).
 # Idempotent: installs dependencies and regenerates .env.local from the
 # environment variables (Cloud Agent secrets) that are present.
 set -euo pipefail

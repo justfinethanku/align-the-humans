@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, createAdminClient, requireAuth } from '@/app/lib/supabase-server';
+import { createServerClient, createAdminClient, requireAuth, type SupabaseServerClient } from '@/app/lib/supabase-server';
 import {
   assertReadyForDocument,
   completeAlignmentIfAllSigned,
@@ -49,7 +49,6 @@ interface SignResponse {
   };
 }
 
-type SupabaseRouteClient = ReturnType<typeof createServerClient>;
 type SignatureRow = Database['public']['Tables']['alignment_signatures']['Row'];
 
 // ============================================================================
@@ -67,7 +66,7 @@ function isUniqueViolation(error: unknown): boolean {
 }
 
 async function getExistingSignature(
-  supabase: SupabaseRouteClient,
+  supabase: SupabaseServerClient,
   alignmentId: string,
   userId: string,
   round: number
@@ -88,7 +87,7 @@ async function getExistingSignature(
 }
 
 async function assertNoLegacySignature(
-  supabase: SupabaseRouteClient,
+  supabase: SupabaseServerClient,
   alignmentId: string,
   round: number
 ): Promise<void> {
@@ -110,7 +109,7 @@ async function assertNoLegacySignature(
 }
 
 async function completeIfReady(params: {
-  supabase: SupabaseRouteClient;
+  supabase: SupabaseServerClient;
   alignmentId: string;
   round: number;
   snapshotHash: string;
@@ -134,7 +133,7 @@ async function completeIfReady(params: {
 }
 
 function sendCompletionEmails(params: {
-  supabase: SupabaseRouteClient;
+  supabase: SupabaseServerClient;
   alignmentId: string;
   alignmentTitle: string | null;
 }): void {
@@ -142,7 +141,7 @@ function sendCompletionEmails(params: {
 
   (async () => {
     try {
-      const adminClient = createAdminClient();
+      const adminClient = await createAdminClient();
       const { data: participants } = await supabase
         .from('alignment_participants')
         .select('user_id')
@@ -211,7 +210,7 @@ export async function POST(
 ): Promise<NextResponse> {
   const timer = new PerformanceTimer();
   const { id: alignmentId } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     const user = await requireAuth(supabase);

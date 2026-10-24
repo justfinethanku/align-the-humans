@@ -23,7 +23,7 @@ import { DashboardClient } from './DashboardClient';
  */
 export default async function DashboardPage() {
   // Server-side auth check
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const user = await getCurrentUser(supabase);
 
   // Redirect to login if not authenticated

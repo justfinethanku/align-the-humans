@@ -1,7 +1,7 @@
 /**
- * Next.js Middleware for Authentication and Session Management
+ * Next.js Proxy (formerly Middleware) for Authentication and Session Management
  *
- * This middleware handles:
+ * This proxy handles:
  * - Session validation and refresh on every request
  * - Cookie-based session persistence
  * - Route protection (requires auth for protected routes)
@@ -12,7 +12,7 @@
  *
  * References:
  * - https://supabase.com/docs/guides/auth/server-side/nextjs
- * - https://nextjs.org/docs/app/building-your-application/routing/middleware
+ * - https://nextjs.org/docs/app/api-reference/file-conventions/proxy
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -69,13 +69,13 @@ function isAuthRoute(path: string): boolean {
 }
 
 /**
- * Middleware function
+ * Proxy function
  * Runs on every request to validate session and manage authentication
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files, API routes (except auth), and Next.js internals
+  // Skip the proxy for static files, API routes (except auth), and Next.js internals
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/') ||
@@ -143,8 +143,8 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Middleware configuration
- * Define which routes the middleware should run on
+ * Proxy configuration
+ * Define which routes the proxy should run on
  *
  * Note: We match all routes except static files and API routes
  * This ensures session is validated on every page load
