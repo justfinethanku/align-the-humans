@@ -344,7 +344,7 @@ export async function POST(
     });
 
     if (error instanceof z.ZodError) {
-      const validationError = new ValidationError('Invalid request body', { errors: error.errors });
+      const validationError = new ValidationError('Invalid request body', { errors: error.issues });
       return NextResponse.json(
         validationError.toJSON(),
         { status: validationError.statusCode }

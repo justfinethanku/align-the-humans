@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     if (!validatedData.success) {
       throw new ValidationError(
         'Invalid request body',
-        { errors: validatedData.error.errors }
+        { errors: validatedData.error.issues }
       );
     }
 

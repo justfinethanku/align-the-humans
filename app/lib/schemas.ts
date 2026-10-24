@@ -40,7 +40,7 @@ export const AlignmentQuestionSchema: z.ZodType<any> = z.lazy(() =>
     options: z.array(QuestionOptionSchema).optional(),
     followUps: z.array(AlignmentQuestionSchema).optional(),
     aiHints: AIHintsSchema.optional(),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .refine(
     (data) => {

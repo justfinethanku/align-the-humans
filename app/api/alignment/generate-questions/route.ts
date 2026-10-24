@@ -335,7 +335,7 @@ async function generateQuestionsWithAI(
               examplePrompt: z.string().optional(),
               suggestionPrompt: z.string().optional(),
             }).optional(),
-            metadata: z.record(z.any()).optional(),
+            metadata: z.record(z.string(), z.any()).optional(),
           })
         ),
       }),
