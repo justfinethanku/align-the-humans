@@ -47,7 +47,7 @@ const EMAIL_SEARCH_USER_SCAN_LIMIT = 1000;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   // Auth check goes through the RLS-bound client (reads the session cookie).
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     // 1. Authenticate user
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // All data access below uses the admin client (service role) because
     // profiles RLS is own-row only -- the RLS-bound client would only ever
     // be able to see the caller's own profile.
-    const admin = createAdminClient();
+    const admin = await createAdminClient();
 
     // 3. Search profiles by display name
     const { data: nameMatches, error: nameError } = await admin

@@ -55,7 +55,7 @@ interface SuggestionResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const timer = new PerformanceTimer();
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   let modelName = 'db-config';
 
   let userId: string | undefined;

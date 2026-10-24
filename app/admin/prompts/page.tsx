@@ -6,7 +6,7 @@
  */
 
 import Link from 'next/link';
-import { createAdminClient } from '@/app/lib/supabase-server';
+import { createAdminClient, type SupabaseAdminClient } from '@/app/lib/supabase-server';
 
 interface PromptListRow {
   slug: string;
@@ -18,7 +18,7 @@ interface PromptListRow {
   updated_at: string;
 }
 
-function promptsTable(client: ReturnType<typeof createAdminClient>): {
+function promptsTable(client: SupabaseAdminClient): {
   select: (columns: string) => {
     order: (
       column: string,
@@ -39,7 +39,7 @@ function formatUpdatedAt(iso: string): string {
 }
 
 export default async function PromptsPage() {
-  const supabase = createAdminClient();
+  const supabase = await createAdminClient();
   const { data, error } = await promptsTable(supabase)
     .select('slug, name, model, temperature, max_tokens, is_active, updated_at')
     .order('slug', { ascending: true });

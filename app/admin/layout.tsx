@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 async function checkAdminAccess() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // Get current user
   const {

@@ -5,10 +5,9 @@
  * Usage in Server Components:
  * ```tsx
  * import { createServerClient } from '@/app/lib/supabase-server';
- * import { cookies } from 'next/headers';
  *
  * export default async function MyPage() {
- *   const supabase = createServerClient();
+ *   const supabase = await createServerClient();
  *   const { data } = await supabase.from('profiles').select('*');
  *   // Use data...
  * }
@@ -17,10 +16,9 @@
  * Usage in Route Handlers:
  * ```tsx
  * import { createServerClient } from '@/app/lib/supabase-server';
- * import { cookies } from 'next/headers';
  *
  * export async function GET(request: Request) {
- *   const supabase = createServerClient();
+ *   const supabase = await createServerClient();
  *   // Use supabase client...
  * }
  * ```
@@ -37,13 +35,12 @@ import { AuthError } from './errors';
  * - Server Components
  * - Server Actions
  * - Route Handlers
- * - Middleware
  *
  * Automatically manages session via cookies
  *
  * @returns Supabase server client with TypeScript types
  */
-export function createServerClient() {
+export async function createServerClient() {
   // Validate environment variables
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -55,7 +52,7 @@ export function createServerClient() {
     );
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   // Create server client with cookie handling
   return createSupabaseServerClient<Database>(
@@ -73,7 +70,7 @@ export function createServerClient() {
             );
           } catch {
             // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
+            // This can be ignored if you have the proxy refreshing
             // user sessions.
           }
         },
@@ -95,7 +92,7 @@ export function createServerClient() {
  *
  * @returns Supabase admin client with full privileges
  */
-export function createAdminClient() {
+export async function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -106,7 +103,7 @@ export function createAdminClient() {
     );
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   // Create admin client with service role key
   return createSupabaseServerClient<Database>(
@@ -134,12 +131,12 @@ export function createAdminClient() {
 /**
  * Type-safe shorthand for the server client
  */
-export type SupabaseServerClient = ReturnType<typeof createServerClient>;
+export type SupabaseServerClient = Awaited<ReturnType<typeof createServerClient>>;
 
 /**
  * Type-safe shorthand for the admin client
  */
-export type SupabaseAdminClient = ReturnType<typeof createAdminClient>;
+export type SupabaseAdminClient = Awaited<ReturnType<typeof createAdminClient>>;
 
 /**
  * Gets the current authenticated user from server-side context

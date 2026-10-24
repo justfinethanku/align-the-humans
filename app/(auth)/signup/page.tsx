@@ -7,9 +7,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useActionState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -37,7 +37,7 @@ function SubmitButton() {
 export default function SignupPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo');
-  const [state, formAction] = useFormState(signupAction, null);
+  const [state, formAction] = useActionState(signupAction, null);
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 

@@ -153,7 +153,7 @@ function getExpirationText(expiresAtValue: string | null): string {
  */
 export default async function JoinPage({ params }: PageProps) {
   const { token } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   if (!isValidTokenFormat(token)) {
     return <InvalidInvitationCard />;

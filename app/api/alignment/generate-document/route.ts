@@ -49,7 +49,7 @@ interface GenerateDocumentResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const timer = new PerformanceTimer();
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   let bodyData: unknown = {};
 
   try {

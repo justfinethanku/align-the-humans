@@ -83,7 +83,7 @@ function redirectForDocumentError(error: AlignmentError, alignmentId: string): n
 }
 
 async function getDocumentData(alignmentId: string, userId: string) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const readiness = await assertReadyForDocument(supabase, alignmentId, userId);
   const { alignment, analysis, round } = readiness;
 
@@ -157,7 +157,7 @@ async function getDocumentData(alignmentId: string, userId: string) {
 
 export default async function DocumentPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const user = await requireAuth(supabase);
   let data: Awaited<ReturnType<typeof getDocumentData>> | null;
 

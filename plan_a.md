@@ -5,7 +5,7 @@
 
 ## 1. Product Overview
 
-**Human Alignment** (live at https://alignthehumans.com) is a Next.js 14 web app that helps two parties reach a documented, mutual agreement on a topic (e.g. a roommate agreement, cofounder equity split, operating agreement, marketing plan) through an AI-guided structured conversation.
+**Human Alignment** (live at https://alignthehumans.com) is a Next.js 16 web app that helps two parties reach a documented, mutual agreement on a topic (e.g. a roommate agreement, cofounder equity split, operating agreement, marketing plan) through an AI-guided structured conversation.
 
 Core loop: one person creates an **alignment**, defines the topic/questions, invites a partner, both parties answer independently (blind to each other's answers), Claude analyzes the responses for agreements and conflicts, and the pair iterates through AI-assisted resolution until they reach consensus and sign a final document.
 

@@ -6,7 +6,7 @@
 import { createServerClient } from '@/app/lib/supabase-server';
 
 async function getAdminStats() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // Get total users count
   const { count: totalUsers } = await supabase

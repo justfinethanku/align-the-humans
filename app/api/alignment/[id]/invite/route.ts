@@ -25,7 +25,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     const user = await requireAuth(supabase);

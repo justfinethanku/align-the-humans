@@ -28,13 +28,13 @@ export type SignupState = {
 
 const RATE_LIMIT_MESSAGE = 'Too many attempts, please wait a minute.';
 
-function getClientIp(): string {
-  const forwardedFor = headers().get('x-forwarded-for');
+async function getClientIp(): Promise<string> {
+  const forwardedFor = (await headers()).get('x-forwarded-for');
   return forwardedFor?.split(',')[0]?.trim() || 'unknown';
 }
 
-function authRateLimitKey(scope: string, email: string): string {
-  return `auth:${scope}:${email.toLowerCase()}:ip:${getClientIp()}`;
+async function authRateLimitKey(scope: string, email: string): Promise<string> {
+  return `auth:${scope}:${email.toLowerCase()}:ip:${await getClientIp()}`;
 }
 
 /**
@@ -145,7 +145,7 @@ export async function signupAction(
 
     // In-memory limiter; production should back this with Vercel KV / Upstash.
     const rateLimitResult = await checkRateLimit(
-      authRateLimitKey('signup', email),
+      await authRateLimitKey('signup', email),
       { limit: 5, windowMs: 60_000 }
     );
     if (!rateLimitResult.ok) {
@@ -156,7 +156,7 @@ export async function signupAction(
     }
 
     // Create Supabase client
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const callbackUrl = new URL('/auth/callback', appUrl);
     callbackUrl.searchParams.set('next', destination);

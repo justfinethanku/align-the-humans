@@ -14,7 +14,7 @@
 
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
+import { createServerClient, getCurrentUser, type SupabaseServerClient } from '@/app/lib/supabase-server';
 import { getAlignmentDetail } from '@/app/lib/db-helpers';
 import { AnalysisProgressClient } from './analysis-progress-client';
 import { Button } from '@/components/ui/button';
@@ -192,7 +192,7 @@ function ConflictItem({
 
 export default async function AnalysisPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const user = await getCurrentUser(supabase);
 
   // Require authentication
@@ -570,7 +570,7 @@ function getStringField(record: unknown, key: string): string | null {
 }
 
 async function getParticipantFirstNames(
-  supabase: ReturnType<typeof createServerClient>,
+  supabase: SupabaseServerClient,
   userIds: string[]
 ): Promise<Map<string, string>> {
   const uniqueUserIds = Array.from(new Set(userIds));

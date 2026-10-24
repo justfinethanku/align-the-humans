@@ -6,7 +6,7 @@
 import { createServerClient } from '@/app/lib/supabase-server';
 
 async function getAllUsers() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   const { data: profiles, error } = await supabase
     .from('profiles')

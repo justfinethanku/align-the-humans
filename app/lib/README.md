@@ -54,7 +54,7 @@ Supabase clients for server-side usage:
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 
 export default async function MyPage() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const user = await requireAuth(supabase);
 
   const { data } = await supabase.from('profiles').select('*');
@@ -67,7 +67,7 @@ export default async function MyPage() {
 import { createServerClient } from '@/app/lib/supabase-server';
 
 export async function GET(request: Request) {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase.from('alignments').select('*');
 
   if (error) {
@@ -117,7 +117,7 @@ Type-safe helper functions for common database operations:
 import { createServerClient, getUserAlignments } from '@/app/lib';
 
 export default async function Dashboard() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return <div>Not authenticated</div>;

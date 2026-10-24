@@ -6,7 +6,7 @@
 import { createServerClient } from '@/app/lib/supabase-server';
 
 export default async function AdminAlignmentsPage() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   const { data: alignments, error } = await supabase
     .from('alignments')

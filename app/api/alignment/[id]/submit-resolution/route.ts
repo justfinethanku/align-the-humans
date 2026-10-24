@@ -59,7 +59,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   const timer = new PerformanceTimer();
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   try {
     // 1. Authenticate user

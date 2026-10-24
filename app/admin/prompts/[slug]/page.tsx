@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { createAdminClient } from '@/app/lib/supabase-server';
+import { createAdminClient, type SupabaseAdminClient } from '@/app/lib/supabase-server';
 import {
   PromptEditor,
   type PromptEditorData,
@@ -37,13 +37,13 @@ interface PromptVersionRow {
   change_note: string | null;
 }
 
-function untypedTable(client: ReturnType<typeof createAdminClient>, table: string): any {
+function untypedTable(client: SupabaseAdminClient, table: string): any {
   return (client as any).from(table);
 }
 
-export default async function PromptDetailPage({ params }: PageProps): Promise<JSX.Element> {
+export default async function PromptDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const admin = createAdminClient();
+  const admin = await createAdminClient();
 
   const { data: promptRow, error: promptError } = await untypedTable(admin, 'prompts')
     .select(

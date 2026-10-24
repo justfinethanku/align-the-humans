@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { clearPromptCache } from '@/app/lib/prompts';
-import { createAdminClient, createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
+import { createAdminClient, createServerClient, getCurrentUser, type SupabaseAdminClient } from '@/app/lib/supabase-server';
 
 const updatePromptInputSchema = z.object({
   name: z.string().min(1),
@@ -34,14 +34,14 @@ interface PromptRow {
   updated_at: string;
 }
 
-function untypedTable(client: ReturnType<typeof createAdminClient>, table: string): any {
+function untypedTable(client: SupabaseAdminClient, table: string): any {
   return (client as any).from(table);
 }
 
 async function requireAdminUser(): Promise<
   { ok: true; userId: string } | { ok: false; error: string }
 > {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const user = await getCurrentUser(supabase);
 
   if (!user) {
@@ -93,7 +93,7 @@ export async function updatePromptAction(
   }
 
   const data = parsed.data;
-  const admin = createAdminClient();
+  const admin = await createAdminClient();
 
   const { data: current, error: loadError } = await untypedTable(admin, 'prompts')
     .select('*')

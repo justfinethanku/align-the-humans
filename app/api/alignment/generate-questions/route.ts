@@ -46,7 +46,7 @@ import type {
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const timer = new PerformanceTimer();
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   let userId: string | undefined;
   let alignmentId: string | undefined;

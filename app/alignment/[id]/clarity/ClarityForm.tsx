@@ -120,7 +120,7 @@ export function ClarityForm({
   const [upgradeDialogOpen, setUpgradeDialogOpen] = React.useState(false)
 
   // Auto-save timer
-  const autoSaveTimerRef = React.useRef<NodeJS.Timeout>()
+  const autoSaveTimerRef = React.useRef<NodeJS.Timeout>(undefined)
   const topicInputRef = React.useRef<HTMLTextAreaElement>(null)
   const partnerInputRef = React.useRef<HTMLTextAreaElement>(null)
   const outcomeInputRef = React.useRef<HTMLTextAreaElement>(null)

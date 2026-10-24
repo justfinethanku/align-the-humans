@@ -6,9 +6,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useActionState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -38,7 +38,7 @@ export default function LoginPage() {
   const redirectTo = searchParams.get('redirectTo');
   const verified = searchParams.get('verified');
   const verificationError = searchParams.get('error');
-  const [state, formAction] = useFormState(loginAction, null);
+  const [state, formAction] = useActionState(loginAction, null);
   const [showPassword, setShowPassword] = useState(false);
   const [showVerificationSuccess, setShowVerificationSuccess] = useState(verified === 'true');
   const [showVerificationError, setShowVerificationError] = useState(!!verificationError);

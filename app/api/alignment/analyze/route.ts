@@ -21,7 +21,7 @@ import { z } from 'zod';
 import { generateObject } from 'ai';
 import { resolveModel } from '@/app/lib/ai-config';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
-import { createServerClient, createAdminClient, getCurrentUser } from '@/app/lib/supabase-server';
+import { createServerClient, createAdminClient, getCurrentUser, type SupabaseServerClient } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, isParticipant } from '@/app/lib/db-helpers';
 import { AlignmentError, ValidationError, RateLimitError, createErrorResponse } from '@/app/lib/errors';
 import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
@@ -81,7 +81,6 @@ type AnalysisResult = z.infer<typeof analysisSchema>;
 const ANALYSIS_LOCK_STALE_AFTER_MS = 5 * 60 * 1000;
 const ANALYSIS_RETRY_AFTER_SECONDS = 3;
 
-type SupabaseServerClient = ReturnType<typeof createServerClient>;
 type RollbackStatus = 'active' | 'resolving';
 
 function emptyAnalysisPayload(): AnalysisResult {
@@ -249,7 +248,7 @@ async function ensureAnalysisIsResolving(
 
 export async function POST(request: NextRequest) {
   const timer = new PerformanceTimer();
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   let lockAcquired = false;
   let rollbackStatus: RollbackStatus | null = null;
   let rollbackAlignmentId: string | null = null;
@@ -549,7 +548,7 @@ export async function POST(request: NextRequest) {
     // Send analysis complete emails (fire-and-forget)
     (async () => {
       try {
-        const adminClient = createAdminClient();
+        const adminClient = await createAdminClient();
         const { data: participants } = await supabase
           .from('alignment_participants')
           .select('user_id')

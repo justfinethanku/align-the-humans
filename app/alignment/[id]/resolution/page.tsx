@@ -39,7 +39,7 @@ export default async function ResolutionPage({ params }: ResolutionPageProps) {
   const resolvedParams = await params;
   const alignmentId = resolvedParams.id;
 
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   const user = await getCurrentUser(supabase);
 
   // 1. Require authentication
