@@ -19,7 +19,6 @@ import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import {
   GenerateQuestionsRequestSchema,
   AlignmentQuestionsArraySchema,
-  AlignmentQuestionSchema,
 } from '@/app/lib/schemas';
 import {
   getFallbackTemplate,
@@ -335,7 +334,14 @@ async function generateQuestionsWithAI(
               examplePrompt: z.string().optional(),
               suggestionPrompt: z.string().optional(),
             }).optional(),
-            metadata: z.record(z.any()).optional(),
+            // Explicit keys: the AI SDK marks zod 4 records as closed objects,
+            // so a record here would tell the model metadata must be empty.
+            metadata: z.object({
+              category: z.string().optional(),
+              placeholder: z.string().optional(),
+              min: z.number().optional(),
+              max: z.number().optional(),
+            }).optional(),
           })
         ),
       }),

@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 20**
+**Total Changelogs: 21**
+
+### [2026-10-24-1741 - security-jspdf-zod-dompurify](./2026-10-24-1741-security-jspdf-zod-dompurify.md)
+**Keywords:** [SECURITY] [DEPENDENCIES] [ZOD] [JSPDF] [DOMPURIFY] [AI-SDK]
+FLEET-39 security sweep: jsPDF 4.2.1, DOMPurify 3.4.17 (isomorphic-dompurify pin kept), zod 4.6.7 with migration, ai pinned at 5.0.222; prod audit 15 → 2 (only Next 14, ATH-6).
 
 ### [2026-10-23-1622 - auth-email-webhook-signature](./2026-10-23-1622-auth-email-webhook-signature.md)
 **Keywords:** [AUTH] [EMAIL] [WEBHOOK] [SECURITY]

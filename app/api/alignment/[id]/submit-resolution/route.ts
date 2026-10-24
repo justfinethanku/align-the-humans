@@ -296,11 +296,11 @@ export async function POST(
         errorCode: 'VALIDATION_ERROR',
         errorMessage: 'Invalid request payload',
         userId: (await getCurrentUser(supabase))?.id,
-        context: { errors: error.errors },
+        context: { errors: error.issues },
       });
 
       return createErrorResponse(
-        new ValidationError('Invalid request payload', { errors: error.errors })
+        new ValidationError('Invalid request payload', { errors: error.issues })
       );
     } else {
       telemetry.logError({
