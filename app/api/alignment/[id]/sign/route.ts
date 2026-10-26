@@ -141,7 +141,7 @@ function sendCompletionEmails(params: {
 
   after(async () => {
     try {
-      const adminClient = await createAdminClient();
+      const adminClient = createAdminClient();
       const { data: participants } = await supabase
         .from('alignment_participants')
         .select('user_id')

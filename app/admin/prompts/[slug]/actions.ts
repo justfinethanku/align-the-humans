@@ -93,7 +93,7 @@ export async function updatePromptAction(
   }
 
   const data = parsed.data;
-  const admin = await createAdminClient();
+  const admin = createAdminClient();
 
   const { data: current, error: loadError } = await untypedTable(admin, 'prompts')
     .select('*')

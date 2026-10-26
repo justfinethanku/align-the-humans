@@ -152,7 +152,7 @@ export async function getPrompt(slug: string): Promise<PromptConfig> {
 
   // 2. Try database
   try {
-    const supabase = await createAdminClient();
+    const supabase = createAdminClient();
     const { data, error } = await promptsTable(supabase)
       .select('*')
       .eq('slug', slug)
@@ -184,7 +184,7 @@ export async function getPrompt(slug: string): Promise<PromptConfig> {
  */
 export async function getAllPrompts(): Promise<PromptConfig[]> {
   try {
-    const supabase = await createAdminClient();
+    const supabase = createAdminClient();
     const { data, error } = await promptsTable(supabase)
       .select('*')
       .eq('is_active', true)
