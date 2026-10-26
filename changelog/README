@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 23**
+**Total Changelogs: 24**
+
+### [2026-10-26-0326 - ath-31-after-for-emails](./2026-10-26-0326-ath-31-after-for-emails.md)
+**Keywords:** [BUG] [NEXTJS] [EMAIL] [SERVERLESS] [AFTER]
+ATH-31: completion and analysis emails in the sign and analyze routes now run under Next's after() instead of an unawaited IIFE, so serverless runtimes can't drop them.
 
 ### [2026-10-26-0230 - ath-29-clarity-redirect-rethrow](./2026-10-26-0230-ath-29-clarity-redirect-rethrow.md)
 **Keywords:** [BUG] [NEXTJS] [REDIRECT] [CLARITY] [ROUTING]

@@ -6,7 +6,7 @@
  * snapshot and completes the alignment only from the resolving state.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { createServerClient, createAdminClient, requireAuth, type SupabaseServerClient } from '@/app/lib/supabase-server';
 import {
   assertReadyForDocument,
@@ -139,7 +139,7 @@ function sendCompletionEmails(params: {
 }): void {
   const { supabase, alignmentId, alignmentTitle } = params;
 
-  (async () => {
+  after(async () => {
     try {
       const adminClient = await createAdminClient();
       const { data: participants } = await supabase
@@ -176,7 +176,7 @@ function sendCompletionEmails(params: {
     } catch (emailErr) {
       console.error('[Email] Failed to send completion emails:', emailErr);
     }
-  })();
+  });
 }
 
 function responseForSignature(params: {

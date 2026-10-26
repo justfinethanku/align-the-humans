@@ -16,7 +16,7 @@
  * - Alignment must be in 'active' or 'resolving' status
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { generateObject } from 'ai';
 import { resolveModel } from '@/app/lib/ai-config';
@@ -545,8 +545,8 @@ export async function POST(request: NextRequest) {
       userId: user.id,
     });
 
-    // Send analysis complete emails (fire-and-forget)
-    (async () => {
+    // Send analysis complete emails once the response is sent
+    after(async () => {
       try {
         const adminClient = await createAdminClient();
         const { data: participants } = await supabase
@@ -580,7 +580,7 @@ export async function POST(request: NextRequest) {
       } catch (emailErr) {
         console.error('[Email] Failed to send analysis emails:', emailErr);
       }
-    })();
+    });
 
     // 12. Return analysis results
     return NextResponse.json({
