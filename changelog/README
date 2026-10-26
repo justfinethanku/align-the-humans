@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 22**
+**Total Changelogs: 23**
+
+### [2026-10-26-0230 - ath-29-clarity-redirect-rethrow](./2026-10-26-0230-ath-29-clarity-redirect-rethrow.md)
+**Keywords:** [BUG] [NEXTJS] [REDIRECT] [CLARITY] [ROUTING]
+ATH-29: clarity page's catch swallowed the redirect() throw and sent active alignments to /dashboard; fixed with unstable_rethrow.
 
 ### [2026-10-24-1857 - nextjs-16-react-19-upgrade](./2026-10-24-1857-nextjs-16-react-19-upgrade.md)
 **Keywords:** [SECURITY] [DEPENDENCIES] [NEXTJS] [REACT] [ESLINT] [TURBOPACK]

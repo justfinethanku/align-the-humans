@@ -7,7 +7,7 @@
  * Design reference: page_design_templates/{dark_mode,light_mode}/define_alignment_clarity_page
  */
 
-import { redirect } from 'next/navigation';
+import { redirect, unstable_rethrow } from 'next/navigation';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { getAlignmentDetail } from '@/app/lib/db-helpers';
 import { ClarityForm } from './ClarityForm';
@@ -111,6 +111,8 @@ export default async function ClarityPage({ params, searchParams }: ClarityPageP
       </div>
     );
   } catch (error) {
+    // redirect() throws; let Next handle it instead of sending everyone to /dashboard.
+    unstable_rethrow(error);
     console.error('Clarity page error:', error);
     redirect('/dashboard');
   }
