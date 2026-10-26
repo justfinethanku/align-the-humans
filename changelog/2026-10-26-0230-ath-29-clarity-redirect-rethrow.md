@@ -2,7 +2,7 @@
 
 **Keywords:** [BUG] [NEXTJS] [REDIRECT] [CLARITY] [ROUTING]
 **Session:** 2026-10-26, ~02:15–02:40 (linked agent session, ~25 min)
-**Commit:** see the PR merge commit (fix commit listed under the PR)
+**Commit:** 67dbf05 (fix), merged via PR #15
 **Linear:** ATH-29 (found by the code review of ATH-6, PR #14)
 
 ## What Changed
@@ -37,7 +37,8 @@ None added or changed.
 - `npx tsc --noEmit`: exit 0.
 - `npx eslint "app/alignment/[id]/clarity/page.tsx"`: exit 0.
 - `npm run build` (placeholder env): compiled, TypeScript passed, `/alignment/[id]/clarity` built as a dynamic route.
-- Live, authenticated check (sign in, open `/alignment/<active id>/clarity`, confirm it lands on `/questions`): see the PR and the Linear comment for what was run and what was not.
+- Not tested live: the signed-in check (sign in, open `/alignment/<active id>/clarity`, confirm it lands on `/questions`) was not run. The only active alignment in prod belongs to a test account whose login is not in the vault, and an unauthenticated request cannot show the difference (`requireAuth` throws, it does not redirect).
+- Code review: `code-simplicity-reviewer` on the diff, verdict SHIP. Its one SHOULD (state the live-test status here) and one NIT (commit SHA) were applied.
 
 ## Next Steps
 
