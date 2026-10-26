@@ -108,7 +108,6 @@ export function createAdminClient() {
     );
   }
 
-  // Service role key, no session: every request, .from() included, runs as service_role.
   return createSupabaseClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -122,7 +121,7 @@ export type SupabaseServerClient = Awaited<ReturnType<typeof createServerClient>
 /**
  * Type-safe shorthand for the admin client
  */
-export type SupabaseAdminClient = Awaited<ReturnType<typeof createAdminClient>>;
+export type SupabaseAdminClient = ReturnType<typeof createAdminClient>;
 
 /**
  * Gets the current authenticated user from server-side context

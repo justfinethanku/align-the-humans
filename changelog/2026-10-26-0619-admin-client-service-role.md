@@ -26,7 +26,7 @@
 |---|---|---|
 | `partners/search` | profiles (now RLS-bound), auth users (admin, unchanged) | Same as before: profiles RLS (own row + shared-alignment partners) |
 | `analyze`, `[id]/sign` | none; `auth.admin.getUserById` only | Unchanged (auth admin already used the service key) |
-| `lib/prompts.ts` `getPrompt`/`getAllPrompts` | prompts | Same rows: `prompts_read_all` already lets every authenticated user read active prompts; all callers are authenticated routes |
+| `lib/prompts.ts` `getPrompt`/`getAllPrompts` | prompts | Same rows: `prompts_read_all` already lets every authenticated user read prompt rows, and the loaders filter to `is_active`; all callers are authenticated routes |
 | `admin/prompts/*` pages and actions | prompts, prompt_versions, admin_audit_log | Same for admins. App-level `is_admin` gate runs before the client is created (`admin/layout.tsx`, `requireAdminUser`) |
 
 ## Issues Encountered

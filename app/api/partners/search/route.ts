@@ -8,8 +8,9 @@
  *
  * Implementation notes:
  * - Profile reads use the RLS-bound client on purpose. profiles RLS shows the
- *   caller their own row and the rows of people who share an alignment with
- *   them (profiles_read_shared, 20260711120000). Running them through the
+ *   caller their own row, the rows of people who share an alignment with
+ *   them (profiles_read_shared, 20260711120000), and every row to platform
+ *   admins (profiles_admin_read, 20260701120000). Running them through the
  *   service-role client would show every user's display name to every
  *   signed-in user. Only the auth user list uses createAdminClient(), and
  *   that list is used to match emails; its results are filtered by profile RLS.
@@ -46,7 +47,7 @@ interface SearchResponse {
 const EMAIL_SEARCH_USER_SCAN_LIMIT = 1000;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  // Auth check goes through the RLS-bound client (reads the session cookie).
+  // Auth and profile reads use the RLS-bound client (reads the session cookie).
   const supabase = await createServerClient();
 
   try {
