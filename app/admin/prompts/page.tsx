@@ -39,7 +39,7 @@ function formatUpdatedAt(iso: string): string {
 }
 
 export default async function PromptsPage() {
-  const supabase = await createAdminClient();
+  const supabase = createAdminClient();
   const { data, error } = await promptsTable(supabase)
     .select('slug, name, model, temperature, max_tokens, is_active, updated_at')
     .order('slug', { ascending: true });

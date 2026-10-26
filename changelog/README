@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 24**
+**Total Changelogs: 25**
+
+### [2026-10-26-0619 - admin-client-service-role](./2026-10-26-0619-admin-client-service-role.md)
+**Keywords:** [SECURITY] [SUPABASE] [RLS] [ADMIN] [ATH-30]
+ATH-30: createAdminClient is sync and cookie-free, so its queries run as the service role instead of the signed-in user. Partner search profile reads stay RLS-bound to keep current visibility.
 
 ### [2026-10-26-0326 - ath-31-after-for-emails](./2026-10-26-0326-ath-31-after-for-emails.md)
 **Keywords:** [BUG] [NEXTJS] [EMAIL] [SERVERLESS] [AFTER]

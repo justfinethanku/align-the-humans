@@ -44,7 +44,7 @@ Copy `.env.example` to `.env.local`. Required:
 ### Supabase Client Pattern
 
 Two client factories, never use raw `@supabase/ssr` directly:
-- **Server** (`app/lib/supabase-server.ts`): `await createServerClient()` for Server Components, Route Handlers, Server Actions. Also `await createAdminClient()` to bypass RLS. Both are async because `cookies()` is async. Auth helpers: `getCurrentUser()`, `requireAuth()`.
+- **Server** (`app/lib/supabase-server.ts`): `await createServerClient()` for Server Components, Route Handlers, Server Actions. `createAdminClient()` (sync, no cookies) bypasses RLS: use it only for admin work, never for reads that should follow the caller's visibility. Auth helpers: `getCurrentUser()`, `requireAuth()`.
 - **Browser** (`app/lib/supabase-browser.ts`): `createClient()` for Client Components and realtime subscriptions.
 
 Both are typed via `Database` type from `app/lib/database.types.ts` (generated from Supabase schema).

@@ -25,6 +25,7 @@
  */
 
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import type { Database } from './database.types';
 import { AuthError } from './errors';
@@ -83,6 +84,10 @@ export async function createServerClient() {
  * Creates a Supabase client with service role key for admin operations
  * ⚠️ DANGER: This client bypasses Row-Level Security (RLS)
  *
+ * Built without cookies on purpose. If it read the request's session cookie,
+ * supabase-js would send the signed-in user's token on .from() queries, and
+ * those queries would run under RLS as that user instead of as the service role.
+ *
  * Only use for:
  * - Server-side admin operations
  * - Background jobs
@@ -92,7 +97,7 @@ export async function createServerClient() {
  *
  * @returns Supabase admin client with full privileges
  */
-export async function createAdminClient() {
+export function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -103,29 +108,10 @@ export async function createAdminClient() {
     );
   }
 
-  const cookieStore = await cookies();
-
-  // Create admin client with service role key
-  return createSupabaseServerClient<Database>(
-    supabaseUrl,
-    supabaseServiceRoleKey,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Ignore cookie setting errors in Server Components
-          }
-        },
-      },
-    }
-  );
+  // Service role key, no session: every request, .from() included, runs as service_role.
+  return createSupabaseClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 /**

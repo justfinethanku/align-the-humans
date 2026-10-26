@@ -43,7 +43,7 @@ function untypedTable(client: SupabaseAdminClient, table: string): any {
 
 export default async function PromptDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const admin = await createAdminClient();
+  const admin = createAdminClient();
 
   const { data: promptRow, error: promptError } = await untypedTable(admin, 'prompts')
     .select(

@@ -7,12 +7,12 @@
  * Returns matching profiles from the database.
  *
  * Implementation notes:
- * - profiles RLS is own-row only (see supabase/migrations/*_init_human_alignment.sql
- *   and 20260701120000_fix_alignments_participant_rls.sql, which only adds
- *   admin-read, not cross-user read), so a caller can never see another
- *   user's profile row through the RLS-bound client. Both the display-name
- *   and email lookups below therefore run through createAdminClient()
- *   (service role, server-only, bypasses RLS).
+ * - Profile reads use the RLS-bound client on purpose. profiles RLS shows the
+ *   caller their own row and the rows of people who share an alignment with
+ *   them (profiles_read_shared, 20260711120000). Running them through the
+ *   service-role client would show every user's display name to every
+ *   signed-in user. Only the auth user list uses createAdminClient(), and
+ *   that list is used to match emails; its results are filtered by profile RLS.
  * - Email is not stored on public.profiles, only on auth.users, which is not
  *   directly queryable via PostgREST. Supabase's auth admin API
  *   (supabase.auth.admin.listUsers) has no server-side email filter in the
@@ -71,13 +71,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const searchTerm = query.trim().toLowerCase();
 
-    // All data access below uses the admin client (service role) because
-    // profiles RLS is own-row only -- the RLS-bound client would only ever
-    // be able to see the caller's own profile.
-    const admin = await createAdminClient();
-
-    // 3. Search profiles by display name
-    const { data: nameMatches, error: nameError } = await admin
+    // 3. Search profiles by display name (RLS-bound: only profiles the caller can see)
+    const { data: nameMatches, error: nameError } = await supabase
       .from('profiles')
       .select('id, display_name')
       .neq('id', user.id) // Exclude current user
@@ -92,6 +87,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // 4. Search by email via the Supabase Auth admin API. There is no
     // server-side email filter available, so page through users (capped)
     // and filter in memory.
+    const admin = createAdminClient();
     const emailMatchedUserIds = new Set<string>();
     let page = 1;
     const perPage = 200;
@@ -126,7 +122,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // their email addresses in the response).
     let emailMatches: SearchResult[] = [];
     if (emailMatchedUserIds.size > 0) {
-      const { data: emailProfiles, error: emailProfilesError } = await admin
+      const { data: emailProfiles, error: emailProfilesError } = await supabase
         .from('profiles')
         .select('id, display_name')
         .in('id', Array.from(emailMatchedUserIds));
