@@ -2,7 +2,7 @@
 
 **Keywords:** [AI] [OPENROUTER] [RETRY] [FALLBACK] [ATH-38]
 **Session:** Oct 27, 2026, evening
-**Commit:** pending
+**Commit:** 1a640ae2ec18c1d765f6a4c84262ccb6174ff98c
 
 ### What Changed
 - Empty or schema-invalid model output is retried once on the prompt's model, then once on the other model named in `AI_MODELS`.
