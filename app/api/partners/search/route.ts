@@ -3,33 +3,27 @@
  *
  * GET /api/partners/search?q={query}
  *
- * Searches for users by display name or email to add as alignment partners.
- * Returns matching profiles from the database.
+ * Answers only an exact, case-insensitive email address. A fragment such as
+ * "jo@" and any display-name query return no one. There is no name scan.
  *
- * Implementation notes:
- * - Profile reads use the RLS-bound client on purpose. profiles RLS shows the
- *   caller their own row, the rows of people who share an alignment with
- *   them (profiles_read_shared, 20260711120000), and every row to platform
- *   admins (profiles_admin_read, 20260701120000). Running them through the
- *   service-role client would show every user's display name to every
- *   signed-in user. Only the auth user list uses createAdminClient(), and
- *   that list is used to match emails; its results are filtered by profile RLS.
- * - Email is not stored on public.profiles, only on auth.users, which is not
- *   directly queryable via PostgREST. Supabase's auth admin API
- *   (supabase.auth.admin.listUsers) has no server-side email filter in the
- *   installed SDK version, so we page through users and filter in memory.
- *   Fine for this app's current small user base; if the user count grows
- *   significantly, prefer denormalizing a searchable email column onto
- *   profiles (kept in sync via a trigger) instead of scanning auth.users.
- * - The response NEVER includes email or any other auth.users field for
- *   anyone but the requester's own results are excluded entirely (self is
- *   never returned) -- only { id, display_name } is exposed, to avoid
- *   leaking other users' PII to arbitrary authenticated callers.
+ * The auth admin API in the installed supabase-js has no exact-email filter,
+ * so an exact address still pages `listUsers` (capped) and compares in memory.
+ * Profile rows are read with the session client, under RLS, so a hit is
+ * returned only when the caller can already see that profile (someone they
+ * share an alignment with, or a platform admin). This route does not widen
+ * that visibility. The response is `{ id, display_name }` and never includes
+ * an email. The caller is never returned.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, createAdminClient, requireAuth } from '@/app/lib/supabase-server';
-import { createErrorResponse } from '@/app/lib/errors';
+import { createServerClient, createAdminClient, requireAuth, type SupabaseAdminClient } from '@/app/lib/supabase-server';
+import { createErrorResponse, RateLimitError } from '@/app/lib/errors';
+import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
+import {
+  PARTNER_SEARCH_RATE_LIMIT,
+  findExactEmailUserId,
+  normalizeExactEmail,
+} from '@/app/lib/partner-search';
 
 interface SearchResult {
   id: string;
@@ -41,132 +35,109 @@ interface SearchResponse {
   query: string;
 }
 
-// Upper bound on how many auth users we page through when matching by email.
-// The installed supabase-js admin API has no server-side email filter, so we
-// have to list-and-filter in memory; this caps the cost of that scan.
+// Upper bound on how many auth users we page through for one exact email.
+// listUsers has no server-side email filter in the installed SDK.
 const EMAIL_SEARCH_USER_SCAN_LIMIT = 1000;
+const EMAIL_SEARCH_PAGE_SIZE = 200;
+
+async function findUserIdByExactEmail(
+  admin: SupabaseAdminClient,
+  normalizedEmail: string,
+  excludeUserId: string
+): Promise<string | null> {
+  let page = 1;
+
+  while ((page - 1) * EMAIL_SEARCH_PAGE_SIZE < EMAIL_SEARCH_USER_SCAN_LIMIT) {
+    const { data: userPage, error: listUsersError } = await admin.auth.admin.listUsers({
+      page,
+      perPage: EMAIL_SEARCH_PAGE_SIZE,
+    });
+
+    if (listUsersError) {
+      console.error('Auth admin listUsers error:', listUsersError);
+      return null;
+    }
+
+    const users = userPage?.users ?? [];
+    const match = findExactEmailUserId(users, normalizedEmail, excludeUserId);
+    if (match) return match;
+    if (users.length < EMAIL_SEARCH_PAGE_SIZE) return null;
+    page += 1;
+  }
+
+  return null;
+}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  // Auth and profile reads use the RLS-bound client (reads the session cookie).
   const supabase = await createServerClient();
 
   try {
-    // 1. Authenticate user
     const user = await requireAuth(supabase);
 
-    // 2. Get search query from URL params
-    const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get('q');
+    const query = request.nextUrl.searchParams.get('q') ?? '';
+    const normalizedEmail = normalizeExactEmail(query);
+    const empty: SearchResponse = { results: [], query: query.trim() };
 
-    if (!query || query.trim().length < 2) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'INVALID_QUERY',
-            message: 'Search query must be at least 2 characters',
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    const searchTerm = query.trim().toLowerCase();
-
-    // 3. Search profiles by display name (RLS-bound: only profiles the caller can see)
-    const { data: nameMatches, error: nameError } = await supabase
-      .from('profiles')
-      .select('id, display_name')
-      .neq('id', user.id) // Exclude current user
-      .ilike('display_name', `%${searchTerm}%`)
-      .limit(10);
-
-    if (nameError) {
-      console.error('Profile display-name search error:', nameError);
-      throw new Error('Failed to search profiles');
-    }
-
-    // 4. Search by email via the Supabase Auth admin API. There is no
-    // server-side email filter available, so page through users (capped)
-    // and filter in memory.
-    const admin = createAdminClient();
-    const emailMatchedUserIds = new Set<string>();
-    let page = 1;
-    const perPage = 200;
-
-    while (emailMatchedUserIds.size < 10 && (page - 1) * perPage < EMAIL_SEARCH_USER_SCAN_LIMIT) {
-      const { data: userPage, error: listUsersError } = await admin.auth.admin.listUsers({
-        page,
-        perPage,
+    // Fragments and names match nobody and do not touch auth.users.
+    // Only an exact address consumes the rate limit and runs the lookup.
+    if (!normalizedEmail) {
+      return NextResponse.json(empty, {
+        status: 200,
+        headers: { 'Cache-Control': 'private, no-store' },
       });
-
-      if (listUsersError) {
-        console.error('Auth admin listUsers error:', listUsersError);
-        break; // Non-fatal -- fall back to display-name-only results
-      }
-
-      const users = userPage?.users ?? [];
-      for (const authUser of users) {
-        if (
-          authUser.id !== user.id &&
-          typeof authUser.email === 'string' &&
-          authUser.email.toLowerCase().includes(searchTerm)
-        ) {
-          emailMatchedUserIds.add(authUser.id);
-        }
-      }
-
-      if (users.length < perPage) break; // No more pages
-      page += 1;
     }
 
-    // 5. Resolve display names for the email-matched users (never expose
-    // their email addresses in the response).
-    let emailMatches: SearchResult[] = [];
-    if (emailMatchedUserIds.size > 0) {
-      const { data: emailProfiles, error: emailProfilesError } = await supabase
+    const rateLimitResult = await checkRateLimit(
+      rateLimitKeyForUser(user.id, 'partners.search'),
+      PARTNER_SEARCH_RATE_LIMIT
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError('Too many partner searches. Please try again shortly.', {
+        retryAfter: rateLimitResult.retryAfter,
+      });
+    }
+
+    const admin = createAdminClient();
+    const matchedUserId = await findUserIdByExactEmail(admin, normalizedEmail, user.id);
+
+    let results: SearchResult[] = [];
+    if (matchedUserId) {
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id, display_name')
-        .in('id', Array.from(emailMatchedUserIds));
+        .eq('id', matchedUserId)
+        .maybeSingle();
 
-      if (emailProfilesError) {
-        console.error('Profile lookup for email matches error:', emailProfilesError);
-      } else {
-        emailMatches = (emailProfiles || []).map((profile) => ({
-          id: profile.id,
-          display_name: profile.display_name,
-        }));
+      if (profileError) {
+        console.error('Profile lookup for email match error:', profileError);
+      } else if (profile) {
+        results = [{ id: profile.id, display_name: profile.display_name }];
       }
     }
 
-    // 6. Merge display-name and email matches, de-duplicating by id.
-    const resultsById = new Map<string, SearchResult>();
-    for (const profile of nameMatches || []) {
-      resultsById.set(profile.id, { id: profile.id, display_name: profile.display_name });
-    }
-    for (const profile of emailMatches) {
-      resultsById.set(profile.id, profile);
-    }
-
-    const results = Array.from(resultsById.values()).slice(0, 10);
-
-    // 7. Return results
     const response: SearchResponse = {
       results,
       query: query.trim(),
     };
 
-    return NextResponse.json(response, { status: 200 });
-
+    return NextResponse.json(response, {
+      status: 200,
+      headers: { 'Cache-Control': 'private, no-store' },
+    });
   } catch (error) {
     console.error('Partner search error:', error);
-    return createErrorResponse(error) as any;
+    const response = createErrorResponse(error);
+    if (error instanceof RateLimitError && typeof error.details?.retryAfter === 'number') {
+      response.headers.set('Retry-After', String(error.details.retryAfter));
+    }
+    return response as NextResponse;
   }
 }
 
 /**
  * OPTIONS handler for CORS
  */
-export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
+export async function OPTIONS(): Promise<NextResponse> {
   return new NextResponse(null, {
     status: 204,
     headers: {
