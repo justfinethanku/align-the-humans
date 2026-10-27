@@ -194,8 +194,8 @@ None - testing tools only
 
 3. **Create Test Users:**
    - Option A: Create via signup UI manually
-     - testuser1@example.com / TestPassword123!
-     - testuser2@example.com / TestPassword123!
+     - testuser1@example.com / [redacted]
+     - testuser2@example.com / [redacted]
    - Option B: Use Supabase Auth Admin API to create test users programmatically
    - Option C: Create seed.sql with test users
 

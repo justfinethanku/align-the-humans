@@ -254,8 +254,8 @@ Due to critical blocking bugs, the following test scenarios could not be complet
 13. `13-back-to-alignment-new.png` - Unexpected redirect to signup
 
 ### Test Users Created:
-- **User A:** testusera@example.com / TestPassword123!
-- **User B:** testuserb@example.com / TestPassword123!
+- **User A:** testusera@example.com / [redacted]
+- **User B:** testuserb@example.com / [redacted]
 - Both users exist in Supabase Auth and can be used for future testing
 
 ### Console Errors Logged:

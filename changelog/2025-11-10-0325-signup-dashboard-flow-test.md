@@ -34,7 +34,7 @@ Completed comprehensive end-to-end testing of the signup to dashboard user flow,
 **Test:** Complete signup with valid credentials
 - **Test User:** testsignup1762763034535@example.com
 - **Username:** testsignup1762763034535
-- **Password:** TestPass123! (strong password with upper, lower, number, special char)
+- **Password:** [redacted] (it met the strength rules: upper, lower, number, and a special character)
 - **Result:** Successfully created account and redirected to dashboard
 
 **Screenshots:**

@@ -15,7 +15,7 @@ Attempted comprehensive testing of custom alignment flow but encountered critica
 1. Started Next.js development server on port 3000
 2. Created test user programmatically using Supabase service role key:
    - Email: `testcustom@example.com`
-   - Password: `TestPassword123!`
+   - Password: [redacted]
    - User ID: `58c9b850-0fc4-4066-a2e7-774addeb0318`
    - Profile created successfully in `profiles` table
 
@@ -60,7 +60,7 @@ Testing was blocked by authentication session management bug that prevents authe
    // Used Supabase service role key to create test user
    await supabase.auth.admin.createUser({
      email: 'testcustom@example.com',
-     password: 'TestPassword123!',
+     password: '[redacted]',
      email_confirm: true
    });
 
@@ -332,7 +332,7 @@ None - testing only, no code changes made.
 
 ```
 Email: testcustom@example.com
-Password: TestPassword123!
+Password: [redacted]
 User ID: 58c9b850-0fc4-4066-a2e7-774addeb0318
 Display Name: Test Custom User
 ```

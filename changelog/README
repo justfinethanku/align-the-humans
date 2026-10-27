@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 26**
+**Total Changelogs: 27**
+
+### [2026-10-27-0428 - ath-13-testing-runbook](./2026-10-27-0428-ath-13-testing-runbook.md)
+**Keywords:** [DOCS] [TESTING] [SECURITY] [ATH-13]
+Removed the stale E2E plan and its sample password, and rewrote the testing runbook around the current invite-to-PDF journey, `npm test`, and an accurate post-redesign status.
 
 ### [2026-10-27-0425 - env-var-docs-ath-12](./2026-10-27-0425-env-var-docs-ath-12.md)
 **Keywords:** [DOCS] [ENV] [OPENROUTER] [ATH-12]
