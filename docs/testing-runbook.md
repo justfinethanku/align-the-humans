@@ -1,8 +1,119 @@
 # Human Alignment Testing Runbook
 
+This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 share-link flow, assumed a local Supabase instance, and stored sample account passwords. It is removed. Do not record passwords, invite tokens, or other credentials in this file. Take labeled test accounts from the operator handoff.
+
+## Status
+
+The long-document PDF check and the signed-in two-partner journey have not been re-run since the September 27, 2026 redesign. Those checks are tracked in [ATH-14](https://linear.app/contentionmedia/issue/ATH-14) and [ATH-32](https://linear.app/contentionmedia/issue/ATH-32).
+
+The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. This repo has no `supabase/config.toml`, so there is no checked-in local Supabase project either. A recipe that says "isolated project" means a project an operator names. Do not apply migrations, mint invite rows, or force failures against production.
+
+## Automated checks
+
+`npm test` runs the seven `node --test` cases for the Supabase Auth Send Email hook in `app/api/auth/email/hook.test.ts` (pull request #12). The script typechecks `hook.ts` and `hook.test.ts`, then runs the compiled file. The cases are:
+
+1. accepts a current Standard Webhooks signature
+2. rejects a request missing the Standard Webhooks headers
+3. rejects a wrong signature
+4. rejects a stale signature
+5. rejects a timestamp newer than the 5 minute tolerance
+6. fails closed in production when the hook secret is not configured
+7. plans each auth email type the route handles
+
+These tests do not cover invite, join, answers, analysis, signatures, or PDF export. `npm run lint`, `npm run type-check`, and `npm run build` are the other repository checks. None of them is a signed-in journey.
+
+## Current journey
+
+Status: not re-run since the September 27, 2026 redesign ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14), [ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The steps below describe the routes as the code implements them today. They are the procedure for the next signed-in pass. They are not a record of a pass.
+
+Role/account: two authenticated users. On production (`https://alignthehumans.com`), use the labeled comped creator and partner accounts from the operator handoff. A creator with no paid credit, no `pro` or `team` plan, and no future `comped_until` can activate one alignment. The second activation returns `402` with `error.code` `FREE_LIMIT_REACHED` before any AI request. Never record passwords here. Localhost is not production evidence.
+
+Opening `/alignment/[id]` routes by status:
+
+- `draft` → `/alignment/[id]/clarity`
+- `active`, and this user has not submitted → `/alignment/[id]/questions`
+- `active`, and this user has submitted → `/alignment/[id]/waiting`
+- `analyzing` → `/alignment/[id]/analysis`
+- `resolving` → `/alignment/[id]/resolution` (that page sends a conflict-free round to the document)
+- `complete` → `/alignment/[id]/document`
+
+### 1. Create
+
+1. Sign in and open `/alignment/new`.
+2. Pick a template card (Partnership Terms, Bringing Someone In, Equity Split, Business Operations, Marketing Strategy, Roommate Agreement) or Custom.
+3. Confirm one `alignments` row and its owner `alignment_participants` row are created together by `create_alignment_with_owner`, and the browser lands on `/alignment/[id]/clarity` while status is still `draft`. Creating the draft does not claim the free alignment.
+4. On Clarity, fill the topic, who the creator is aligning with, and the desired result, then press Continue. That posts `/api/alignment/generate-questions`. For a draft, `claim_alignment_activation` runs before any model call. When the question template is stored, the alignment becomes `active` and the browser opens `/alignment/[id]/questions`. Questions come from the model, or from the curated fallback if generation fails validation.
+5. A second draft's Continue, with no paid credit, `pro`/`team` plan, or future `comped_until`, opens the upgrade dialog titled "Your free creator alignment is in use". The button is "Request a pilot spot". Success toast: "Pilot spot requested. We’ll be in touch before anything is charged." The click inserts `upgrade_interest`. Billing is not live. The dashboard shows "1 of 1 free alignments used" only after `free_alignment_claimed_at` is set.
+6. Typing or selecting a partner on Clarity supplies question context only. It does not insert a partner `alignment_participants` row.
+
+### 2. Invite
+
+1. On Clarity, before a partner participant exists, the creator sees "Waiting for Partner" and the share-link card. The same card is on `/alignment/[id]/waiting` while the creator is waiting and no partner has joined.
+2. The link is not created on page load. Press Generate Link. `POST /api/alignment/[id]/generate-invite` returns `201` with `invite_url`. The visible toast is "Share link created!".
+3. The URL is `{NEXT_PUBLIC_APP_URL}/join/{token}` (the route falls back to `http://localhost:3000` only when that env var is unset). The invite expires in 30 days, `max_uses` is 1, and the UI shows "Expires in N days". Copy shows "Link copied to clipboard!". Devices with `navigator.share` also show Share.
+4. The database stores the SHA-256 hash, not the raw token. `GET /api/alignment/[id]/invite` rebuilds the URL from the stored ciphertext for the creator only.
+5. Regenerate asks "Regenerate Share Link?" and warns that the old link stops working immediately. Confirming posts `/api/alignment/[id]/regenerate-invite` and toasts "New share link generated!".
+6. The share-link button does not send email. Email is sent only when that POST body includes `partnerEmail`.
+
+### 3. Join
+
+1. Open `/join/[token]` while logged out. A valid invite shows "You're Invited to Join an Alignment", the alignment title, "Shared by {creator}", and the expiration line.
+2. Sign in to Join goes to `/login?redirectTo=/join/{token}`. Create Account goes to `/signup?redirectTo=/join/{token}`. Both login and signup keep a safe `redirectTo` and return to the invite.
+3. Join Alignment posts `/api/alignment/join` with `{ token }`. The route hashes the token and calls `redeem_alignment_invite`. Success returns `alignment_id` and the message "Successfully joined alignment", then the browser opens `/alignment/[id]`, which follows the status router. A repeat redemption returns "Already joined alignment".
+4. A logged-in person who is already a participant is redirected by the join page to `/alignment/[id]` before the button is shown (`get_alignment_invite_preview` status `already_participant`).
+5. Bad links render a card and "Go to Homepage", not a join button:
+   - malformed token: "Invalid Invitation Link"
+   - unknown token: "Invitation Not Found"
+   - revoked: "Invitation Revoked"
+   - expired: "Invitation Expired"
+   - use limit reached: "Invitation Limit Reached"
+   - alignment already complete: "Alignment Completed"
+6. Join attempts are limited to 10 per hour per IP. The next attempt is `429` with "Too many join attempts. Please try again in an hour."
+
+### 4. Answer
+
+1. Each person opens `/alignment/[id]/questions` and answers independently. Submit Responses writes `submitted_at` and sends that person to `/alignment/[id]/waiting`.
+2. A submitted questionnaire does not reopen. A direct visit to `/questions` goes to waiting, or to analysis, resolution, or the document if the alignment has already moved on.
+3. The waiting page shows whether the partner has joined and whether they have submitted. Once two submitted responses exist for the round, it opens `/alignment/[id]/analysis` (on load, when alignment status changes, or on a poll about every 10 seconds).
+
+### 5. Analyze
+
+1. If the current round has no saved analysis and at least two submitted responses, `/analysis` shows the progress card and posts `/api/alignment/analyze` with `{ alignmentId, round }`.
+2. That route moves `active` or `resolving` to `analyzing`, then to `resolving` when the analysis is stored. A `200` with an analysis refreshes the page into the report. If the progress card is still showing "Analysis complete", View Report reloads it.
+3. The report's action is Resolve Conflicts (`/resolution`) when `conflicts` is non-empty, and Generate Final Document (`/document`) when it is empty.
+4. Fewer than two submitted responses on `/analysis` redirects back to `/questions`.
+
+### 6. Resolve, then analyze again
+
+1. `/resolution` requires status `resolving`, a current-round analysis, and a partner participant. Each conflict can be an AI suggestion, the partner's position, the user's own position, or a custom solution.
+2. Submit posts `/api/alignment/[id]/submit-resolution`. Resolution rows are the next response round (`current_round + 1`) and carry `metadata.resolution_submission`.
+3. When only one person has submitted, the page stays on `/resolution`. When both have submitted and the round cap has not been hit, both go back to `/analysis` for the next round.
+4. `MAX_RESOLUTION_ROUNDS` is 5. At the cap, the resolution page refreshes in place and does not start another analysis.
+5. A later analysis with zero conflicts is the path into the document. `/resolution` itself redirects to `/document` when the current analysis has no conflicts.
+
+### 7. Sign
+
+1. `/alignment/[id]/document` loads only when the viewer is a participant, status is `resolving` or `complete`, the current round has an analysis, and that analysis has zero conflicts. Anything else redirects: remaining conflicts to `/resolution`, missing analysis to `/analysis`, `draft` to `/clarity`, `active` to `/waiting`, `analyzing` to `/analysis`.
+2. The page shows a preview until the first signature freezes the snapshot. Both people sign that same 64-character hash. The checkbox reads "Confirm your digital signature as {name}. I have reviewed the agreement document and consent to sign these terms." Sign posts `/api/alignment/[id]/sign` with `{ round, reviewedSnapshotHash }`.
+3. The first signature keeps status `resolving` (`allSigned` false). The second signature, on the identical hash, completes the alignment. A hash that does not match the snapshot on the server asks the signer to review the refreshed document.
+4. Agreement dates and signature timestamps are formatted in UTC. Signature lines use `formatAgreementTimestamp` and end in "UTC". The summary date is the same string frozen into the document body.
+
+### 8. PDF
+
+1. Download Agreement is rendered only after both participants have signed (`allSigned`). It is not a server PDF route.
+2. The button rasterizes `#alignment-document-export` in the browser with `html2pdf.js` 0.14.0 and jsPDF 4.2.1 (letter, portrait, 0.5 inch margin, JPEG via html2canvas). The filename is the alignment title slug plus `.pdf`.
+3. Page breaks use `before: ['.document-disclaimer']` and avoid headings, table rows, `.term`, `.signature-participant-row`, `.document-disclaimer`, `.document-footer`, and `.document-meta`. The file is an image, so text is not selectable.
+4. Open every page. Terms must not be sliced mid-line. The agreement date must match between the summary and the body. Both signature rows must be intact and show explicit UTC timestamps. This is the long-document check in ATH-14. A signed-in PDF export and one live AI generation (`generate-questions` or `analyze`) are the checks in ATH-32. Neither has been re-run on the current production build.
+
+What to record when that pass happens: alignment id, invite HTTP status (not the token), analysis rounds with score and conflict count, the snapshot hash both people signed, whether status stayed `resolving` after the first signature and became `complete` after the second, and the PDF page count plus any clipped line. Do not put credentials or the raw invite token in the notes.
+
+## Historical evidence (July 11–12, 2026)
+
+The sections below keep the July 11–12 lessons. Read them as what that run observed. The status lines say what is and is not still current.
+
 ## Deployed production journey and capture gate
 
-Status: needs repair (all production journey gates pass except longer-document PDF pagination)
+Status: historical July 12, 2026 production run. The long-document PDF check and the signed-in journey have not been re-run since the September 27, 2026 redesign (tracked in [ATH-14](https://linear.app/contentionmedia/issue/ATH-14) and [ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The July "needs repair" pagination note is not the current status.
 
 Purpose: Verify the deployed `alignthehumans.com` build through invite generation, multi-round analysis, report transition, agreement signatures, and PDF export before creating a separate clean demo-capture alignment.
 
@@ -58,7 +169,7 @@ Known selector/flow lessons:
 
 ## Recovery checkpoint: round 3 through signed agreement
 
-Status: tested locally against the production database on 2026-07-11; deployed-production verification remains pending
+Status: tested locally against the production database on 2026-07-11. Deployed production was exercised on July 12, 2026, in the section above. The long-document PDF check and the signed-in journey have not been re-run since the September 27, 2026 redesign (tracked in [ATH-14](https://linear.app/contentionmedia/issue/ATH-14) and [ATH-32](https://linear.app/contentionmedia/issue/ATH-32)).
 
 Purpose: Complete an existing two-person alignment from the round-3 analysis checkpoint through document generation, both signatures, completed status, and PDF export. This exercises the current branch through localhost against the production database; it does not prove that the deployed production application has the same fixes or configuration.
 
@@ -115,15 +226,15 @@ Known selector/flow lessons:
 
 ## Monetization activation gate and invite-only enrollment
 
-Status: starter (static verification passed; database integration test pending migration review/application)
+Status: historical July 11, 2026 recipe. Static checks had passed when this section was written; the database integration test was still pending. No staging project is verified. These steps describe the July three-tier gate. The live gate is the partnership pilot in "Current journey" above.
 
 Purpose: Verify `20260711140000_account_entitlements.sql`, the one-free-alignment activation gate, upgrade-interest capture, and invite-only partner enrollment.
 
-Role/account: Two disposable authenticated users in a local or staging Supabase project. Use the first as creator and the second as invitee.
+Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Use the first as creator and the second as invitee. Do not run this against production.
 
 Safe actions:
 
-- Create labeled draft alignments and early-access intent rows in local/staging.
+- Create labeled draft alignments and early-access intent rows on the isolated project.
 - Set test-only entitlement plans, credits, and comp dates with a service-role/admin session.
 - Retry question generation on the same labeled draft to verify idempotency.
 
@@ -135,7 +246,7 @@ Unsafe actions:
 
 Verification steps:
 
-1. Apply migrations through `20260711140000_account_entitlements.sql` in local/staging and confirm every auth user has one `account_entitlements` row.
+1. Apply migrations through `20260711140000_account_entitlements.sql` on the isolated project and confirm every auth user has one `account_entitlements` row.
 2. Create a new auth user and confirm `handle_new_user()` creates both `profiles` and `account_entitlements` rows.
 3. As the creator, create several drafts from `/alignment/new`. Confirm no entitlement is claimed and every dashboard Start button still opens a new draft.
 4. Generate questions for one draft. Confirm it becomes `active`, `free_alignment_claimed_at` and `free_alignment_id` are set, and one `alignment_activation_claims` row has `claim_source='free'`.
@@ -149,7 +260,7 @@ Verification steps:
 
 Cleanup:
 
-- Delete labeled test alignments and `upgrade_interest` rows in local/staging.
+- Delete labeled test alignments and `upgrade_interest` rows on the isolated project.
 - Delete disposable users or restore test entitlement values with service-role access.
 - Remove local AI/failure stubs.
 
@@ -166,16 +277,16 @@ Known selector/flow lessons:
 
 ## Journey integrity: submit, analyze, resolve, sign, and create
 
-Status: starter (static verification passed; database integration test pending migration review/application)
+Status: historical July 11, 2026 recipe. Static checks had passed when this section was written; the database integration test was still pending. No staging project is verified. Follow "Current journey" for the product path. This section is the July integrity recipe.
 
 Purpose: Verify the journey integrity fixes introduced by `20260711130000_atomic_sign_completion.sql`.
 
-Role/account: Two disposable authenticated users in a local or staging Supabase project. Do not run destructive setup against production.
+Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Do not run destructive setup against production.
 
 Safe actions:
 
 - Create a labeled test alignment and disposable responses/signatures.
-- Force API/database failures only in a local or isolated staging project.
+- Force API/database failures only on the isolated project.
 - Delete the labeled test alignment after verification; cascading foreign keys remove its journey rows.
 
 Unsafe actions:
@@ -185,22 +296,22 @@ Unsafe actions:
 
 Verification steps:
 
-1. Apply migrations through `20260711130000_atomic_sign_completion.sql` to local/staging and regenerate database types if the schema differs.
+1. Apply migrations through `20260711130000_atomic_sign_completion.sql` on the isolated project and regenerate database types if the schema differs.
 2. Run `npm run type-check && npm run lint && npm run build`.
 3. Create an alignment from `/alignment/new`; confirm one `alignments` row and its owner `alignment_participants` row are created together.
 4. Add the second user, submit the owner questionnaire, then open `/alignment/<id>/questions` directly. Confirm it redirects to waiting or the current later phase and does not reopen the form.
 5. Attempt to update `answers` on the submitted questionnaire row. Confirm PostgreSQL rejects it with `Submitted questionnaire answers cannot be changed`.
 6. Submit resolution choices through the normal route, including a retry on an already-submitted resolution row. Confirm the dedicated next-round response can still be updated and submitted.
 7. Save an analysis while the alignment is `analyzing`, then call `POST /api/alignment/analyze` again. Confirm cached analysis repairs the status to `resolving` before returning `200`.
-8. Force both `analyzing -> resolving` update attempts to fail in local/staging. Confirm analyze returns `503` with `ANALYSIS_STATUS_TRANSITION_ERROR`, not a successful analysis response.
+8. Force both `analyzing -> resolving` update attempts to fail on the isolated project. Confirm analyze returns `503` with `ANALYSIS_STATUS_TRANSITION_ERROR`, not a successful analysis response.
 9. Force either template insert or alignment template attachment to fail. Confirm clarity shows a toast, remains on the clarity page, and the API returns a structured 500 error.
 10. Sign as user one and confirm `allSigned=false` and status remains `resolving`. Sign the same snapshot as user two and confirm exactly one request reports `didComplete=true`, with status `complete`.
-11. Create mismatched snapshot signatures in local/staging and call `complete_alignment_if_all_signed`. Confirm status remains `resolving`.
+11. Create mismatched snapshot signatures on the isolated project and call `complete_alignment_if_all_signed`. Confirm status remains `resolving`.
 12. Call the completion RPC as a non-participant and confirm access is denied.
 
 Cleanup:
 
-- Delete the labeled test alignment from local/staging.
+- Delete the labeled test alignment from the isolated project.
 - Remove any temporary failure policies, triggers, or mocks used for steps 8–9.
 
 Checkpoint seed data:

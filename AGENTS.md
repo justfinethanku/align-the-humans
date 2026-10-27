@@ -19,6 +19,7 @@ npm run dev          # Start dev server (localhost:3000)
 npm run build        # Production build
 npm run lint         # ESLint CLI (flat config in eslint.config.mjs)
 npm run type-check   # TypeScript check (tsc --noEmit)
+npm test             # Seven node --test cases for the Auth email hook
 npm start            # Run production build
 ```
 

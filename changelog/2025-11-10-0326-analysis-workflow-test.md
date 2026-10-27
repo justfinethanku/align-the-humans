@@ -58,7 +58,7 @@ Testing requirement per plan_a.md lines 1453-1460:
    ```javascript
    await supabase.auth.admin.createUser({
      email: 'alice@testanalysis.com',
-     password: 'TestPass123!',
+     password: '[redacted]',
      email_confirm: true
    });
    ```
@@ -222,8 +222,8 @@ None - testing only
 
 | Email | Password | ID | Role |
 |-------|----------|-----|------|
-| alice@testanalysis.com | TestPass123! | ba03f838-9444-42dc-b4b7-81fa792027f6 | Initiator |
-| bob@testanalysis.com | TestPass123! | f4cb0c82-0ddc-40d2-b50a-b83979e5386f | Partner |
+| alice@testanalysis.com | [redacted] | ba03f838-9444-42dc-b4b7-81fa792027f6 | Initiator |
+| bob@testanalysis.com | [redacted] | f4cb0c82-0ddc-40d2-b50a-b83979e5386f | Partner |
 
 ## Test Alignment Details
 

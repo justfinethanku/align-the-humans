@@ -132,6 +132,8 @@ Refer to `plan_a.md` for complete database schema and setup instructions.
 - `npm run build` - Build for production
 - `npm run start` - Run production build
 - `npm run lint` - Run ESLint
+- `npm run type-check` - TypeScript check
+- `npm test` - Seven `node --test` cases for the Supabase Auth email hook
 
 ### Code Style
 
@@ -142,6 +144,7 @@ Refer to `plan_a.md` for complete database schema and setup instructions.
 
 ## Documentation
 
+- **Testing**: See `docs/testing-runbook.md` for the current two-partner journey and the automated checks. `E2E_TEST_PLAN.md` has been removed.
 - **Technical Specification**: See `plan_a.md` for complete implementation details
 - **Copy Guidelines**: See `scrapbook/website copy/philosophy_copy.md` for messaging strategy
 - **Changelog**: See `/changelog/` for development history
