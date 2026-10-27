@@ -29,6 +29,7 @@ import { getResendClient, FROM_EMAIL, getAppUrl } from '@/app/lib/resend';
 import { AuthConfirmEmail } from '@/app/lib/emails/auth-confirm';
 import { PasswordResetEmail } from '@/app/lib/emails/password-reset';
 import { MagicLinkEmail } from '@/app/lib/emails/magic-link';
+import { checkRateLimit, clientIpFromForwarded } from '@/app/lib/rate-limit';
 import { planAuthEmail, verifySupabaseHookPayload } from './hook';
 
 type HookUser = {
@@ -56,6 +57,22 @@ export async function POST(request: NextRequest) {
     const verifyResult = verifySupabaseHookPayload(rawBody, request.headers);
     if (!verifyResult.verified) {
       console.error(`[Auth Email] Verification failed: ${verifyResult.message}`);
+      if (verifyResult.status === 401) {
+        const ip = clientIpFromForwarded(
+          request.headers.get('x-forwarded-for'),
+          request.headers.get('x-real-ip')
+        );
+        const invalidLimit = await checkRateLimit(`ip:${ip}:auth-email.invalid`, {
+          limit: 30,
+          windowMs: 60_000,
+        });
+        if (!invalidLimit.ok) {
+          return NextResponse.json(
+            { error: 'Too many requests' },
+            { status: 429, headers: { 'Retry-After': String(invalidLimit.retryAfter) } }
+          );
+        }
+      }
       return NextResponse.json(
         { error: verifyResult.message },
         { status: verifyResult.status }
@@ -76,6 +93,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid payload' },
         { status: 400 }
+      );
+    }
+
+    const recipientLimit = await checkRateLimit(`email:${user.email.toLowerCase()}:auth-email`, {
+      limit: 8,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!recipientLimit.ok) {
+      console.error('[Auth Email] Recipient rate limit reached');
+      return NextResponse.json(
+        { error: 'Too many emails for this address' },
+        { status: 429, headers: { 'Retry-After': String(recipientLimit.retryAfter) } }
       );
     }
 

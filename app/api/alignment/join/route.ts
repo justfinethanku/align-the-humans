@@ -8,7 +8,7 @@
  *
  * Security:
  * - Token is hashed and compared against database
- * - Rate limiting: 10 attempts per hour per IP address
+ * - Rate limiting: 10 attempts per hour per IP address, shared across instances
  * - Validates expiration, invalidation, and usage limits
  * - Prevents duplicate participants
  * - Raw tokens are never logged
@@ -23,63 +23,11 @@ import {
   ValidationError,
   AlignmentError,
   AuthError,
+  RateLimitError,
 } from '@/app/lib/errors';
+import { checkRateLimit, clientIpFromForwarded } from '@/app/lib/rate-limit';
 
-// ============================================================================
-// Rate Limiting
-// ============================================================================
-
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-// In-memory rate limiter (reset on server restart)
-// For production, consider Redis or similar distributed cache
-const joinAttempts = new Map<string, RateLimitEntry>();
-
-/**
- * Check if IP address has exceeded rate limit
- * @param ip - IP address to check
- * @returns true if under limit, false if exceeded
- */
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const limit = joinAttempts.get(ip);
-
-  // No previous attempts or reset time passed
-  if (!limit || now > limit.resetAt) {
-    joinAttempts.set(ip, { count: 1, resetAt: now + 3600000 }); // 1 hour
-    return true;
-  }
-
-  // Check if limit exceeded
-  if (limit.count >= 10) {
-    return false;
-  }
-
-  // Increment counter
-  limit.count++;
-  return true;
-}
-
-/**
- * Get client IP address from request
- */
-function getClientIP(request: NextRequest): string {
-  // Check forwarded headers (from proxies like Vercel)
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-
-  const realIP = request.headers.get('x-real-ip');
-  if (realIP) {
-    return realIP;
-  }
-
-  return 'unknown';
-}
+const JOIN_RATE_LIMIT = { limit: 10, windowMs: 60 * 60 * 1000 } as const;
 
 // ============================================================================
 // Request/Response Schema
@@ -105,13 +53,19 @@ export async function POST(
   const supabase = await createServerClient();
 
   try {
-    // 1. Rate limiting check
-    const clientIP = getClientIP(request);
-    if (!checkRateLimit(clientIP)) {
-      throw new AuthError(
+    // 1. Rate limiting check (before auth, so token guessing is capped per IP)
+    const clientIP = clientIpFromForwarded(
+      request.headers.get('x-forwarded-for'),
+      request.headers.get('x-real-ip')
+    );
+    const rateLimitResult = await checkRateLimit(
+      `ip:${clientIP}:alignment.join`,
+      JOIN_RATE_LIMIT
+    );
+    if (!rateLimitResult.ok) {
+      throw new RateLimitError(
         'Too many join attempts. Please try again in an hour.',
-        429,
-        { ip: clientIP }
+        { retryAfter: rateLimitResult.retryAfter }
       );
     }
 

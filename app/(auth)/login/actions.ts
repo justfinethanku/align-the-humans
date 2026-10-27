@@ -78,7 +78,6 @@ export async function loginAction(
       };
     }
 
-    // In-memory limiter; production should back this with Vercel KV / Upstash.
     const rateLimitResult = await checkRateLimit(
       await authRateLimitKey('login', email),
       { limit: 10, windowMs: 60_000 }
@@ -168,7 +167,6 @@ export async function forgotPasswordAction(
       return { error: 'Please enter a valid email address', success: false };
     }
 
-    // In-memory limiter; production should back this with Vercel KV / Upstash.
     const rateLimitResult = await checkRateLimit(
       await authRateLimitKey('forgot-password', normalizedEmail),
       { limit: 5, windowMs: 60_000 }

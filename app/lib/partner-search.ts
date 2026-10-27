@@ -9,7 +9,7 @@
 
 const EXACT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Per-user budget for GET /api/partners/search. In-memory; see rate-limit.ts. */
+/** Per-user budget for GET /api/partners/search. Shared store; see rate-limit.ts. */
 export const PARTNER_SEARCH_RATE_LIMIT = { limit: 10, windowMs: 60_000 } as const;
 
 export interface EmailCandidate {

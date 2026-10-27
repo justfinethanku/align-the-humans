@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { DatabaseError, ValidationError, createErrorResponse } from '@/app/lib/errors'
+import { assertWithinRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit'
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server'
 
 const UpgradeInterestSchema = z.object({
@@ -14,6 +15,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const user = await requireAuth(supabase)
+    await assertWithinRateLimit(
+      rateLimitKeyForUser(user.id, 'upgrade-interest'),
+      { limit: 5, windowMs: 60 * 60 * 1000 },
+      'Too many pilot requests. Please try again in an hour.'
+    )
     let body: unknown
 
     try {

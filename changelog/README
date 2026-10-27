@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 28**
+**Total Changelogs: 29**
+
+### [2026-10-27-0640 - ath-20-shared-rate-limit-and-csp](./2026-10-27-0640-ath-20-shared-rate-limit-and-csp.md)
+**Keywords:** [SECURITY] [RATE-LIMIT] [CSP] [SUPABASE] [ATH-20]
+Shared Postgres rate limits for auth, AI, search, invites, and the other open routes, and an enforced Content-Security-Policy that reports to the app.
 
 ### [2026-10-27-0428 - ath-13-testing-runbook](./2026-10-27-0428-ath-13-testing-runbook.md)
 **Keywords:** [DOCS] [TESTING] [SECURITY] [ATH-13]

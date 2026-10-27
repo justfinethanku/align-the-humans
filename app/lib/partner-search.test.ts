@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { checkRateLimit } from './rate-limit';
+import { checkRateLimit, createMemoryRateLimitStore } from './rate-limit';
 import {
   PARTNER_SEARCH_RATE_LIMIT,
   findExactEmailUserId,
@@ -44,12 +44,13 @@ test('findExactEmailUserId does not match substrings or the caller', () => {
 });
 
 test('partner search rate limit blocks the call past the budget', async () => {
+  const store = createMemoryRateLimitStore();
   const key = `partners.search.test:${Date.now()}:${Math.random()}`;
   for (let i = 0; i < PARTNER_SEARCH_RATE_LIMIT.limit; i += 1) {
-    const result = await checkRateLimit(key, PARTNER_SEARCH_RATE_LIMIT);
+    const result = await checkRateLimit(key, PARTNER_SEARCH_RATE_LIMIT, store);
     assert.equal(result.ok, true);
   }
-  const blocked = await checkRateLimit(key, PARTNER_SEARCH_RATE_LIMIT);
+  const blocked = await checkRateLimit(key, PARTNER_SEARCH_RATE_LIMIT, store);
   assert.equal(blocked.ok, false);
   assert.ok(blocked.retryAfter >= 1);
 });

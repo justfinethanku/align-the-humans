@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { updateAlignment } from '@/app/lib/db-helpers';
 import { createErrorResponse, ValidationError, AlignmentError } from '@/app/lib/errors';
+import { assertWithinRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import type { Database, Json } from '@/app/lib/database.types';
 
 // ============================================================================
@@ -43,6 +44,12 @@ export async function PATCH(
   try {
     // 1. Authenticate user
     const user = await requireAuth(supabase);
+    // Clarity autosave fires about a second after typing pauses.
+    await assertWithinRateLimit(
+      rateLimitKeyForUser(user.id, `alignment.update:${id}`),
+      { limit: 120, windowMs: 60_000 },
+      'Too many updates. Please try again shortly.'
+    );
 
     // 2. Parse and validate request body
     const body = await request.json();
