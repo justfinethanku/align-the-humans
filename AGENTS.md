@@ -203,5 +203,5 @@ Session notes live in `/changelog/`:
 
 ## Fleet
 
-- Linear team: ATH.
+- Linear team: ATH. Work and status live in Linear.
 - SOPs: Align the Humans SOP index: https://linear.app/contentionmedia/document/align-the-humans-sop-index-b96ebc9261ae
