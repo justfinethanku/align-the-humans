@@ -145,6 +145,7 @@ The current schema is the SQL in `supabase/migrations`. Apply those files to the
 ## Documentation
 
 - **Testing**: See `docs/testing-runbook.md` for the current two-partner journey and the automated checks. `E2E_TEST_PLAN.md` has been removed.
+- **Deploy and migrations**: See `docs/deploy.md` for how `main` and pull requests reach Vercel, how to compare `supabase/migrations` with the database, and how to roll back a deploy or a migration.
 - **Database schema**: `supabase/migrations`
 - **Technical specification**: `plan_a.md` is an older implementation spec. For current behavior, read the code and `supabase/migrations`.
 - **Copy Guidelines**: See `scrapbook/website copy/philosophy_copy.md` for messaging strategy
