@@ -24,6 +24,7 @@ import {
   ValidationError,
   logError
 } from '@/app/lib/errors';
+import { assertWithinRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { sendAlignmentCompleteEmail } from '@/app/lib/email-service';
 import type { AlignmentStatus } from '@/app/lib/types';
 import { z } from 'zod';
@@ -214,6 +215,11 @@ export async function POST(
 
   try {
     const user = await requireAuth(supabase);
+    await assertWithinRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.sign'),
+      { limit: 10, windowMs: 60_000 },
+      'Too many sign attempts. Please try again shortly.'
+    );
     const body = await request.json();
     const { round, reviewedSnapshotHash } = SignRequestSchema.parse(body);
     const readiness = await assertReadyForDocument(supabase, alignmentId, user.id, round);
@@ -350,11 +356,7 @@ export async function POST(
       );
     }
 
-    const errorResponse = createErrorResponse(error);
-    return NextResponse.json(
-      await errorResponse.json(),
-      { status: errorResponse.status }
-    );
+    return createErrorResponse(error) as NextResponse;
   }
 }
 

@@ -143,7 +143,6 @@ export async function signupAction(
     const redirectTo = formData.get('redirectTo') as string | null;
     const destination = isSafeRedirectPath(redirectTo) ? redirectTo : '/dashboard';
 
-    // In-memory limiter; production should back this with Vercel KV / Upstash.
     const rateLimitResult = await checkRateLimit(
       await authRateLimitKey('signup', email),
       { limit: 5, windowMs: 60_000 }

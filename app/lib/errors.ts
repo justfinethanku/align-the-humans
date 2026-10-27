@@ -300,8 +300,16 @@ export function createErrorResponse(
 ): Response {
   const statusCode = isAppError(error) ? error.statusCode : defaultStatusCode;
   const body = serializeError(error);
+  const response = Response.json(body, { status: statusCode });
 
-  return Response.json(body, { status: statusCode });
+  if (isAppError(error) && error.statusCode === 429) {
+    const retryAfter = error.details?.retryAfter;
+    if (typeof retryAfter === 'number' && Number.isFinite(retryAfter)) {
+      response.headers.set('Retry-After', String(Math.max(1, Math.ceil(retryAfter))));
+    }
+  }
+
+  return response;
 }
 
 /**

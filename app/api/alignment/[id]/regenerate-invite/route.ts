@@ -21,6 +21,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { encryptInviteToken, generateInvite } from '@/app/lib/invite-tokens';
 import { createErrorResponse, AlignmentError, AuthError, DatabaseError } from '@/app/lib/errors';
+import { assertWithinRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 
 // ============================================================================
 // Types
@@ -46,6 +47,11 @@ export async function POST(
   try {
     // 1. Authenticate user
     const user = await requireAuth(supabase);
+    await assertWithinRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.regenerate-invite'),
+      { limit: 10, windowMs: 60 * 60 * 1000 },
+      'Too many invite links. Please try again in an hour.'
+    );
 
     // 2. Verify alignment exists and user is the creator
     const { data: alignment, error: alignmentError } = await supabase

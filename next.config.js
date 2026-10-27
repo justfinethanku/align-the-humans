@@ -18,18 +18,31 @@ const nextConfig = {
         key: 'Permissions-Policy',
         value: 'camera=(), microphone=(), geolocation=()',
       },
-      // Report-Only so this cannot break the live site while we validate
-      // the allowlist against real traffic. Promote to enforcing
-      // (Content-Security-Policy) once verified.
+      // Enforced. Reports go to /api/csp-report (report-uri and report-to).
+      // Inline scripts: Next.js bootstrap, next-themes, JSON-LD.
+      // Fonts are self-hosted by next/font. PDF export uses a blob worker.
       {
-        key: 'Content-Security-Policy-Report-Only',
+        key: 'Content-Security-Policy',
         value: [
           "default-src 'self'",
-          "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai-gateway.vercel.sh https://openrouter.ai",
-          "img-src 'self' data: blob:",
-          "style-src 'self' 'unsafe-inline'",
+          "base-uri 'self'",
+          "object-src 'none'",
+          "frame-ancestors 'none'",
+          "form-action 'self'",
           "script-src 'self' 'unsafe-inline'",
+          "worker-src 'self' blob:",
+          "style-src 'self' 'unsafe-inline'",
+          "font-src 'self'",
+          "img-src 'self' data: blob: https://*.supabase.co",
+          "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai-gateway.vercel.sh https://openrouter.ai",
+          "manifest-src 'self'",
+          "report-uri /api/csp-report",
+          "report-to csp",
         ].join('; '),
+      },
+      {
+        key: 'Reporting-Endpoints',
+        value: 'csp="/api/csp-report"',
       },
     ]
 

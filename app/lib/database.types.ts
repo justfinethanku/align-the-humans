@@ -609,6 +609,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_hits: {
+        Row: {
+          id: number
+          bucket_key: string
+          hit_at: string
+        }
+        Insert: {
+          id?: number
+          bucket_key: string
+          hit_at?: string
+        }
+        Update: {
+          id?: number
+          bucket_key?: string
+          hit_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       alignment_status_view: {
@@ -646,6 +664,17 @@ export type Database = {
       }
     }
     Functions: {
+      consume_rate_limit: {
+        Args: {
+          p_key: string
+          p_limit: number
+          p_window_ms: number
+        }
+        Returns: {
+          ok: boolean
+          retry_after: number
+        }[]
+      }
       claim_alignment_activation: {
         Args: {
           p_alignment_id: string

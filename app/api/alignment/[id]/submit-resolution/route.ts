@@ -14,7 +14,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, getCurrentUser } from '@/app/lib/supabase-server';
 import { saveResponse, submitResponse, isParticipant, getRoundResponses } from '@/app/lib/db-helpers';
-import { AlignmentError, ValidationError, createErrorResponse } from '@/app/lib/errors';
+import { AlignmentError, RateLimitError, ValidationError, createErrorResponse } from '@/app/lib/errors';
+import { assertWithinRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
 import { MAX_RESOLUTION_ROUNDS } from '@/app/lib/resolution-config';
 
@@ -71,6 +72,12 @@ export async function POST(
         401
       );
     }
+
+    await assertWithinRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.submit-resolution'),
+      { limit: 20, windowMs: 60_000 },
+      'Too many resolution submissions. Please try again shortly.'
+    );
 
     // 2. Get alignment ID from params
     const { id: alignmentId } = await context.params;
@@ -284,7 +291,7 @@ export async function POST(
     // Log error
     const latencyMs = timer.stop();
 
-    if (error instanceof AlignmentError || error instanceof ValidationError) {
+    if (error instanceof AlignmentError || error instanceof ValidationError || error instanceof RateLimitError) {
       telemetry.logError({
         errorCode: error.code,
         errorMessage: error.message,

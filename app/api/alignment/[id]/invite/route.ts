@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { decryptInviteToken } from '@/app/lib/invite-tokens';
 import { createErrorResponse, AlignmentError, AuthError } from '@/app/lib/errors';
+import { assertWithinRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 
 interface InviteResponse {
   token: string;
@@ -29,6 +30,11 @@ export async function GET(
 
   try {
     const user = await requireAuth(supabase);
+    await assertWithinRateLimit(
+      rateLimitKeyForUser(user.id, 'alignment.invite'),
+      { limit: 60, windowMs: 60_000 },
+      'Too many invite lookups. Please try again shortly.'
+    );
 
     // Ensure alignment exists and user is the creator
     const { data: alignment, error: alignmentError } = await supabase
