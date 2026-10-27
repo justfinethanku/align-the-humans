@@ -20,7 +20,7 @@ Production domains on the current production deployment:
 
 Vercel Authentication (`ssoProtection`) is enabled for `all_except_custom_domains`. Password protection is off. A preview URL for pull request 25, `align-the-humans-calwb4d1o-jonathan-edwards-projects.vercel.app`, responded `302` to `https://vercel.com/sso-api`. The custom domains above are outside that protection.
 
-The deployment that was current at check time is `dpl_H2vDz8mA3Yj3Lze1Ee1rdQKeULV5`. It is `source: git`, target `production`, state `READY`, commit `002922b9d18cf64a1558844742b68fb20de33323` on `main`. GitHub recorded that Production deployment as created by `vercel[bot]`.
+The production deployment current at the end of this check is `dpl_9f12wziVeVRYkFpHCGn3F6LrgDCC`. It is `source: git`, target `production`, state `READY`, commit `7d006c4a4b72b6316a83b5f0060de39f358c7689` on `main` (pull request 26), and its aliases include `alignthehumans.com` and `www.alignthehumans.com`. GitHub recorded that Production deployment at 2026-10-27T20:32:23Z, created by `vercel[bot]`. The previous production deployment, `dpl_H2vDz8mA3Yj3Lze1Ee1rdQKeULV5`, is also `source: git` and `READY`, on commit `002922b9d18cf64a1558844742b68fb20de33323`.
 
 ## Pushes to `main` deploy to production
 
@@ -31,14 +31,14 @@ The Vercel GitHub integration publishes `main`. `.github/workflows/ci.yml` lints
 
 The production deploy finished while `ci` was still running. A push to `main` is enough. `ci` is a separate check.
 
-Vercel lists 38 production deployments for this project. All 38 are state `READY`, `githubCommitRef` `main`, and `isRollbackCandidate: true`. Asking for production deployments older than the oldest of those 38 returned none. Every one of those deployments is a rollback candidate under the project's current list.
+The first Vercel read listed 38 production deployments. All 38 were state `READY`, `githubCommitRef` `main`, and `isRollbackCandidate: true`. Asking for production deployments older than the oldest of those 38 returned none. Pull request 26 then added `dpl_9f12wziVeVRYkFpHCGn3F6LrgDCC`, also `READY` and a rollback candidate.
 
 GitHub first-parent history on `main` compared with GitHub Production deployments:
 
-- From `2db7a4087302e4d3ff57e553fa3a8938b626393b` (2026-02-17 20:10 ET, "Remove ~2,000 lines of dead code and fix UI flickering") through `002922b9d18cf64a1558844742b68fb20de33323` (2026-10-27), all 28 first-parent commits have a Production deployment. That span includes the merge commits of pull requests 2 through 10 and 12 through 25, and five commits that landed on `main` without a pull-request merge commit (`343836ce2597`, `539a3b8e7b4c`, `6d5907600e26`, `b857b812185b`, `2db7a4087302`).
+- From `2db7a4087302e4d3ff57e553fa3a8938b626393b` (2026-02-17 20:10 ET, "Remove ~2,000 lines of dead code and fix UI flickering") through `7d006c4a4b72b6316a83b5f0060de39f358c7689` (2026-10-27, pull request 26), all 29 first-parent commits have a Production deployment. That span includes the merge commits of pull requests 2 through 10 and 12 through 26, and five commits that landed on `main` without a pull-request merge commit (`343836ce2597`, `539a3b8e7b4c`, `6d5907600e26`, `b857b812185b`, `2db7a4087302`).
 - Two earlier gaps have no GitHub deployment record. `ac74aaba389a` (2025-11-24 21:56 ET) has none; the commit two minutes later does. Fifteen commits from `6899de07d727` through `5b1b17f0cce1` (2026-02-17 18:21–19:03 ET) have none. Vercel returns no deployment for `5b1b17f0cce1`. **UNKNOWN:** why those 16 commits have no deployment record.
 
-Pull requests 13 through 25 each have a Production deployment on the merge commit. So do pull requests 2 through 10 and 12. Pull request 11 is open and has no merge commit. There is no pull request 1.
+Pull requests 13 through 26 each have a Production deployment on the merge commit. So do pull requests 2 through 10 and 12. Pull request 11 is open and has no merge commit. There is no pull request 1.
 
 **UNKNOWN:** classic branch protection on `main` returned 403 to this token, so required status checks could not be read. The rulesets list was empty. Whether GitHub refuses a merge when `ci` or `Vercel` fails was not tested. A failed `ci` run was not observed, so whether a failing `ci` run can stop a Vercel deploy is **UNKNOWN**. The one successful push above deployed before `ci` finished.
 
@@ -101,7 +101,7 @@ One object from the newest file was readable. A service-role `GET` of `public.ra
 
 ## Roll back a deploy
 
-Instant Rollback points the production domains at an earlier production deployment. This session did not execute one. The steps and the side effect below are from Vercel's Instant Rollback documentation, fetched 2026-10-27. The team is Pro, and on Pro a deployment that was previously aliased to a production domain is eligible. All 38 production deployments in the current list are rollback candidates. Preview deployments are not.
+Instant Rollback points the production domains at an earlier production deployment. This session did not execute one. The steps and the side effect below are from Vercel's Instant Rollback documentation, fetched 2026-10-27. The team is Pro, and on Pro a deployment that was previously aliased to a production domain is eligible. The production deployments read above are rollback candidates. Preview deployments are not.
 
 From the project overview, use Instant Rollback, choose the deployment, confirm the domains, and confirm. From the Deployments list, filter to `main`, open the row menu, and choose Instant Rollback.
 
