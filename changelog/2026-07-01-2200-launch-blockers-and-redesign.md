@@ -42,6 +42,8 @@ Two-layer delegation: a Workflow (13 subagents, adversarial verify) for the laun
 
 ## Next Steps (launch gates, human-required)
 1. Set `ANTHROPIC_API_KEY` + `NEXT_PUBLIC_APP_URL=https://alignthehumans.com` in Vercel (SITE_URL can be deleted).
+
+   Note (2026-10-27, ATH-12): the key name in this step is historical. Generation now reads `OPEN_ROUTER_API_KEY` first, with `OPENROUTER_API_KEY` as a fallback. The sentence above is unchanged.
 2. Apply migration `20260701120000_fix_alignments_participant_rls.sql` to prod (idempotent).
 3. Supabase dashboard → Auth → Hooks: confirm Send-Email hook → `/api/auth/email`, set `SUPABASE_AUTH_HOOK_SECRET`.
 4. `npx tsx scripts/set-admin.ts <email>` for first admin.

@@ -28,8 +28,11 @@ Copy `.env.example` to `.env.local`. Required:
 - `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key (client-safe)
 - `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (server-only)
-- `AI_GATEWAY_API_KEY` - Vercel AI Gateway key (optional for local dev)
+- `OPEN_ROUTER_API_KEY` - OpenRouter key for AI generation. The app reads this name first and falls back to `OPENROUTER_API_KEY` when it is unset.
+- `RESEND_API_KEY` - Resend API key for transactional email
+- `SUPABASE_AUTH_HOOK_SECRET` - Standard Webhooks secret (`v1,whsec_...`) for the Supabase Send Email hook
 - `INVITE_TOKEN_SECRET` - Secret for encrypting invite tokens (AES-256-GCM)
+- `AI_GATEWAY_API_KEY` - Vercel AI Gateway key used only for admin model discovery, not generation (optional for local dev)
 
 ## Tech Stack
 

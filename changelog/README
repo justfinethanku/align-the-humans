@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 25**
+**Total Changelogs: 26**
+
+### [2026-10-27-0425 - env-var-docs-ath-12](./2026-10-27-0425-env-var-docs-ath-12.md)
+**Keywords:** [DOCS] [ENV] [OPENROUTER] [ATH-12]
+ATH-12: setup docs name `OPEN_ROUTER_API_KEY` (fallback `OPENROUTER_API_KEY`) as the AI key, and list `RESEND_API_KEY`, `SUPABASE_AUTH_HOOK_SECRET`, and the admin-only role of `AI_GATEWAY_API_KEY`.
 
 ### [2026-10-26-0619 - admin-client-service-role](./2026-10-26-0619-admin-client-service-role.md)
 **Keywords:** [SECURITY] [SUPABASE] [RLS] [ADMIN] [ATH-30]

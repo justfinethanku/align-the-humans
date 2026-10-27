@@ -26,6 +26,7 @@ write_var() {
 write_var NEXT_PUBLIC_SUPABASE_URL
 write_var NEXT_PUBLIC_SUPABASE_ANON_KEY
 write_var SUPABASE_SERVICE_ROLE_KEY
+# Canonical OpenRouter name. The app also accepts OPENROUTER_API_KEY as a fallback.
 write_var OPEN_ROUTER_API_KEY
 write_var AI_GATEWAY_API_KEY
 write_var RESEND_API_KEY
