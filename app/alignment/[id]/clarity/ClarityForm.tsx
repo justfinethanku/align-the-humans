@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { AI_OUTPUT_RETRY_MESSAGE, messageFromFailedResponse } from "@/app/lib/api-error-message"
 import { cn } from "@/lib/utils"
 import { InviteStatus } from "@/components/alignment/InviteStatus"
 import { UpgradeDialog } from "@/components/monetization/UpgradeDialog"
@@ -235,7 +236,7 @@ export function ClarityForm({
       })
 
       if (!response.ok) {
-        throw new Error("Failed to fetch suggestions")
+        throw new Error(await messageFromFailedResponse(response, AI_OUTPUT_RETRY_MESSAGE))
       }
 
       const data = await response.json()
@@ -245,7 +246,7 @@ export function ClarityForm({
       }))
     } catch (err) {
       console.error("Suggestion fetch error:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch suggestions")
+      setError(err instanceof Error ? err.message : AI_OUTPUT_RETRY_MESSAGE)
     } finally {
       setLoadingSuggestions((prev) => ({ ...prev, [section]: false }))
     }

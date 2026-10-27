@@ -11,14 +11,19 @@
  * Uses Claude Haiku 4.5 for fast, cost-effective responses.
  */
 
-import { generateText } from 'ai';
-import { resolveModel } from '@/app/lib/ai-config';
+import { generateTextRecovered } from '@/app/lib/ai-generate';
+import {
+  asAIGenerationError,
+  errorLogMessage,
+  hasUsableSuggestionLines,
+  usableSuggestionLines,
+} from '@/app/lib/ai-recovery';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import { createErrorResponse, ValidationError, AIError, AlignmentError, RateLimitError } from '@/app/lib/errors';
+import { createErrorResponse, ValidationError, AlignmentError, RateLimitError } from '@/app/lib/errors';
 import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
 
 // ============================================================================
@@ -122,27 +127,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       participants: alignmentContext.participants.join(' and '),
     });
 
-    // 5. Generate AI response (prompt text, model, and params all from the DB)
-    const { text, usage } = await generateText({
-      model: resolveModel(promptConfig.model) as any,
+    // 5. Generate AI response (prompt text, model, and params all from the DB).
+    // An empty or unusable reply is retried on this model, then on the other
+    // configured model, before the user sees an error.
+    const { text, usage, modelId } = await generateTextRecovered({
+      modelId: promptConfig.model,
+      task: 'suggestion',
       system: promptConfig.systemPrompt,
       prompt: aiPrompt,
       temperature: promptConfig.temperature,
       maxOutputTokens: promptConfig.maxTokens,
+      accept: hasUsableSuggestionLines,
+      onModel: (id) => {
+        modelName = id;
+      },
     });
 
-    if (!text || text.trim().length === 0) {
-      throw AIError.generationFailed('clarity suggestion', 'Empty response from AI model');
-    }
-
     // 6. Parse suggestions (one per line)
-    const suggestionTexts = text
-      .trim()
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-      .map((line) => line.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '')) // Remove bullets/numbering
-      .slice(0, 3); // Max 3 suggestions
+    const suggestionTexts = usableSuggestionLines(text);
 
     const suggestions = suggestionTexts.map((suggestionText) => ({
       text: suggestionText,
@@ -155,7 +157,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       event: 'ai.suggestion.complete',
       alignmentId: 'clarity-form',
       latencyMs,
-      model: modelName,
+      model: modelId,
       success: true,
       userId,
       tokenUsage: usage ? {
@@ -180,8 +182,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     // Log error telemetry
     const latencyMs = timer.stop();
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorCode = (error as any).code || 'UNKNOWN';
+    const reported = asAIGenerationError('clarity suggestion', error);
+    const errorMessage = errorLogMessage(reported);
+    const errorCode = reported.code || 'UNKNOWN';
 
     telemetry.logAIOperation({
       event: 'ai.suggestion.error',
@@ -194,8 +197,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       errorMessage,
     });
 
-    // Return error response
-    return createErrorResponse(error) as any;
+    return createErrorResponse(reported) as any;
   }
 }
 

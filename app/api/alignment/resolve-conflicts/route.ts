@@ -8,8 +8,8 @@
  * POST /api/alignment/resolve-conflicts
  */
 
-import { generateObject } from 'ai';
-import { resolveModel } from '@/app/lib/ai-config';
+import { generateObjectRecovered } from '@/app/lib/ai-generate';
+import { asAIGenerationError, errorLogMessage, InvalidModelOutputError } from '@/app/lib/ai-recovery';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
@@ -80,6 +80,8 @@ type CompromiseOption = z.infer<typeof CompromiseOptionSchema>;
 export async function POST(request: NextRequest) {
   const timer = new PerformanceTimer();
   const supabase = await createServerClient();
+  let modelName = 'db-config';
+  let telemetryAlignmentId = 'unknown';
 
   try {
     // 1. Authenticate user
@@ -108,6 +110,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { alignmentId, conflict } = validatedData.data;
+    telemetryAlignmentId = alignmentId;
 
     // 3. Verify user has access to this alignment
     const { data: participantCheck, error: participantError } = await supabase
@@ -122,13 +125,14 @@ export async function POST(request: NextRequest) {
     }
 
     const promptConfig = await getPrompt('resolve-conflicts');
+    modelName = promptConfig.model;
 
     // 4. Log AI operation start
     telemetry.logAIOperation({
       event: 'ai.resolve.start',
       alignmentId,
       latencyMs: 0,
-      model: promptConfig.model,
+      model: modelName,
       success: true,
       userId: user.id,
     });
@@ -148,33 +152,26 @@ export async function POST(request: NextRequest) {
     let resolution: ConflictResolution;
 
     try {
-      const { object } = await generateObject({
-        model: resolveModel(promptConfig.model) as any,
+      const recovered = await generateObjectRecovered({
+        modelId: promptConfig.model,
+        task: 'structured',
         schema: ConflictResolutionSchema,
         system: promptConfig.systemPrompt,
         prompt,
         temperature: promptConfig.temperature,
         maxOutputTokens: promptConfig.maxTokens,
+        onModel: (id) => {
+          modelName = id;
+        },
+        validate: (object) => {
+          if (!object.options || object.options.length < 3) {
+            throw new InvalidModelOutputError('AI failed to generate sufficient compromise options');
+          }
+        },
       });
-
-      resolution = object;
+      resolution = recovered.object;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown AI error';
-
-      // Check for rate limiting
-      if (errorMessage.includes('rate_limit') || errorMessage.includes('429')) {
-        throw AIError.rateLimitExceeded();
-      }
-
-      throw AIError.generationFailed('conflict resolution', errorMessage);
-    }
-
-    // 6. Validate AI response
-    if (!resolution.options || resolution.options.length < 3) {
-      throw AIError.generationFailed(
-        'conflict resolution',
-        'AI failed to generate sufficient compromise options'
-      );
+      throw asAIGenerationError('conflict resolution', error);
     }
 
     // 7. Log successful completion
@@ -183,7 +180,7 @@ export async function POST(request: NextRequest) {
       event: 'ai.resolve.complete',
       alignmentId,
       latencyMs,
-      model: promptConfig.model,
+      model: modelName,
       success: true,
       userId: user.id,
     });
@@ -207,12 +204,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof AIError) {
       telemetry.logAIOperation({
         event: 'ai.resolve.error',
-        alignmentId: 'unknown',
+        alignmentId: telemetryAlignmentId,
         latencyMs,
-        model: 'db-config',
+        model: modelName,
         success: false,
         errorCode: error.code,
-        errorMessage: error.message,
+        errorMessage: errorLogMessage(error),
       });
     }
 

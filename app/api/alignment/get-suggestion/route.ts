@@ -11,14 +11,14 @@
  * Reference: plan_a.md lines 770-775, 1173-1193
  */
 
-import { generateText } from 'ai';
-import { resolveModel } from '@/app/lib/ai-config';
+import { generateTextRecovered } from '@/app/lib/ai-generate';
+import { asAIGenerationError, errorLogMessage } from '@/app/lib/ai-recovery';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { TemplateQuestion } from '@/app/lib/types';
 import { telemetry, PerformanceTimer } from '@/app/lib/telemetry';
-import { createErrorResponse, ValidationError, AIError, AlignmentError, RateLimitError } from '@/app/lib/errors';
+import { createErrorResponse, ValidationError, AlignmentError, RateLimitError } from '@/app/lib/errors';
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
 import { isParticipant } from '@/app/lib/db-helpers';
 import { checkRateLimit, rateLimitKeyForUser } from '@/app/lib/rate-limit';
@@ -196,18 +196,18 @@ export async function POST(request: NextRequest): Promise<Response> {
       suggestionInstruction,
     });
 
-    // Generate AI response using Vercel AI SDK
-    const { text, usage } = await generateText({
-      model: resolveModel(promptConfig.model) as any,
+    // Empty replies are retried on this model, then on the other configured model.
+    const { text, usage, modelId } = await generateTextRecovered({
+      modelId: promptConfig.model,
+      task: 'suggestion',
       system: promptConfig.systemPrompt,
       prompt,
       maxOutputTokens: promptConfig.maxTokens,
       temperature: promptConfig.temperature,
+      onModel: (id) => {
+        modelName = id;
+      },
     });
-
-    if (!text || text.trim().length === 0) {
-      throw AIError.generationFailed('suggestion', 'Empty response from AI model');
-    }
 
     // Calculate confidence score
     const confidence = calculateConfidence(mode, question, text.length);
@@ -218,7 +218,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       event: 'ai.suggestion.complete',
       alignmentId: telemetryAlignmentId,
       latencyMs,
-      model: modelName,
+      model: modelId,
       success: true,
       userId: telemetryUserId,
       tokenUsage: usage ? {
@@ -247,8 +247,9 @@ export async function POST(request: NextRequest): Promise<Response> {
   } catch (error) {
     // Log error telemetry
     const latencyMs = timer.stop();
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorCode = (error as any).code || 'UNKNOWN';
+    const reported = asAIGenerationError('suggestion', error);
+    const errorMessage = errorLogMessage(reported);
+    const errorCode = reported.code || 'UNKNOWN';
 
     telemetry.logAIOperation({
       event: 'ai.suggestion.error',
@@ -261,8 +262,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       userId: telemetryUserId,
     });
 
-    // Return error response
-    return createErrorResponse(error);
+    return createErrorResponse(reported);
   }
 }
 
