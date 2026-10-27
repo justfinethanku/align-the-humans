@@ -183,3 +183,9 @@ Every development session must create a changelog in `/changelog/`:
 - XSS protection: `isomorphic-dompurify` for sanitizing AI-generated HTML content
 - SEO: `robots.ts`, `sitemap.ts`, `llms.txt/route.ts` for machine-readable site info
 - Partner responses are never exposed to the other party until both have submitted and analysis is complete
+
+## Fleet
+
+- Linear team: ATH. Work and status live in Linear.
+- Fleet Handbook: https://linear.app/contentionmedia/document/the-fleet-handbook-f3713ba1f434
+- SOPs: Align the Humans SOP index: https://linear.app/contentionmedia/document/align-the-humans-sop-index-b96ebc9261ae
