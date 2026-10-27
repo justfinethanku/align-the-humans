@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 30**
+**Total Changelogs: 31**
+
+### [2026-10-27-2045 - ath-18-ops-email-alerts](./2026-10-27-2045-ath-18-ops-email-alerts.md)
+**Keywords:** [OPS] [EMAIL] [RESEND] [AUTH] [ALERT] [ATH-18]
+A 401 or 500 from the auth email hook, or a rejected Resend send, emails OPS_ALERT_EMAIL at most once per 15 minutes. Unset means log only.
 
 ### [2026-10-27-2024 - ath-23-readme-audience-and-ai](./2026-10-27-2024-ath-23-readme-audience-and-ai.md)
 **Keywords:** [DOCS] [README] [AGENTS] [OPENROUTER] [THEME] [ATH-23]

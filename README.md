@@ -77,6 +77,7 @@ Edit `.env.local` and add your credentials:
 - `OPEN_ROUTER_API_KEY`: OpenRouter API key for AI generation. The app reads this name first and falls back to `OPENROUTER_API_KEY` when it is unset.
 - `RESEND_API_KEY`: Resend API key for transactional email (invites and auth mail)
 - `SUPABASE_AUTH_HOOK_SECRET`: Standard Webhooks secret (`v1,whsec_...`) that verifies the Supabase Send Email hook at `/api/auth/email`
+- `OPS_ALERT_EMAIL`: Optional comma-separated inbox for auth-hook 401/500s and rejected Resend sends. When unset, those failures are logged and no alert is sent.
 - `AI_GATEWAY_API_KEY`: Vercel AI Gateway key used only for the admin model-discovery list, not for generation (optional for local dev)
 
 4. Run the development server:
