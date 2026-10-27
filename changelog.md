@@ -1,10 +1,8 @@
 # CHANGELOG.md
 
-**DO NOT USE THIS FILE FOR SESSION LOGS**
+Session logs go in `/changelog/` as one markdown file per session. This file is the format spec.
 
-All detailed changelogs should be created in the `/changelog/` directory as session-specific markdown files.
-
-**IMPORTANT:** After creating a detailed changelog, you MUST also add a summary entry to `/changelog/README` following the template below.
+A summary of each session file goes in `/changelog/README`, using the template below.
 
 ---
 
@@ -15,7 +13,7 @@ Filename: `YYYY-MM-DD-HHMM-descriptive-keywords.md`
 
 Location: `/changelog/`
 
-### README Summary Entry (REQUIRED)
+### README Summary Entry
 
 After creating your detailed changelog, add a summary to `/changelog/README` using this template:
 
@@ -64,4 +62,4 @@ Each session changelog should include:
 
 ---
 
-**Do NOT put work logs in this file. Use the `/changelog/` directory.**
+Work logs go in the `/changelog/` directory. This file stays the format spec.

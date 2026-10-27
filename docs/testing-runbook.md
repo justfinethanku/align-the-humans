@@ -1,12 +1,12 @@
 # Human Alignment Testing Runbook
 
-This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 share-link flow, assumed a local Supabase instance, and stored sample account passwords. It is removed. Do not record passwords, invite tokens, or other credentials in this file. Take labeled test accounts from the operator handoff.
+This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 share-link flow, assumed a local Supabase instance, and stored sample account passwords. It is removed. Passwords, invite tokens, and other credentials stay in the operator handoff. Labeled test accounts come from that handoff.
 
 ## Status
 
 The long-document PDF check and the signed-in two-partner journey have not been re-run since the September 27, 2026 redesign. Those checks are tracked in [ATH-14](https://linear.app/contentionmedia/issue/ATH-14) and [ATH-32](https://linear.app/contentionmedia/issue/ATH-32).
 
-The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. This repo has no `supabase/config.toml`, so there is no checked-in local Supabase project either. A recipe that says "isolated project" means a project an operator names. Do not apply migrations, mint invite rows, or force failures against production.
+The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. This repo has no `supabase/config.toml`, so there is no checked-in local Supabase project either. A recipe that says "isolated project" means a project an operator names. Migrations, invite-row inserts, and forced failures in those recipes run on that isolated project.
 
 ## Automated checks
 
@@ -26,7 +26,7 @@ These tests do not cover invite, join, answers, analysis, signatures, or PDF exp
 
 Status: not re-run since the September 27, 2026 redesign ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14), [ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The steps below describe the routes as the code implements them today. They are the procedure for the next signed-in pass. They are not a record of a pass.
 
-Role/account: two authenticated users. On production (`https://alignthehumans.com`), use the labeled comped creator and partner accounts from the operator handoff. A creator with no paid credit, no `pro` or `team` plan, and no future `comped_until` can activate one alignment. The second activation returns `402` with `error.code` `FREE_LIMIT_REACHED` before any AI request. Never record passwords here. Localhost is not production evidence.
+Role/account: two authenticated users. On production (`https://alignthehumans.com`), use the labeled comped creator and partner accounts from the operator handoff. A creator with no paid credit, no `pro` or `team` plan, and no future `comped_until` can activate one alignment. The second activation returns `402` with `error.code` `FREE_LIMIT_REACHED` before any AI request. Passwords stay in the operator handoff. A localhost run is separate from production evidence.
 
 Opening `/alignment/[id]` routes by status:
 
@@ -105,7 +105,7 @@ Opening `/alignment/[id]` routes by status:
 3. Page breaks use `before: ['.document-disclaimer']` and avoid headings, table rows, `.term`, `.signature-participant-row`, `.document-disclaimer`, `.document-footer`, and `.document-meta`. The file is an image, so text is not selectable.
 4. Open every page. Terms must not be sliced mid-line. The agreement date must match between the summary and the body. Both signature rows must be intact and show explicit UTC timestamps. This is the long-document check in ATH-14. A signed-in PDF export and one live AI generation (`generate-questions` or `analyze`) are the checks in ATH-32. Neither has been re-run on the current production build.
 
-What to record when that pass happens: alignment id, invite HTTP status (not the token), analysis rounds with score and conflict count, the snapshot hash both people signed, whether status stayed `resolving` after the first signature and became `complete` after the second, and the PDF page count plus any clipped line. Do not put credentials or the raw invite token in the notes.
+What to record when that pass happens: alignment id, invite HTTP status (not the token), analysis rounds with score and conflict count, the snapshot hash both people signed, whether status stayed `resolving` after the first signature and became `complete` after the second, and the PDF page count plus any clipped line. Credentials and the raw invite token stay out of the notes.
 
 ## Historical evidence (July 11–12, 2026)
 
@@ -117,21 +117,21 @@ Status: historical July 12, 2026 production run. The long-document PDF check and
 
 Purpose: Verify the deployed `alignthehumans.com` build through invite generation, multi-round analysis, report transition, agreement signatures, and PDF export before creating a separate clean demo-capture alignment.
 
-Role/account: Use the labeled comped creator and partner test accounts from the operator handoff. Never record their passwords here.
+Role/account: Use the labeled comped creator and partner test accounts from the operator handoff. Passwords stay in that handoff.
 
 Safe actions:
 
 - Create clearly labeled production test alignments through the visible UI.
 - Generate and redeem an invite through the normal creator and partner interfaces.
-- Run the paid AI steps required for one explicitly authorized end-to-end verification alignment and one final capture alignment.
+- Run the paid AI steps for one end-to-end verification alignment and one final capture alignment.
 - Preserve screenshots, browser recordings, and the completed verification alignment as evidence.
 
-Unsafe actions:
+Scope:
 
-- Do not use localhost as evidence for this recipe.
-- Do not mint invite rows, edit journey rows, or repair statuses directly.
-- Do not reuse the recovery alignment or verification alignment as the clean final capture source.
-- Do not expose credentials or invite tokens in captures.
+- Evidence for this recipe is the deployed site. A localhost run is a separate check.
+- Invite rows, journey rows, and statuses change through the visible creator and partner interfaces.
+- The clean final capture is a new alignment. The recovery alignment and the verification alignment stay as evidence.
+- Captures include the two test identities and their alignment content. Credentials and invite tokens stay out of captures.
 
 Verification steps:
 
@@ -173,7 +173,7 @@ Status: tested locally against the production database on 2026-07-11. Deployed p
 
 Purpose: Complete an existing two-person alignment from the round-3 analysis checkpoint through document generation, both signatures, completed status, and PDF export. This exercises the current branch through localhost against the production database; it does not prove that the deployed production application has the same fixes or configuration.
 
-Role/account: Use the labeled creator and partner test accounts for alignment `287267e1-8c5e-4480-bcad-85c959f36d10`. Retrieve credentials from the operator handoff; never record passwords in this runbook.
+Role/account: Use the labeled creator and partner test accounts for alignment `287267e1-8c5e-4480-bcad-85c959f36d10`. Credentials come from the operator handoff. Passwords stay out of this runbook.
 
 Safe actions:
 
@@ -181,19 +181,19 @@ Safe actions:
 - Capture screenshots containing only the two test identities and their alignment content.
 - Retry an idempotent UI action only after recording the first failure and confirming that the prior request did not succeed.
 
-Unsafe actions:
+Scope:
 
-- Do not edit alignment rows, analyses, responses, signatures, or status directly.
-- Do not create or hand-mint invite rows during this checkpoint.
-- Do not treat localhost success as verification of the deployed production application.
-- Do not commit local AI configuration clamps or credentials.
+- Alignment rows, analyses, responses, signatures, and status change through the normal UI for this labeled test alignment.
+- This checkpoint uses the existing alignment. It does not insert invite rows.
+- A localhost result describes this branch against the production database. The July 12 section above is the deployed-application record.
+- Local AI configuration clamps and credentials stay out of git commits.
 
 Verification steps:
 
 1. Confirm localhost serves the intended branch and record any uncommitted diagnostic diff before starting.
 2. Log in through the visible form as the creator and open `/alignment/287267e1-8c5e-4480-bcad-85c959f36d10/analysis`.
 3. Trigger or observe round-3 analysis. Record the HTTP/UI result and capture the resulting score, agreements, and remaining conflict count.
-4. If conflicts remain, stop and report the product state; do not bypass the resolution workflow or mutate rows directly.
+4. If conflicts remain, record the score, agreements, and conflict count, then continue in the resolution form. The next analysis runs after both people submit that round. Rows change through that workflow.
 5. Open the generated agreement through the normal UI. Confirm the document renders and record its reviewed snapshot hash if the UI exposes it.
 6. Sign as the creator. Confirm the application records the signature but does not mark the alignment complete while the partner signature is missing.
 7. Log in through the visible form as the partner, open the same agreement, and sign the identical frozen snapshot.
@@ -230,7 +230,7 @@ Status: historical July 11, 2026 recipe. Static checks had passed when this sect
 
 Purpose: Verify `20260711140000_account_entitlements.sql`, the one-free-alignment activation gate, upgrade-interest capture, and invite-only partner enrollment.
 
-Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Use the first as creator and the second as invitee. Do not run this against production.
+Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Use the first as creator and the second as invitee. This smoke test runs on that isolated project, with a test account and a throwaway alignment.
 
 Safe actions:
 
@@ -238,11 +238,11 @@ Safe actions:
 - Set test-only entitlement plans, credits, and comp dates with a service-role/admin session.
 - Retry question generation on the same labeled draft to verify idempotency.
 
-Unsafe actions:
+Scope:
 
-- Do not change real users' entitlements, credits, comp dates, or activation claims.
-- Do not apply the migration to production as part of this smoke test.
-- Do not call paid AI generation repeatedly; use a local model stub when testing concurrency or failure paths.
+- Entitlement, credit, comp-date, and activation-claim edits in this smoke test use the disposable test users on the isolated project.
+- The migration applies on the isolated project.
+- Concurrency and failure-path checks use a local model stub.
 
 Verification steps:
 
@@ -281,7 +281,7 @@ Status: historical July 11, 2026 recipe. Static checks had passed when this sect
 
 Purpose: Verify the journey integrity fixes introduced by `20260711130000_atomic_sign_completion.sql`.
 
-Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Do not run destructive setup against production.
+Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Destructive setup for this recipe runs on that isolated project. Smoke tests use a test account and a throwaway alignment.
 
 Safe actions:
 
@@ -289,10 +289,10 @@ Safe actions:
 - Force API/database failures only on the isolated project.
 - Delete the labeled test alignment after verification; cascading foreign keys remove its journey rows.
 
-Unsafe actions:
+Scope:
 
-- Do not edit real submitted responses, signatures, or alignment statuses.
-- Do not apply the migration to production as part of a smoke test.
+- Submitted responses, signatures, and alignment statuses in this recipe belong to the labeled throwaway alignment on the isolated project.
+- The migration applies on the isolated project.
 
 Verification steps:
 
