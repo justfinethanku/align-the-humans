@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 29**
+**Total Changelogs: 30**
+
+### [2026-10-27-2024 - ath-23-readme-audience-and-ai](./2026-10-27-2024-ath-23-readme-audience-and-ai.md)
+**Keywords:** [DOCS] [README] [AGENTS] [OPENROUTER] [THEME] [ATH-23]
+README, CLAUDE.md, and AGENTS.md now match the business-partner audience, the public repo, OpenRouter with `anthropic/claude-sonnet-4.6`, Next.js 16.4 and React 19.3, the light default theme, and `supabase/migrations` as the schema.
 
 ### [2026-10-27-0640 - ath-20-shared-rate-limit-and-csp](./2026-10-27-0640-ath-20-shared-rate-limit-and-csp.md)
 **Keywords:** [SECURITY] [RATE-LIMIT] [CSP] [SUPABASE] [ATH-20]

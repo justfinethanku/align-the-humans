@@ -10,9 +10,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Human Alignment** is a Next.js 16 web application that facilitates mutual agreement between partners through AI-guided structured conversations. Two parties independently answer questions about a topic, then Claude AI analyzes responses, identifies conflicts, and guides iterative resolution toward consensus.
+**Human Alignment** is a Next.js 16 (`^16.4.3`) and React 19 (`^19.3.1`) web application for two business partners or co-owners. Each person answers independently. AI comparison surfaces different expectations, and the pair works toward a shared brief for their lawyer. The public site covers starting a business together, bringing someone into the company, or changing how they already work. It is the process before legal drafting. A lawyer drafts the operating agreement from the brief.
 
 **Domain:** https://alignthehumans.com
+
+**Repository:** https://github.com/justfinethanku/align-the-humans (public)
 
 ## Development Commands
 
@@ -39,12 +41,12 @@ Copy `.env.example` to `.env.local`. Required:
 
 ## Tech Stack
 
-- **Framework:** Next.js 16 (App Router, `app/` directory, Turbopack builds) with React 19
+- **Framework:** Next.js `^16.4.3` (App Router, `app/` directory, Turbopack builds) with React `^19.3.1`, from `package.json`
 - **Language:** TypeScript (strict mode, `@/*` path alias maps to project root)
-- **Styling:** Tailwind CSS, dark mode by default (`<html class="dark">`)
+- **Styling:** Tailwind CSS. Dark mode is opt-in via `darkMode: 'class'` (`design-system/tailwind.preset.ts`). The default theme is light: `ThemeProvider` in `app/layout.tsx` sets `defaultTheme="light"` and `enableSystem={false}`, and the root `<html>` has no `dark` class. Marketing pages under `.site` set `color-scheme: light` (`components/site/site.css`).
 - **UI Components:** shadcn/ui in `components/ui/`
-- **Backend:** Supabase (PostgreSQL + RLS + Realtime)
-- **AI:** Vercel AI SDK v5 (`ai` + `@ai-sdk/anthropic`) with Claude Sonnet 4.5
+- **Backend:** Supabase (PostgreSQL + RLS + Realtime). Schema source of truth: `supabase/migrations`.
+- **AI:** Vercel AI SDK (`ai` 5.0.222) through OpenRouter (`@openrouter/ai-sdk-provider`). `AI_MODELS.SONNET` is `anthropic/claude-sonnet-4.6` and `AI_MODELS.HAIKU` is `anthropic/claude-haiku-4.5` (`app/lib/ai-config.ts`). `@ai-sdk/anthropic` is not a dependency.
 - **Forms:** react-hook-form + zod validation
 - **Notifications:** sonner (toast)
 - **Icons:** lucide-react
@@ -81,15 +83,16 @@ Both are typed via `Database` type from `app/lib/database.types.ts` (generated f
 
 ### AI Integration
 
-All AI endpoints use Vercel AI SDK with `generateObject()` (structured output with Zod schemas) rather than `streamText()`:
+AI routes use the Vercel AI SDK. Analysis, question generation, and conflict resolution call `generateObject()` with Zod schemas. Clarity and per-topic suggestions call `generateText()`.
 - `POST /api/alignment/analyze` - Compare responses, detect conflicts (uses `analysisSchema`)
 - `POST /api/alignment/generate-questions` - AI-generate questions from clarity context
 - `POST /api/alignment/resolve-conflicts` - Suggest compromises
-- `POST /api/alignment/generate-document` - Generate agreement document
 - `POST /api/alignment/get-suggestion` - Get AI suggestion for a specific topic
 - `POST /api/alignment/clarity/suggest` - AI-assisted form customization
 
-Model: `anthropic('claude-sonnet-4-5-20250929')`, temperature 0.3 for analysis, higher for creative suggestions.
+`POST /api/alignment/generate-document` renders the agreement preview from stored answers (`app/lib/agreement-snapshots.ts`).
+
+Provider: `resolveModel()` in `app/lib/ai-config.ts` returns an OpenRouter chat model (`createOpenRouter` from `@openrouter/ai-sdk-provider`). Routes pass `resolveModel(promptConfig.model)`. `AI_MODELS.SONNET` is `anthropic/claude-sonnet-4.6`. The `prompts.model` column defaults to that slug (`supabase/migrations/20260701130000_add_prompts_and_audit.sql`). Seed prompts in `app/lib/db/seed-prompts.ts` currently set `z-ai/glm-5.2`; a slug that already contains `/` is forwarded as-is. Analysis temperature defaults to 0.3 (`AI_DEFAULTS.analysis` and the `prompts.temperature` column default). Suggestion and clarity defaults are 0.7.
 
 ### Invite System
 
@@ -152,6 +155,8 @@ Page-specific client components live next to their pages (e.g., `app/alignment/[
 
 ## Database
 
+The schema source of truth is `supabase/migrations`.
+
 ### Core Tables (8 + invitations)
 `profiles`, `alignments`, `alignment_participants`, `alignment_responses`, `alignment_analyses`, `alignment_signatures`, `partners`, `templates`, `alignment_invitations`
 
@@ -172,9 +177,10 @@ All tables have RLS enabled. Policies use `auth.uid()` to scope access.
 
 ## Critical References
 
-- **`/plan_a.md`** (root) - Primary specification with complete UI descriptions, API contracts, and implementation strategy
-- **`/context/supabase_cli.md`** - Database schema docs and CLI reference
-- **`/context/model-integrations.md`** - Claude API reference and pricing
+- **`supabase/migrations/`** - Current database schema
+- **`/plan_a.md`** (root) - Older specification with UI descriptions and API contracts. Current schema is `supabase/migrations`. Its model notes predate OpenRouter.
+- **`/context/supabase_cli.md`** - Supabase CLI notes. The applied schema is `supabase/migrations`.
+- **`/context/model-integrations.md`** - Older model notes. Generation uses OpenRouter as described above.
 
 ## Changelog
 

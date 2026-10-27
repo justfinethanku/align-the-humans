@@ -1,19 +1,18 @@
 # Human Alignment
 
-**Structure for every decision that matters** - from household chores to cofounder equity.
+**Agree on the partnership before you commit to it.** For two business partners or co-owners.
 
-Human Alignment is a Next.js web application that facilitates collaborative decision-making through AI-guided structured conversations. The platform enables partners to think independently, align collectively, and decide confidently on any scale of decision.
+Human Alignment is a Next.js 16 (`^16.4.3`) and React 19 (`^19.3.1`) web application. Two business partners each answer on their own, an AI comparison shows where their expectations differ, and they build a shared brief to review with a lawyer. The public site is that conversation before legal drafting. A lawyer still drafts the operating agreement from the brief.
 
 ## Core Philosophy
 
 **Think independently. Align collectively. Decide confidently.**
 
-Human Alignment transforms how people make decisions together by:
+The public site (`/`, `/example`, `/pricing`) speaks to two business partners or co-owners facing a real commitment:
 
-- **Scale-Agnostic Structure**: Same framework works for chore schedules and equity splits
-- **Independent Thinking → Collective Intelligence**: Separate thinking from negotiating for better outcomes
-- **Practice Compounds Trust**: Start with small decisions, build confidence for big ones
-- **Proactive Alignment**: Align early and often, not just during crises
+- **Starting together, bringing someone in, or changing how you already work**
+- **Independent answers**: Each person answers before seeing the other's
+- **A brief for counsel**: The result is a shared brief. A lawyer drafts the agreement
 
 ## Features
 
@@ -27,27 +26,28 @@ Human Alignment transforms how people make decisions together by:
 
 ### Key Capabilities
 
-- **AI-Powered Analysis**: Claude Sonnet 4.5 analyzes responses and identifies conflicts
-- **Template Library**: Pre-configured flows for common scenarios (cofounder agreements, household decisions, strategic planning)
+- **AI-Powered Analysis**: OpenRouter compares responses and identifies conflicts. The primary model constant is `anthropic/claude-sonnet-4.6` (`AI_MODELS.SONNET` in `app/lib/ai-config.ts`). Each route sends the prompt row's model slug through `resolveModel()`.
+- **Template Library**: Partnership terms, bringing someone in, equity, and operations
 - **Real-time Collaboration**: Partner invitation and status tracking
 - **Document Generation**: Export finalized agreements as PDF
 - **Secure Authentication**: Supabase Auth with email verification
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router), React 19
+- **Framework**: Next.js `^16.4.3` (App Router), React `^19.3.1` (`package.json`)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS. The default theme is light (`defaultTheme="light"` in `app/layout.tsx`).
 - **UI Components**: shadcn/ui
-- **Database**: Supabase (PostgreSQL with Row-Level Security)
-- **AI**: Vercel AI SDK with Anthropic Claude Sonnet 4.5
+- **Database**: Supabase (PostgreSQL with Row-Level Security). Schema source: `supabase/migrations`.
+- **AI**: Vercel AI SDK (`ai` 5.0.222) through OpenRouter (`@openrouter/ai-sdk-provider`). Primary model: `anthropic/claude-sonnet-4.6`. `@ai-sdk/anthropic` is not a dependency.
 - **Hosting**: Vercel
+- **Repository**: Public at https://github.com/justfinethanku/align-the-humans
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ installed
+- Node.js 20.9 or newer (the Next.js 16.4.3 engine range; CI uses Node 22)
 - Supabase account and project
 - OpenRouter API key (`OPEN_ROUTER_API_KEY`) for AI generation
 
@@ -98,7 +98,7 @@ The application requires a Supabase database with the following tables:
 - `partners` - Partner relationships
 - `templates` - Pre-configured alignment question sets
 
-Refer to `plan_a.md` for complete database schema and setup instructions.
+The current schema is the SQL in `supabase/migrations`. Apply those files to the Supabase project. `plan_a.md` is an older specification.
 
 ## Project Structure
 
@@ -145,13 +145,16 @@ Refer to `plan_a.md` for complete database schema and setup instructions.
 ## Documentation
 
 - **Testing**: See `docs/testing-runbook.md` for the current two-partner journey and the automated checks. `E2E_TEST_PLAN.md` has been removed.
-- **Technical Specification**: See `plan_a.md` for complete implementation details
+- **Database schema**: `supabase/migrations`
+- **Technical specification**: `plan_a.md` is an older implementation spec. For current behavior, read the code and `supabase/migrations`.
 - **Copy Guidelines**: See `scrapbook/website copy/philosophy_copy.md` for messaging strategy
 - **Changelog**: See `/changelog/` for development history
 
 ## Contributing
 
-This is currently a private project. Contribution guidelines will be added when the project goes public.
+This GitHub repository is public: https://github.com/justfinethanku/align-the-humans
+
+Open an issue or a pull request.
 
 ## License
 
