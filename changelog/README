@@ -2,11 +2,15 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 27**
+**Total Changelogs: 28**
 
 ### [2026-10-27-0428 - ath-13-testing-runbook](./2026-10-27-0428-ath-13-testing-runbook.md)
 **Keywords:** [DOCS] [TESTING] [SECURITY] [ATH-13]
 Removed the stale E2E plan and its sample password, and rewrote the testing runbook around the current invite-to-PDF journey, `npm test`, and an accurate post-redesign status.
+
+### [2026-10-27-0426 - ath-8-exact-email-partner-search](./2026-10-27-0426-ath-8-exact-email-partner-search.md)
+**Keywords:** [SECURITY] [PARTNERS] [RATE-LIMIT] [EMAIL] [ATH-8]
+ATH-8: partner search returns a profile only for an exact email, rate-limited, with no name or substring scan.
 
 ### [2026-10-27-0425 - env-var-docs-ath-12](./2026-10-27-0425-env-var-docs-ath-12.md)
 **Keywords:** [DOCS] [ENV] [OPENROUTER] [ATH-12]

@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { InviteStatus } from "@/components/alignment/InviteStatus"
 import { UpgradeDialog } from "@/components/monetization/UpgradeDialog"
+import { normalizeExactEmail } from "@/app/lib/partner-search"
 import { toast } from "sonner"
 
 // Types
@@ -296,13 +297,14 @@ export function ClarityForm({
    * Debounced partner search
    */
   React.useEffect(() => {
-    if (searchQuery.trim().length < 2) {
+    const email = normalizeExactEmail(searchQuery)
+    if (!email) {
       setSearchResults([])
       return
     }
 
     const timer = setTimeout(() => {
-      performPartnerSearch(searchQuery)
+      performPartnerSearch(email)
     }, 300)
 
     return () => clearTimeout(timer)
@@ -321,7 +323,16 @@ export function ClarityForm({
       )
 
       if (!response.ok) {
-        throw new Error("Failed to search partners")
+        let message = "Failed to search partners"
+        try {
+          const body = await response.json()
+          if (typeof body?.error?.message === "string" && body.error.message) {
+            message = body.error.message
+          }
+        } catch {
+          // Keep the generic message when the body is not JSON.
+        }
+        throw new Error(message)
       }
 
       const data = await response.json()
@@ -630,7 +641,7 @@ export function ClarityForm({
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                       <Input
                         type="text"
-                        placeholder="Search for a partner by name or email..."
+                        placeholder="Search for a partner by exact email..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
