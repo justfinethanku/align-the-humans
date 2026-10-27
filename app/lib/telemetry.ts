@@ -1,9 +1,9 @@
 /**
  * Telemetry and Event Logging
  *
- * Provides structured logging for AI operations and application events.
- * Console-based implementation for now, can be enhanced with external
- * analytics services later (e.g., Vercel Analytics, PostHog, etc.).
+ * Structured console logs for AI operations and application events.
+ * Auth-hook 401/500s and rejected Resend sends are not logged here:
+ * those page a person through `reportOpsAlert` in `app/lib/ops-alert.ts`.
  */
 
 

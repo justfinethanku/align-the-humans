@@ -109,6 +109,7 @@ export default async function AdminSystemPage() {
           <EnvRow label="AI Gateway" value={process.env.AI_GATEWAY_API_KEY ? 'Configured' : 'Not configured'} />
           <EnvRow label="Supabase URL" value={process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Configured' : 'Not configured'} />
           <EnvRow label="Resend API" value={process.env.RESEND_API_KEY ? 'Configured' : 'Not configured'} />
+          <EnvRow label="Ops alert email" value={process.env.OPS_ALERT_EMAIL ? 'Configured' : 'Not configured'} />
           <EnvRow label="Node Env" value={process.env.NODE_ENV ?? 'unknown'} />
         </div>
       </div>

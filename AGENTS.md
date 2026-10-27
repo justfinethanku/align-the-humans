@@ -23,7 +23,7 @@ npm run dev          # Start dev server (localhost:3000)
 npm run build        # Production build
 npm run lint         # ESLint CLI (flat config in eslint.config.mjs)
 npm run type-check   # TypeScript check (tsc --noEmit)
-npm test             # Seven node --test cases for the Auth email hook
+npm test             # node --test cases for the auth email hook, partner search, rate limit, and ops alerts
 npm start            # Run production build
 ```
 
@@ -36,6 +36,7 @@ Copy `.env.example` to `.env.local`. Required:
 - `OPEN_ROUTER_API_KEY` - OpenRouter key for AI generation. The app reads this name first and falls back to `OPENROUTER_API_KEY` when it is unset.
 - `RESEND_API_KEY` - Resend API key for transactional email
 - `SUPABASE_AUTH_HOOK_SECRET` - Standard Webhooks secret (`v1,whsec_...`) for the Supabase Send Email hook
+- `OPS_ALERT_EMAIL` - Optional comma-separated inbox. A 401/500 from `/api/auth/email`, or a rejected Resend send, emails this address at most once per 15 minutes. Unset means log only.
 - `INVITE_TOKEN_SECRET` - Secret for encrypting invite tokens (AES-256-GCM)
 - `AI_GATEWAY_API_KEY` - Vercel AI Gateway key used only for admin model discovery, not generation (optional for local dev)
 

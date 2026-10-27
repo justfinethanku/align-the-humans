@@ -5,6 +5,7 @@
  * All email sends go through Resend with React Email templates.
  */
 
+import { reportOpsAlert } from './ops-alert';
 import { getResendClient, FROM_EMAIL, getAppUrl } from './resend';
 import { InvitePartnerEmail } from './emails/invite-partner';
 import { AlignmentReadyEmail } from './emails/alignment-ready';
@@ -16,6 +17,27 @@ interface SendResult {
   success: boolean;
   id?: string;
   error?: string;
+}
+
+function describeSendError(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message: unknown }).message;
+    if (typeof message === 'string' && message.length > 0) return message;
+  }
+  return 'Unknown error';
+}
+
+async function failSend(kind: string, error: unknown): Promise<SendResult> {
+  const message = describeSendError(error);
+  console.error(`[Email] ${kind} send failed:`, error);
+  await reportOpsAlert({
+    source: 'resend',
+    status: 500,
+    summary: `Resend rejected ${kind}`,
+    detail: message,
+  });
+  return { success: false, error: message };
 }
 
 /**
@@ -43,15 +65,11 @@ export async function sendInviteEmail(params: {
       }),
     });
 
-    if (error) {
-      console.error('[Email] Invite send failed:', error);
-      return { success: false, error: error.message };
-    }
+    if (error) return failSend('invite', error);
 
     return { success: true, id: data?.id };
   } catch (err) {
-    console.error('[Email] Invite send error:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return failSend('invite', err);
   }
 }
 
@@ -83,15 +101,11 @@ export async function sendAlignmentReadyEmail(params: {
       }),
     });
 
-    if (error) {
-      console.error('[Email] Alignment ready send failed:', error);
-      return { success: false, error: error.message };
-    }
+    if (error) return failSend('alignment-ready', error);
 
     return { success: true, id: data?.id };
   } catch (err) {
-    console.error('[Email] Alignment ready send error:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return failSend('alignment-ready', err);
   }
 }
 
@@ -127,15 +141,11 @@ export async function sendAnalysisCompleteEmail(params: {
       }),
     });
 
-    if (error) {
-      console.error('[Email] Analysis complete send failed:', error);
-      return { success: false, error: error.message };
-    }
+    if (error) return failSend('analysis-complete', error);
 
     return { success: true, id: data?.id };
   } catch (err) {
-    console.error('[Email] Analysis complete send error:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return failSend('analysis-complete', err);
   }
 }
 
@@ -167,15 +177,11 @@ export async function sendAlignmentCompleteEmail(params: {
       }),
     });
 
-    if (error) {
-      console.error('[Email] Alignment complete send failed:', error);
-      return { success: false, error: error.message };
-    }
+    if (error) return failSend('alignment-complete', error);
 
     return { success: true, id: data?.id };
   } catch (err) {
-    console.error('[Email] Alignment complete send error:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return failSend('alignment-complete', err);
   }
 }
 
@@ -202,14 +208,10 @@ export async function sendWelcomeEmail(params: {
       }),
     });
 
-    if (error) {
-      console.error('[Email] Welcome send failed:', error);
-      return { success: false, error: error.message };
-    }
+    if (error) return failSend('welcome', error);
 
     return { success: true, id: data?.id };
   } catch (err) {
-    console.error('[Email] Welcome send error:', err);
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return failSend('welcome', err);
   }
 }

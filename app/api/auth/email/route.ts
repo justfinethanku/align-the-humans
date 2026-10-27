@@ -21,14 +21,19 @@
  * unsigned payloads — this endpoint can send email as Human Alignment's
  * Resend account to any address an attacker supplies, so it must never
  * process an unverified request in production.
+ *
+ * A 401 or 500 from this route, including a Resend rejection, also calls
+ * reportOpsAlert. That emails OPS_ALERT_EMAIL when it is set and only
+ * logs when it is not. Alerting never changes the response.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { render } from '@react-email/components';
 import { getResendClient, FROM_EMAIL, getAppUrl } from '@/app/lib/resend';
 import { AuthConfirmEmail } from '@/app/lib/emails/auth-confirm';
 import { PasswordResetEmail } from '@/app/lib/emails/password-reset';
 import { MagicLinkEmail } from '@/app/lib/emails/magic-link';
+import { isAuthEmailAlertStatus, reportOpsAlert } from '@/app/lib/ops-alert';
 import { checkRateLimit, clientIpFromForwarded } from '@/app/lib/rate-limit';
 import { planAuthEmail, verifySupabaseHookPayload } from './hook';
 
@@ -49,6 +54,18 @@ type HookPayload = {
 
 function isHookPayload(payload: unknown): payload is HookPayload {
   return typeof payload === 'object' && payload !== null;
+}
+
+function alertAuthEmailFailure(status: number, summary: string, detail?: string): void {
+  if (!isAuthEmailAlertStatus(status)) return;
+  after(async () => {
+    await reportOpsAlert({
+      source: 'auth-email',
+      status,
+      summary,
+      detail,
+    });
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -73,6 +90,7 @@ export async function POST(request: NextRequest) {
           );
         }
       }
+      alertAuthEmailFailure(verifyResult.status, verifyResult.message);
       return NextResponse.json(
         { error: verifyResult.message },
         { status: verifyResult.status }
@@ -150,6 +168,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error(`[Auth Email] Failed to send ${emailActionType} email:`, error);
+      alertAuthEmailFailure(500, 'Resend rejected the auth email', error.message);
       return NextResponse.json(
         { error: 'Failed to send email' },
         { status: 500 }
@@ -161,6 +180,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('[Auth Email] Webhook error:', err);
+    alertAuthEmailFailure(
+      500,
+      'Auth email hook threw',
+      err instanceof Error ? err.message : 'Unknown error'
+    );
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
