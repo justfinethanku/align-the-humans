@@ -49,7 +49,7 @@ Human Alignment transforms how people make decisions together by:
 
 - Node.js 18+ installed
 - Supabase account and project
-- Anthropic API key (for Claude)
+- OpenRouter API key (`OPEN_ROUTER_API_KEY`) for AI generation
 
 ### Installation
 
@@ -74,7 +74,10 @@ Edit `.env.local` and add your credentials:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anon key
 - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (server-only)
 - `INVITE_TOKEN_SECRET`: Random secret used to encrypt invite tokens before storage (any strong string)
-- `AI_GATEWAY_API_KEY`: Your Vercel AI Gateway API key
+- `OPEN_ROUTER_API_KEY`: OpenRouter API key for AI generation. The app reads this name first and falls back to `OPENROUTER_API_KEY` when it is unset.
+- `RESEND_API_KEY`: Resend API key for transactional email (invites and auth mail)
+- `SUPABASE_AUTH_HOOK_SECRET`: Standard Webhooks secret (`v1,whsec_...`) that verifies the Supabase Send Email hook at `/api/auth/email`
+- `AI_GATEWAY_API_KEY`: Vercel AI Gateway key used only for the admin model-discovery list, not for generation (optional for local dev)
 
 4. Run the development server:
 ```bash

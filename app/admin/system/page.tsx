@@ -104,6 +104,7 @@ export default async function AdminSystemPage() {
       <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6">
         <h2 className="text-xl font-semibold text-zinc-100 mb-4">Environment</h2>
         <div className="space-y-2 text-sm">
+          {/* OPEN_ROUTER_API_KEY is canonical; OPENROUTER_API_KEY is the fallback. */}
           <EnvRow label="OpenRouter API" value={process.env.OPEN_ROUTER_API_KEY || process.env.OPENROUTER_API_KEY ? 'Configured' : 'Not configured'} />
           <EnvRow label="AI Gateway" value={process.env.AI_GATEWAY_API_KEY ? 'Configured' : 'Not configured'} />
           <EnvRow label="Supabase URL" value={process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Configured' : 'Not configured'} />

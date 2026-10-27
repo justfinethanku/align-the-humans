@@ -10,6 +10,7 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 
 const openrouter = createOpenRouter({
+  // Canonical name is OPEN_ROUTER_API_KEY. OPENROUTER_API_KEY is a fallback.
   apiKey: process.env.OPEN_ROUTER_API_KEY ?? process.env.OPENROUTER_API_KEY,
 });
 
