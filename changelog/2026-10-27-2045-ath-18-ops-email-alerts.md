@@ -2,7 +2,7 @@
 
 **Keywords:** [OPS] [EMAIL] [RESEND] [AUTH] [ALERT] [ATH-18]
 **Session:** 2026-10-27, evening UTC
-**Commit:** recorded in the pull request for this change
+**Commit:** 2156faf
 **Linear:** ATH-18
 
 ## What Changed
