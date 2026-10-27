@@ -54,7 +54,7 @@ Pull request 25's checks were `Vercel`, `Vercel Preview Comments`, and `ci`. The
 
 ## Database
 
-The only Supabase project ref named in the repo is `qvzfcezbuzmvglgiolmh` (`.env.example`, `app/lib/README.md`, and the November 2025 setup notes). This environment's `NEXT_PUBLIC_SUPABASE_URL` host is `qvzfcezbuzmvglgiolmh.supabase.co`. There is no `supabase/config.toml` and no second project ref in the repo. No staging Supabase project is configured here. Creating one is out of scope.
+The only Supabase project ref named in the repo is `qvzfcezbuzmvglgiolmh` (`.env.example`, `app/lib/README.md`, and the November 2025 setup notes). This environment's `NEXT_PUBLIC_SUPABASE_URL` host is `qvzfcezbuzmvglgiolmh.supabase.co`. `supabase/config.toml` configures the local stack only and names no second project ref. No staging Supabase project is configured here. Creating one is out of scope.
 
 Vercel has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` on the development, preview, and production targets. Those values were not read. **UNKNOWN:** whether preview and production point at the same Supabase project.
 

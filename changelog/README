@@ -2,7 +2,7 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 33**
+**Total Changelogs: 34**
 
 ### [2026-10-27-2245 - ath-38-ai-empty-reply-recovery](./2026-10-27-2245-ath-38-ai-empty-reply-recovery.md)
 **Keywords:** [AI] [OPENROUTER] [RETRY] [FALLBACK] [ATH-38]
@@ -11,6 +11,10 @@ An empty or schema-invalid model reply is retried on the prompt's model, then on
 ### [2026-10-27-1648 - ath-fleet-207b-restore-linear-lines](./2026-10-27-1648-ath-fleet-207b-restore-linear-lines.md)
 **Keywords:** [DOCS] [AGENTS] [LINEAR] [FLEET-207] [ATH-FLEET-207B]
 Restores the original "Work and status live in Linear." team line that the FLEET-98 pointer change dropped.
+
+### [2026-10-27-1934 - ath-21-core-journey-e2e](./2026-10-27-1934-ath-21-core-journey-e2e.md)
+**Keywords:** [TESTING] [E2E] [PLAYWRIGHT] [SUPABASE] [CI] [ATH-21]
+Automated Playwright test for the core two-partner journey on a local Supabase stack with made-up accounts and a stubbed model, run on every pull request.
 
 ### [2026-10-27-2045 - ath-18-ops-email-alerts](./2026-10-27-2045-ath-18-ops-email-alerts.md)
 **Keywords:** [OPS] [EMAIL] [RESEND] [AUTH] [ALERT] [ATH-18]

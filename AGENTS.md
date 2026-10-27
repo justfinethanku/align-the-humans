@@ -28,6 +28,7 @@ npm run build        # Production build
 npm run lint         # ESLint CLI (flat config in eslint.config.mjs)
 npm run type-check   # TypeScript check (tsc --noEmit)
 npm test             # node --test cases for the auth email hook, partner search, rate limit, and ops alerts
+npm run test:e2e     # Core journey in Chromium against local Supabase (needs Docker; model stubbed)
 npm start            # Run production build
 ```
 

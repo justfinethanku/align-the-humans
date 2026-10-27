@@ -6,7 +6,7 @@ This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 
 
 The long-document PDF check and the signed-in two-partner journey have not been re-run since the September 27, 2026 redesign. Those checks are tracked in [ATH-14](https://linear.app/contentionmedia/issue/ATH-14) and [ATH-32](https://linear.app/contentionmedia/issue/ATH-32).
 
-The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. How production deploys, how to compare applied migrations with `supabase/migrations`, and how to roll a deploy or a migration back are in `docs/deploy.md`. This repo has no `supabase/config.toml`, so there is no checked-in local Supabase project either. A recipe that says "isolated project" means a project an operator names. Migrations, invite-row inserts, and forced failures in those recipes run on that isolated project.
+The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. How production deploys, how to compare applied migrations with `supabase/migrations`, and how to roll a deploy or a migration back are in `docs/deploy.md`. `supabase/config.toml` describes a local Supabase stack only; it names no hosted project. A recipe that says "isolated project" means a project an operator names. Migrations, invite-row inserts, and forced failures in those recipes run on that isolated project.
 
 ## Automated checks
 
@@ -20,7 +20,7 @@ The July 11–12, 2026 sections below are historical evidence from before that r
 6. fails closed in production when the hook secret is not configured
 7. plans each auth email type the route handles
 
-These tests do not cover invite, join, answers, analysis, signatures, or PDF export. `npm run lint`, `npm run type-check`, and `npm run build` are the other repository checks. None of them is a signed-in journey.
+These tests do not cover invite, join, answers, analysis, signatures, or PDF export. `npm run lint`, `npm run type-check`, and `npm run build` are the other repository checks. The signed-in core journey (invite, join, answer, analyze, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts.
 
 ## Current journey
 

@@ -3,6 +3,8 @@
 -- Topic pattern: alignment:<alignment_id>:responses
 -- Requires: alignment_participants(alignment_id, user_id) populated
 -- =========================================
+do $$
+begin
 
 -- Ensure RLS is enabled (it is by default in Supabase projects, but assert)
 alter table realtime.messages enable row level security;
@@ -78,3 +80,8 @@ with check (
       and ap.alignment_id = split_part(topic, ':', 2)::uuid
   )
 );
+exception when insufficient_privilege then
+  -- Local Supabase stacks can own realtime.messages under another role. Hosted projects can run these statements, so the guard changes nothing there.
+  raise warning 'realtime.messages policies skipped: migration role does not own realtime.messages';
+end
+$$;
