@@ -88,7 +88,7 @@ Both are typed via `Database` type from `app/lib/database.types.ts` (generated f
 
 ### AI Integration
 
-AI routes use the Vercel AI SDK. Analysis, question generation, and conflict resolution call `generateObject()` with Zod schemas. Clarity and per-topic suggestions call `generateText()`.
+AI routes use the Vercel AI SDK. Analysis, question generation, and conflict resolution call `generateObject()` with Zod schemas. Clarity and per-topic suggestions call `generateText()`. An empty or schema-invalid reply is tried once more on `prompts.model`, then once on the other model in `AI_MODELS` (`fallbackModelFor` in `app/lib/ai-config.ts`: Haiku for short suggestions, Sonnet for structured generation). `POST /api/alignment/generate-document` does not call a model.
 - `POST /api/alignment/analyze` - Compare responses, detect conflicts (uses `analysisSchema`)
 - `POST /api/alignment/generate-questions` - AI-generate questions from clarity context
 - `POST /api/alignment/resolve-conflicts` - Suggest compromises

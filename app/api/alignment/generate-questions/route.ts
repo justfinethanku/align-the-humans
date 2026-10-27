@@ -10,8 +10,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateObject } from 'ai';
-import { resolveModel } from '@/app/lib/ai-config';
+import { generateObjectRecovered } from '@/app/lib/ai-generate';
+import { asAIGenerationError, InvalidModelOutputError } from '@/app/lib/ai-recovery';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { z } from 'zod';
 
@@ -27,7 +27,6 @@ import {
 } from '@/app/lib/templates';
 import {
   ValidationError,
-  AIError,
   AlignmentError,
   RateLimitError,
   createErrorResponse,
@@ -146,7 +145,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       questions = generatedQuestions.questions;
       source = {
         type: 'ai',
-        model: promptConfig.model,
+        model: generatedQuestions.modelId,
       };
 
       // Validate generated questions
@@ -248,12 +247,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // 7. Log success
-    if (source.type === 'ai') {
+    if (source.type === 'ai' && source.model) {
       telemetry.logAIOperation({
         event: 'ai.generation.complete',
         alignmentId: validatedRequest.alignmentId,
         latencyMs: timer.stop(),
-        model: promptConfig.model,
+        model: source.model,
         success: true,
         userId,
       });
@@ -297,7 +296,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 async function generateQuestionsWithAI(
   request: GenerateQuestionsRequest,
   userId: string
-): Promise<{ questions: AlignmentQuestion[] }> {
+): Promise<{ questions: AlignmentQuestion[]; modelId: string }> {
   const timer = new PerformanceTimer();
 
   const promptConfig = await getPrompt('generate-questions');
@@ -311,40 +310,43 @@ async function generateQuestionsWithAI(
     userId,
   });
 
-  try {
-    const { object } = await generateObject({
-      model: resolveModel(promptConfig.model) as any,
-      schema: z.object({
-        questions: z.array(
+  const questionSchema = z.object({
+    questions: z.array(
+      z.object({
+        id: z.string(),
+        prompt: z.string(),
+        description: z.string().optional(),
+        type: z.enum(['short_text', 'long_text', 'multiple_choice', 'checkbox', 'number', 'scale']),
+        required: z.boolean(),
+        options: z.array(
           z.object({
             id: z.string(),
-            prompt: z.string(),
-            description: z.string().optional(),
-            type: z.enum(['short_text', 'long_text', 'multiple_choice', 'checkbox', 'number', 'scale']),
-            required: z.boolean(),
-            options: z.array(
-              z.object({
-                id: z.string(),
-                label: z.string(),
-              })
-            ).optional(),
-            followUps: z.array(z.any()).optional(),
-            aiHints: z.object({
-              explainPrompt: z.string().optional(),
-              examplePrompt: z.string().optional(),
-              suggestionPrompt: z.string().optional(),
-            }).optional(),
-            // Explicit keys: the AI SDK marks zod 4 records as closed objects,
-            // so a record here would tell the model metadata must be empty.
-            metadata: z.object({
-              category: z.string().optional(),
-              placeholder: z.string().optional(),
-              min: z.number().optional(),
-              max: z.number().optional(),
-            }).optional(),
+            label: z.string(),
           })
-        ),
-      }),
+        ).optional(),
+        followUps: z.array(z.any()).optional(),
+        aiHints: z.object({
+          explainPrompt: z.string().optional(),
+          examplePrompt: z.string().optional(),
+          suggestionPrompt: z.string().optional(),
+        }).optional(),
+        // Explicit keys: the AI SDK marks zod 4 records as closed objects,
+        // so a record here would tell the model metadata must be empty.
+        metadata: z.object({
+          category: z.string().optional(),
+          placeholder: z.string().optional(),
+          min: z.number().optional(),
+          max: z.number().optional(),
+        }).optional(),
+      })
+    ),
+  });
+
+  try {
+    const recovered = await generateObjectRecovered({
+      modelId: promptConfig.model,
+      task: 'structured',
+      schema: questionSchema,
       system: promptConfig.systemPrompt,
       prompt: renderPrompt(promptConfig.userPromptTemplate, {
         topic: request.clarity.topic,
@@ -355,24 +357,22 @@ async function generateQuestionsWithAI(
       }),
       temperature: promptConfig.temperature,
       maxOutputTokens: promptConfig.maxTokens,
+      validate: (object) => {
+        const validQuestions = object.questions.filter(isValidQuestion);
+        if (validQuestions.length === 0) {
+          throw new InvalidModelOutputError('No valid questions produced');
+        }
+      },
     });
 
-    // Validate that all questions are valid
-    const validQuestions = object.questions.filter(isValidQuestion);
-    if (validQuestions.length === 0) {
-      throw AIError.generationFailed('question generation', 'No valid questions produced');
-    }
-
-    return { questions: validQuestions as AlignmentQuestion[] };
+    const validQuestions = recovered.object.questions.filter(isValidQuestion);
+    return { questions: validQuestions as AlignmentQuestion[], modelId: recovered.modelId };
   } catch (error) {
     logError(error, {
       alignmentId: request.alignmentId,
       operation: 'generateQuestionsWithAI',
     });
-    throw AIError.generationFailed(
-      'question generation',
-      error instanceof Error ? error.message : 'Unknown error'
-    );
+    throw asAIGenerationError('question generation', error);
   }
 }
 

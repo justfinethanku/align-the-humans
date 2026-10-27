@@ -30,6 +30,7 @@ import {
   Loader2,
   CheckCircle2
 } from 'lucide-react';
+import { AI_OUTPUT_RETRY_MESSAGE, messageFromFailedResponse } from '@/app/lib/api-error-message';
 import { cn } from '@/lib/utils';
 
 interface QuestionnaireClientProps {
@@ -71,6 +72,7 @@ export function QuestionnaireClient({
 
   // AI assistance state
   const [aiAssistance, setAiAssistance] = useState<AIAssistance | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const aiRequestInFlight = useRef(false);
 
@@ -262,6 +264,7 @@ export function QuestionnaireClient({
         setCurrentQuestionIndex((prev) => prev + 1);
         setShowValidation(false);
         setAiAssistance(null);
+        setAiError(null);
       }
     }
   };
@@ -274,6 +277,7 @@ export function QuestionnaireClient({
       setCurrentQuestionIndex((prev) => prev - 1);
       setShowValidation(false);
       setAiAssistance(null);
+      setAiError(null);
     }
   };
 
@@ -286,6 +290,7 @@ export function QuestionnaireClient({
     try {
       setAiLoading(true);
       setAiAssistance(null);
+      setAiError(null);
 
       const response = await fetch('/api/alignment/get-suggestion', {
         method: 'POST',
@@ -310,7 +315,7 @@ export function QuestionnaireClient({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get AI assistance');
+        throw new Error(await messageFromFailedResponse(response, AI_OUTPUT_RETRY_MESSAGE));
       }
 
       const data = await response.json();
@@ -322,6 +327,7 @@ export function QuestionnaireClient({
       });
     } catch (error) {
       console.error('AI assistance error:', error);
+      setAiError(error instanceof Error ? error.message : AI_OUTPUT_RETRY_MESSAGE);
     } finally {
       setAiLoading(false);
       aiRequestInFlight.current = false;
@@ -340,6 +346,7 @@ export function QuestionnaireClient({
       setSubmitError('Please answer all required questions before submitting.');
       setCurrentQuestionIndex(firstInvalidIndex);
       setAiAssistance(null);
+      setAiError(null);
       return;
     }
 
@@ -561,6 +568,15 @@ export function QuestionnaireClient({
                 </div>
               </div>
 
+              {aiError && (
+                <div
+                  className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-900/10 dark:text-red-400"
+                  role="alert"
+                >
+                  {aiError}
+                </div>
+              )}
+
               {/* AI Assistance Display */}
               {aiAssistance && aiAssistance.questionId === currentQuestion.id && (
                 <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 dark:bg-primary/10">
@@ -612,6 +628,7 @@ export function QuestionnaireClient({
                         setCurrentQuestionIndex(idx);
                         setShowValidation(false);
                         setAiAssistance(null);
+                        setAiError(null);
                       }}
                       className={cn(
                         "h-2.5 w-2.5 rounded-full transition-all",

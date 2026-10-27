@@ -18,8 +18,8 @@
 
 import { after, NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { generateObject } from 'ai';
-import { resolveModel } from '@/app/lib/ai-config';
+import { generateObjectRecovered } from '@/app/lib/ai-generate';
+import { errorLogMessage } from '@/app/lib/ai-recovery';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
 import { createServerClient, createAdminClient, getCurrentUser, type SupabaseServerClient } from '@/app/lib/supabase-server';
 import { getRoundResponses, saveAnalysis, isParticipant } from '@/app/lib/db-helpers';
@@ -680,34 +680,41 @@ async function analyzeResponses(
     responseB: JSON.stringify(responseB.answers, null, 2),
   });
 
+  let modelUsed = promptConfig.model;
+
   try {
-    const result = await generateObject({
-      model: resolveModel(promptConfig.model) as any,
+    const recovered = await generateObjectRecovered({
+      modelId: promptConfig.model,
+      task: 'structured',
       schema: analysisSchema,
       system: promptConfig.systemPrompt,
       prompt,
       temperature: promptConfig.temperature,
       maxOutputTokens: promptConfig.maxTokens,
+      onModel: (id) => {
+        modelUsed = id;
+      },
     });
 
-    return result.object;
+    return recovered.object;
   } catch (error) {
-    // Log AI-specific error
+    // Log AI-specific error. Empty or schema-invalid output has already been
+    // retried on the prompt model and on the other configured model.
     telemetry.logAIOperation({
       event: 'ai.analysis.error',
       alignmentId,
       latencyMs: 0,
-      model: promptConfig.model,
+      model: modelUsed,
       success: false,
       errorCode: error instanceof Error ? error.name : 'UNKNOWN',
-      errorMessage: error instanceof Error ? error.message : 'AI analysis failed',
+      errorMessage: errorLogMessage(error),
     });
 
     throw new AlignmentError(
       'AI analysis failed. Please try again.',
       'AI_ANALYSIS_FAILED',
       502,
-      { originalError: error instanceof Error ? error.message : String(error) }
+      { originalError: errorLogMessage(error) }
     );
   }
 }

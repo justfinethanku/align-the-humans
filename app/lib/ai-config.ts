@@ -54,6 +54,24 @@ export function resolveModel(modelId: string) {
   return openrouter.chat(toOpenRouterSlug(modelId));
 }
 
+export type ModelTask = 'suggestion' | 'structured';
+
+/**
+ * Second model when the prompt's model returns empty or schema-invalid output.
+ *
+ * `prompts.model` stays the primary. These two slugs are the alternates already
+ * named in AI_MODELS, so recovery does not need another database column and
+ * does not change which model a prompt is configured to use. Short suggestions
+ * fall back to Haiku. Structured generation falls back to Sonnet. When the
+ * prompt already uses that slug, the other one is the alternate.
+ */
+export function fallbackModelFor(primaryModelId: string, task: ModelTask = 'suggestion'): string {
+  const primary = toOpenRouterSlug(primaryModelId);
+  const preferred = task === 'structured' ? AI_MODELS.SONNET : AI_MODELS.HAIKU;
+  if (primary !== preferred) return preferred;
+  return preferred === AI_MODELS.SONNET ? AI_MODELS.HAIKU : AI_MODELS.SONNET;
+}
+
 // ============================================================================
 // Vercel AI Gateway - Dynamic Model Discovery
 // ============================================================================

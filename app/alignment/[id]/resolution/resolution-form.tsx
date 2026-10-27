@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Lightbulb, TrendingUp, Loader2, AlertCircle, Flag, RefreshCw } from 'lucide-react';
 import type { AlignmentStatus, ConflictItem } from '@/app/lib/types';
+import { AI_OUTPUT_RETRY_MESSAGE, messageFromFailedResponse } from '@/app/lib/api-error-message';
 
 interface ResolutionFormProps {
   alignmentId: string;
@@ -236,7 +237,7 @@ export function ResolutionForm({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch AI suggestions');
+        throw new Error(await messageFromFailedResponse(response, AI_OUTPUT_RETRY_MESSAGE));
       }
 
       const data = await response.json();
@@ -248,7 +249,7 @@ export function ResolutionForm({
         },
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch examples');
+      setError(err instanceof Error ? err.message : AI_OUTPUT_RETRY_MESSAGE);
     } finally {
       setLoadingAI(null);
     }
@@ -274,7 +275,7 @@ export function ResolutionForm({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch AI implications');
+        throw new Error(await messageFromFailedResponse(response, AI_OUTPUT_RETRY_MESSAGE));
       }
 
       const data = await response.json();
@@ -286,7 +287,7 @@ export function ResolutionForm({
         },
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch implications');
+      setError(err instanceof Error ? err.message : AI_OUTPUT_RETRY_MESSAGE);
     } finally {
       setLoadingAI(null);
     }
@@ -312,7 +313,7 @@ export function ResolutionForm({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch AI suggestions');
+        throw new Error(await messageFromFailedResponse(response, AI_OUTPUT_RETRY_MESSAGE));
       }
 
       const data = await response.json();
@@ -324,7 +325,7 @@ export function ResolutionForm({
         },
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch suggestions');
+      setError(err instanceof Error ? err.message : AI_OUTPUT_RETRY_MESSAGE);
     } finally {
       setLoadingAI(null);
     }
