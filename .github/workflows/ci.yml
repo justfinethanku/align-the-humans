@@ -1,0 +1,59 @@
+name: CI
+
+# Status-check context is the job name `ci`. Branch protection and rulesets
+# on main should require that context. Renaming the job changes the context.
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # No .nvmrc or package.json engines field. @types/node is 22, and
+          # Next 16 supports Node 20.9+, so CI uses the Node 22 LTS line.
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        env:
+          # Compile-only stand-ins. Not credentials. next build inlines
+          # NEXT_PUBLIC_* and prerender reaches the Supabase client
+          # factories, which throw when these are unset.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: public-anon-key-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: service-role-placeholder
+          INVITE_TOKEN_SECRET: invite-token-placeholder
+        run: npm run build

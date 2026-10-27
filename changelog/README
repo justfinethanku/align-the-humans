@@ -4,6 +4,10 @@ This is an auto-generated index of all changelog entries. Use Cmd+F to search ac
 
 **Total Changelogs: 25**
 
+### [2026-10-27-0423 - github-actions-ci](./2026-10-27-0423-github-actions-ci.md)
+**Keywords:** [CI] [GITHUB-ACTIONS] [LINT] [TYPECHECK] [TEST] [BUILD]
+ATH-11: GitHub Actions runs lint, type-check, npm test, and a placeholder-env production build on pull requests to main and on pushes to main.
+
 ### [2026-10-26-0619 - admin-client-service-role](./2026-10-26-0619-admin-client-service-role.md)
 **Keywords:** [SECURITY] [SUPABASE] [RLS] [ADMIN] [ATH-30]
 ATH-30: createAdminClient is sync and cookie-free, so its queries run as the service role instead of the signed-in user. Partner search profile reads stay RLS-bound to keep current visibility.
