@@ -4,6 +4,10 @@ Rules: The Fleet Handbook is the only source of rules: https://linear.app/conten
 - Fleet Handbook: https://linear.app/contentionmedia/document/the-fleet-handbook-f3713ba1f434
 - Operating system index: https://linear.app/contentionmedia/document/the-operating-system-index-of-rules-templates-and-sops-3766418ca97b
 
+## GitHub-synced Linear issues
+Some Linear issues are synced from GitHub issues. The sync overwrites edits made on the Linear side, and Linear comments can echo back to GitHub. Work these through GitHub: comment on the GitHub issue, link the PR with `Fixes #<n>`, and let the sync close the Linear copy when the PR merges. Merging the PR is fine.
+(How-to, FLEET-144/151, ruled by Jon with Lex, Oct 27 2026.)
+
 # AGENTS.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
