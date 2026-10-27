@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
-    "test": "tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --outDir /tmp/align-auth-email-tests --rootDir app/api/auth/email app/api/auth/email/hook.ts app/api/auth/email/hook.test.ts && node --test /tmp/align-auth-email-tests/hook.test.js && tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --outDir /tmp/align-partner-search-tests --rootDir app/lib app/lib/partner-search.ts app/lib/partner-search.test.ts app/lib/rate-limit.ts app/lib/rate-limit.test.ts && node --test /tmp/align-partner-search-tests/partner-search.test.js /tmp/align-partner-search-tests/rate-limit.test.js && tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --outDir /tmp/align-ops-alert-tests --rootDir app/lib app/lib/ops-alert.ts app/lib/ops-alert.test.ts app/lib/rate-limit.ts && node --test /tmp/align-ops-alert-tests/ops-alert.test.js && tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --lib ES2022,DOM --outDir /tmp/align-ai-recovery-tests --rootDir app/lib app/lib/ai-recovery.ts app/lib/ai-recovery.test.ts app/lib/ai-generate.ts app/lib/ai-config.ts app/lib/api-error-message.ts app/lib/api-error-message.test.ts app/lib/errors.ts && NODE_PATH=./node_modules node --test /tmp/align-ai-recovery-tests/ai-recovery.test.js /tmp/align-ai-recovery-tests/api-error-message.test.js"
+    "test": "tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --outDir /tmp/align-auth-email-tests --rootDir app/api/auth/email app/api/auth/email/hook.ts app/api/auth/email/hook.test.ts && node --test /tmp/align-auth-email-tests/hook.test.js && tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --outDir /tmp/align-partner-search-tests --rootDir app/lib app/lib/partner-search.ts app/lib/partner-search.test.ts app/lib/rate-limit.ts app/lib/rate-limit.test.ts && node --test /tmp/align-partner-search-tests/partner-search.test.js /tmp/align-partner-search-tests/rate-limit.test.js && tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --outDir /tmp/align-ops-alert-tests --rootDir app/lib app/lib/ops-alert.ts app/lib/ops-alert.test.ts app/lib/rate-limit.ts && node --test /tmp/align-ops-alert-tests/ops-alert.test.js && tsc --pretty false --module commonjs --moduleResolution node --esModuleInterop --strict --target ES2022 --skipLibCheck --lib ES2022,DOM --outDir /tmp/align-ai-recovery-tests --rootDir app/lib app/lib/ai-recovery.ts app/lib/ai-recovery.test.ts app/lib/ai-generate.ts app/lib/ai-config.ts app/lib/api-error-message.ts app/lib/api-error-message.test.ts app/lib/errors.ts && NODE_PATH=./node_modules node --test /tmp/align-ai-recovery-tests/ai-recovery.test.js /tmp/align-ai-recovery-tests/api-error-message.test.js",
+    "test:e2e": "node tests/e2e/run.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -44,6 +45,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22.19.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

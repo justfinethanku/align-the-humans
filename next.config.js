@@ -1,3 +1,12 @@
+// The app's own Supabase URL. Hosted projects already match *.supabase.co;
+// a local stack (http://127.0.0.1:...) needs its exact origin listed.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  : null;
+const supabaseConnectSources = supabaseUrl
+  ? [supabaseUrl.origin, supabaseUrl.origin.replace(/^http/, 'ws')]
+  : [];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -34,7 +43,11 @@ const nextConfig = {
           "style-src 'self' 'unsafe-inline'",
           "font-src 'self'",
           "img-src 'self' data: blob: https://*.supabase.co",
-          "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai-gateway.vercel.sh https://openrouter.ai",
+          [
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+            ...supabaseConnectSources,
+            'https://ai-gateway.vercel.sh https://openrouter.ai',
+          ].join(' '),
           "manifest-src 'self'",
           "report-uri /api/csp-report",
           "report-to csp",
