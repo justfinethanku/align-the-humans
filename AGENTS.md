@@ -1,3 +1,5 @@
+Rules: The Fleet Handbook is the only source of rules: https://linear.app/contentionmedia/document/the-fleet-handbook-f3713ba1f434
+
 - Team page: [Align the Humans: team page](https://linear.app/contentionmedia/document/align-the-humans-team-page-aa017e44b3e5)
 - Fleet Handbook: https://linear.app/contentionmedia/document/the-fleet-handbook-f3713ba1f434
 - Operating system index: https://linear.app/contentionmedia/document/the-operating-system-index-of-rules-templates-and-sops-3766418ca97b
@@ -174,13 +176,13 @@ All tables have RLS enabled. Policies use `auth.uid()` to scope access.
 - **`/context/supabase_cli.md`** - Database schema docs and CLI reference
 - **`/context/model-integrations.md`** - Claude API reference and pricing
 
-## Changelog Requirements
+## Changelog
 
-Every development session must create a changelog in `/changelog/`:
+Session notes live in `/changelog/`:
 - **Filename:** `YYYY-MM-DD-HHMM-descriptive-keywords.md`
 - **Sections:** What Changed, Why, How, Issues Encountered, Dependencies, Testing, Next Steps
-- Also add a summary entry to `/changelog/README`
-- See `/changelog.md` for full format spec
+- A summary entry for that file goes in `/changelog/README`
+- Format spec: `/changelog.md`
 
 ## Key Conventions
 
