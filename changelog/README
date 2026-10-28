@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 40**
+**Total Changelogs: 86**
+
+### [2026-10-28-1028 - ath-50-question-options](./2026-10-28-1028-ath-50-question-options.md)
+**Keywords:** [AI] [QUESTIONS] [VALIDATION] [OPENROUTER] [ATH-50]
+Question generation keeps usable questions when a choice question has no options. The curated template is used only when nothing usable comes back.
 
 ### [2026-10-28-0835 - ath-2-resolution-journey](./2026-10-28-0835-ath-2-resolution-journey.md)
 **Keywords:** [TESTING] [E2E] [RESOLUTION] [OPENROUTER] [ATH-2]

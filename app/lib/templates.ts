@@ -571,12 +571,16 @@ export function isValidQuestion(question: unknown): question is AlignmentQuestio
   const validTypes = ['short_text', 'long_text', 'multiple_choice', 'checkbox', 'number', 'scale'];
   if (!validTypes.includes(q.type as string)) return false;
 
+  const needsOptions = q.type === 'multiple_choice' || q.type === 'checkbox' || q.type === 'scale';
+  if (needsOptions && (!Array.isArray(q.options) || q.options.length === 0)) return false;
+
   // If options exist, validate structure
   if (q.options !== undefined) {
     if (!Array.isArray(q.options)) return false;
     for (const opt of q.options) {
       if (typeof opt !== 'object' || opt === null) return false;
-      if (typeof opt.id !== 'string' || typeof opt.label !== 'string') return false;
+      if (typeof opt.id !== 'string' || opt.id.length === 0) return false;
+      if (typeof opt.label !== 'string' || opt.label.length === 0) return false;
     }
   }
 

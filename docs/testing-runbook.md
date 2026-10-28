@@ -26,6 +26,8 @@ Analysis also used `z-ai/glm-5.2`:
 
 Both partners signed snapshot `9d1678074c5e7cc9a232ec6feb0cadff67a67951df7ec3b19884e116faad3483`. The first signature left status `resolving`. The second set it to `complete`. The PDF was 3 pages. The final report still listed gaps and imbalances. Signing is allowed once the conflict list is empty. Mail was not sent: this runner leaves `RESEND_API_KEY` empty.
 
+ATH-50 check, October 28, 2026. One question-generation call on `z-ai/glm-5.2` with `OPEN_ROUTER_API_KEY`, the generate-questions seed prompt, and the choice-options rule the route appends. Ten questions came back, five of them choice or scale, every choice question had four options, and the set passed validation. None were dropped, so the curated fallback would not have been used. This environment has no Docker (`docker: command not found`), so `npx supabase start` did not run and this call did not go through the browser journey.
+
 This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 share-link flow, assumed a local Supabase instance, and stored sample account passwords. It is removed. Passwords, invite tokens, and other credentials stay in the operator handoff. Labeled test accounts come from that handoff.
 
 
@@ -58,6 +60,7 @@ The July 11–12, 2026 sections below are historical evidence from before that r
 - `app/lib/ai-recovery.test.ts`
 - `app/lib/api-error-message.test.ts`
 - `app/lib/agreement-pdf.test.ts` — keeps "Detailed Terms" with Term 1, and drops only the full-page disclaimer spacer
+- `app/lib/generated-questions.test.ts` — keeps usable generated questions when a choice question has no options
 
 These unit tests do not cover invite, join, answers, analysis, signatures, or the browser PDF rasterizer. `npm run lint`, `npm run type-check`, and `npm run build` are the other checks in `.github/workflows/ci.yml`. The signed-in core journey (invite, join, answer, analyze, resolve a conflict, analyze again, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts. The stub returns one conflict, then a conflict-free analysis after both partners submit the same resolution. `.github/workflows/e2e.yml` runs that command on pull requests to `main` and on pushes to `main`. The real-model variant is `E2E_REAL_MODEL=1 npm run test:e2e`, described above. CI does not set that variable.
 
@@ -81,7 +84,7 @@ Opening `/alignment/[id]` routes by status:
 1. Sign in and open `/alignment/new`.
 2. Pick a template card (Partnership Terms, Bringing Someone In, Equity Split, Business Operations, Marketing Strategy, Roommate Agreement) or Custom.
 3. Confirm one `alignments` row and its owner `alignment_participants` row are created together by `create_alignment_with_owner`, and the browser lands on `/alignment/[id]/clarity` while status is still `draft`. Creating the draft does not claim the free alignment.
-4. On Clarity, fill the topic, who the creator is aligning with, and the desired result, then press Continue. That posts `/api/alignment/generate-questions`. For a draft, `claim_alignment_activation` runs before any model call. When the question template is stored, the alignment becomes `active` and the browser opens `/alignment/[id]/questions`. Questions come from the model, or from the curated fallback if generation fails validation.
+4. On Clarity, fill the topic, who the creator is aligning with, and the desired result, then press Continue. That posts `/api/alignment/generate-questions`. For a draft, `claim_alignment_activation` runs before any model call. When the question template is stored, the alignment becomes `active` and the browser opens `/alignment/[id]/questions`. Questions come from the model. A choice question without options is dropped and the rest are kept. The curated fallback is used only when no generated question is usable.
 5. A second draft's Continue, with no paid credit, `pro`/`team` plan, or future `comped_until`, opens the upgrade dialog titled "Your free creator alignment is in use". The button is "Request a pilot spot". Success toast: "Pilot spot requested. We’ll be in touch before anything is charged." The click inserts `upgrade_interest`. Billing is not live. The dashboard shows "1 of 1 free alignments used" only after `free_alignment_claimed_at` is set.
 6. Typing or selecting a partner on Clarity supplies question context only. It does not insert a partner `alignment_participants` row.
 
