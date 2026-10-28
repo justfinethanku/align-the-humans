@@ -10,6 +10,8 @@ const supabaseConnectSources = supabaseUrl
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Cursor browser previews use 127.0.0.1 for the development HMR socket.
+  // Keep Next dev from rewriting the repo-owned agent instructions.
+  agentRules: false,
   allowedDevOrigins: ['127.0.0.1'],
   reactStrictMode: true,
   images: {
