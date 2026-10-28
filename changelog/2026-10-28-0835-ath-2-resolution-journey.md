@@ -2,7 +2,7 @@
 
 **Keywords:** [TESTING] [E2E] [RESOLUTION] [OPENROUTER] [ATH-2]
 **Session:** 2026-10-28 morning
-**Commit:** recorded after the commit lands
+**Commit:** `171e20a` and the docs commit that records the run
 
 ## What Changed
 
@@ -20,7 +20,9 @@ The OpenRouter stub returns one ownership conflict until the request contains th
 
 ## Issues Encountered
 
-Filled in after the local run.
+The first stub run clicked "View Report", and that click waited for a load event the analysis page does not settle. The test now reloads with `domcontentloaded` only when that card is still up.
+
+Question generation on the real run returned choice questions without options. The existing fallback served the curated template. Analysis still ran on `z-ai/glm-5.2`.
 
 ## Dependencies
 
@@ -28,11 +30,13 @@ None added.
 
 ## Testing Notes
 
-Local stub run and, if the environment has a key, one real-model run. Results are added after those runs.
+Stub journey passed locally: alignment `87b9aeeb-23c5-4894-9c1f-176616461544`, round 1 score 54 with 1 conflict, round 2 score 96 with 0 conflicts, 5-page PDF, status `complete`.
+
+Real-model journey, one run, October 28, 2026, commit `171e20a`, alignment `39d2aa61-2e66-4600-aed4-79f28657b502`. Model `z-ai/glm-5.2`. Rounds: 15/4 conflicts, 85/2 conflicts, 88/0 conflicts. Both signatures on `9d1678074c5e7cc9a232ec6feb0cadff67a67951df7ec3b19884e116faad3483`. PDF 3 pages. Status `complete`.
 
 ## Next Steps
 
-Record the real-model date, SHA, and alignment id on ATH-2 when that run finishes.
+Comment on ATH-2 with the pull request, the squash SHA, and this alignment id.
 
 ## Impact Assessment
 
