@@ -2,7 +2,7 @@
 
 **Keywords:** [PDF] [PAGINATION] [JSPDF] [HTML2PDF] [ATH-14] [ATH-28]
 **Session:** 2026-10-28, after midnight UTC
-**Commit:** this branch
+**Commit:** `4cb367b`
 
 ## What Changed
 - Agreement PDF export drops the full-page spacer html2pdf inserts before `.document-disclaimer` when that disclaimer is already at the top of a page.
