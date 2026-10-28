@@ -2,6 +2,30 @@
 
 Journey tests run on the local Supabase stack. That is the Docker stack the automated journey already uses (`npm run test:e2e`, `tests/e2e/core-journey.spec.ts`): made-up accounts and a stubbed model. It costs nothing and does not write to the live database. The run proves the code. It does not prove the live project's settings. A hosted staging Supabase project is not set up, and one is used only if Jon approves the cost. Production is not the default place for journey runs.
 
+## Real-model variant
+
+`npm run test:e2e` stubs OpenRouter. The stub's first analysis returns one ownership conflict. Both partners resolve it with the same custom solution, the next analysis returns no conflicts, and the journey continues through both signatures on one snapshot and a multi-page PDF. CI runs that command on every pull request.
+
+To run the same browser journey once against this local stack with the real model:
+
+```bash
+E2E_REAL_MODEL=1 npm run test:e2e
+```
+
+The app reads `OPEN_ROUTER_API_KEY` and falls back to `OPENROUTER_API_KEY`. Export the key in the environment for that command. The runner exits before Playwright starts when neither name is set. It does not load `tests/e2e/support/openrouter-stub.cjs`, and it does not read the key from a file. One run is the whole cost: question generation and the analysis calls for that alignment. Accounts are still made up on the local stack. The test prints `E2E_ALIGNMENT_ID` and `E2E_EVIDENCE`. Record the date, the git SHA, and that alignment id.
+
+Acceptance run, October 28, 2026, on this local stack with made-up accounts. The code under test was `171e20a`. Alignment `39d2aa61-2e66-4600-aed4-79f28657b502`.
+
+Question generation called `z-ai/glm-5.2` and failed validation: several multiple-choice, checkbox, and scale questions came back without options. The app used the curated fallback questions. The call was real. The questionnaire text was the fallback.
+
+Analysis also used `z-ai/glm-5.2`:
+
+- Round 1: score 15, 4 conflicts
+- Round 2: score 85, 2 conflicts
+- Round 3: score 88, 0 conflicts
+
+Both partners signed snapshot `9d1678074c5e7cc9a232ec6feb0cadff67a67951df7ec3b19884e116faad3483`. The first signature left status `resolving`. The second set it to `complete`. The PDF was 3 pages. The final report still listed gaps and imbalances. Signing is allowed once the conflict list is empty. Mail was not sent: this runner leaves `RESEND_API_KEY` empty.
+
 This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 share-link flow, assumed a local Supabase instance, and stored sample account passwords. It is removed. Passwords, invite tokens, and other credentials stay in the operator handoff. Labeled test accounts come from that handoff.
 
 
@@ -19,7 +43,7 @@ Rollback: revert the repo recipe commit and rebuild the same saved environment, 
 
 On October 27, 2026 three completed agreements were exported from production (`https://www.alignthehumans.com`) and every page was checked. The 5-page "A fair guest and shared-space policy" (7 terms) and the 3-page overnight-guests agreement (1 long term) kept each term whole. Both had one fully blank page between the last term and the disclaimer. The 5-page file also left the "Detailed Terms" heading alone at the bottom of page 1. A 2-page single-short-term export had no blank page. Those two defects are fixed in the PDF exporter ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14)). Retest from a completed agreement: Download Agreement, then open every page. There should be no blank page, no term sliced mid-line, and "Detailed Terms" on the same page as Term 1. Repeat with one long term that fills a page and with one short term.
 
-The signed-in two-partner journey has not been re-run since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)).
+The signed-in two-partner journey has not been re-run on production since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The October 28, 2026 local real-model pass is in "Real-model variant".
 
 The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. How production deploys, how to compare applied migrations with `supabase/migrations`, and how to roll a deploy or a migration back are in `docs/deploy.md`. `supabase/config.toml` describes a local Supabase stack only; it names no hosted project. A recipe that says "isolated project" means that local Supabase stack (Docker, made-up accounts, stubbed model). Migrations, invite-row inserts, and forced failures in those recipes run on that local stack.
 
@@ -35,11 +59,11 @@ The July 11–12, 2026 sections below are historical evidence from before that r
 - `app/lib/api-error-message.test.ts`
 - `app/lib/agreement-pdf.test.ts` — keeps "Detailed Terms" with Term 1, and drops only the full-page disclaimer spacer
 
-These unit tests do not cover invite, join, answers, analysis, signatures, or the browser PDF rasterizer. `npm run lint`, `npm run type-check`, and `npm run build` are the other checks in `.github/workflows/ci.yml`. The signed-in core journey (invite, join, answer, analyze, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts. `.github/workflows/e2e.yml` runs that command on pull requests to `main` and on pushes to `main`.
+These unit tests do not cover invite, join, answers, analysis, signatures, or the browser PDF rasterizer. `npm run lint`, `npm run type-check`, and `npm run build` are the other checks in `.github/workflows/ci.yml`. The signed-in core journey (invite, join, answer, analyze, resolve a conflict, analyze again, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts. The stub returns one conflict, then a conflict-free analysis after both partners submit the same resolution. `.github/workflows/e2e.yml` runs that command on pull requests to `main` and on pushes to `main`. The real-model variant is `E2E_REAL_MODEL=1 npm run test:e2e`, described above. CI does not set that variable.
 
 ## Current journey
 
-Status: the signed-in journey has not been re-run since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The October 27, 2026 PDF page check is in the status section ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14)). The steps below describe the routes as the code implements them today. They are the procedure for the next signed-in pass. They are not a record of a pass.
+Status: the October 28, 2026 local real-model pass is in "Real-model variant". Production has not been re-run since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The October 27, 2026 PDF page check is in the status section ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14)). The steps below describe the routes as the code implements them today. They are the procedure. The acceptance record is the real-model section.
 
 Role/account: two authenticated users. On production (`https://alignthehumans.com`), use the labeled comped creator and partner accounts from the operator handoff. A creator with no paid credit, no `pro` or `team` plan, and no future `comped_until` can activate one alignment. The second activation returns `402` with `error.code` `FREE_LIMIT_REACHED` before any AI request. Passwords stay in the operator handoff. A localhost run is separate from production evidence.
 

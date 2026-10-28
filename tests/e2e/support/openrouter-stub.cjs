@@ -11,18 +11,67 @@ const QUESTIONS = [
   'How will we handle money we put in and take out?',
 ];
 
-const ANALYSIS = {
-  alignedItems: [],
+// Round 1 has one conflict. A later round includes the resolution text both
+// partners submit, and that round is conflict-free so they can sign.
+const RESOLUTION_MARK = 'EQUAL_OWNERSHIP_COMPROMISE';
+
+const CONFLICT_ANALYSIS = {
+  alignedItems: [
+    {
+      question_id: 'e2e_q2',
+      description: 'Both partners want a written plan for someone leaving.',
+      shared_value: 'A departure gets a written notice period and a buyout at the agreed value.',
+    },
+  ],
+  conflicts: [
+    {
+      id: 'conflict_ownership',
+      question_id: 'e2e_q1',
+      severity: 'critical',
+      topic: 'Ownership split',
+      description: 'The two of you disagree on how to split ownership.',
+      personA_position: 'Equal 50/50 ownership.',
+      personB_position: 'An 80/20 split in one partner\'s favor.',
+      suggested_resolution: 'Split ownership equally and revisit after the first year.',
+      suggestions: [
+        'Split ownership equally and revisit after the first year.',
+        'Use a vesting schedule that starts equal and adjusts with contribution.',
+      ],
+    },
+  ],
+  hiddenAssumptions: [],
+  gaps: [],
+  imbalances: [],
+  overall_alignment_score: 54,
+};
+
+function term(index) {
+  return {
+    question_id: `e2e_term_${index}`,
+    description: `Shared operating rule ${index}`,
+    shared_value: [
+      `Term ${index}. Ownership, pay, client work, and decisions follow the written compromise both partners accepted.`,
+      'They review this rule together once a year. Neither person changes it alone.',
+      'A record of each review stays with this agreement. The rule covers ordinary studio work and new client engagements.',
+      'Money that comes in is recorded before either person takes a draw. A draw that would break this rule waits until both agree.',
+    ].join(' '),
+  };
+}
+
+const CLEAN_ANALYSIS = {
+  alignedItems: [1, 2, 3, 4, 5, 6, 7, 8].map(term),
   conflicts: [],
   hiddenAssumptions: [],
   gaps: [],
   imbalances: [],
-  overall_alignment_score: 92,
+  overall_alignment_score: 96,
 };
 
 function contentFor(body) {
   const text = JSON.stringify(body);
-  if (text.includes('overall_alignment_score')) return ANALYSIS;
+  if (text.includes('overall_alignment_score')) {
+    return text.includes(RESOLUTION_MARK) ? CLEAN_ANALYSIS : CONFLICT_ANALYSIS;
+  }
   return {
     questions: QUESTIONS.map((prompt, index) => ({
       id: `e2e_q${index + 1}`,

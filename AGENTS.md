@@ -55,7 +55,7 @@ npx playwright install --with-deps chromium
 npm run test:e2e
 ```
 
-`npm run test:e2e` is `node tests/e2e/run.mjs`. It starts the local Supabase stack, resets that database to `supabase/migrations`, and runs `tests/e2e/core-journey.spec.ts` in Chromium. The journey is invite, join, answer, analyze, sign, and a PDF. Accounts are made up for the run. The model is stubbed. Docker is required, because the runner starts that Supabase stack. Playwright builds the app and serves it on port 3100, and it does not reuse a server that is already running (`playwright.config.ts`).
+`npm run test:e2e` is `node tests/e2e/run.mjs`. It starts the local Supabase stack, resets that database to `supabase/migrations`, and runs `tests/e2e/core-journey.spec.ts` in Chromium. The journey is invite, join, answer, analyze, resolve at least one conflict, analyze again, sign, and a PDF. Accounts are made up for the run. The model is stubbed. `E2E_REAL_MODEL=1` runs that same journey once with `OPEN_ROUTER_API_KEY` (`OPENROUTER_API_KEY` is the fallback) and is not what CI runs. Docker is required, because the runner starts that Supabase stack. Playwright builds the app and serves it on port 3100, and it does not reuse a server that is already running (`playwright.config.ts`).
 
 `.github/workflows/e2e.yml` runs this on every pull request to `main` and every push to `main`. The job name is `e2e`: `npm ci` (Node 22), `npx playwright install --with-deps chromium`, then `npm run test:e2e`. That job name is the status-check context.
 

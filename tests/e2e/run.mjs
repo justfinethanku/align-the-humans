@@ -2,6 +2,9 @@
 // Starts Supabase, resets it to the checked-in migrations, reads its local
 // keys without printing them, then hands off to Playwright.
 // Usage: npm run test:e2e
+// Real model, one journey, key from the environment only:
+//   E2E_REAL_MODEL=1 npm run test:e2e
+// Requires OPEN_ROUTER_API_KEY (OPENROUTER_API_KEY is the fallback).
 
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
@@ -39,6 +42,21 @@ if (missing.length) {
   process.exit(1);
 }
 
+const realModel = process.env.E2E_REAL_MODEL === '1';
+const openRouterKey = process.env.OPEN_ROUTER_API_KEY || process.env.OPENROUTER_API_KEY || '';
+if (realModel && !openRouterKey) {
+  console.error(
+    'E2E_REAL_MODEL=1 needs OPEN_ROUTER_API_KEY in the environment. OPENROUTER_API_KEY is the fallback. The runner does not read a key from a file.'
+  );
+  process.exit(1);
+}
+
+const stub = path.join(root, 'tests/e2e/support/openrouter-stub.cjs');
+const nodeOptions = (process.env.NODE_OPTIONS ?? '')
+  .replace(/--require\s+\S*openrouter-stub\.cjs/g, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
 const result = spawnSync('npx', ['playwright', 'test', ...process.argv.slice(2)], {
   cwd: root,
   stdio: 'inherit',
@@ -53,9 +71,12 @@ const result = spawnSync('npx', ['playwright', 'test', ...process.argv.slice(2)]
     // Empty on purpose: a developer's real keys must never send mail from a test run.
     RESEND_API_KEY: '',
     OPS_ALERT_EMAIL: '',
-    // Placeholder key for the model stub. The stub never sends it anywhere.
-    OPEN_ROUTER_API_KEY: 'e2e-stub-key',
-    NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --require ${path.join(root, 'tests/e2e/support/openrouter-stub.cjs')}`.trim(),
+    // The stub never sends its placeholder. The real-model variant forwards the
+    // environment key and does not write it anywhere.
+    OPEN_ROUTER_API_KEY: realModel ? openRouterKey : 'e2e-stub-key',
+    OPENROUTER_API_KEY: '',
+    NODE_OPTIONS: realModel ? nodeOptions : `${nodeOptions} --require ${stub}`.trim(),
+    E2E_REAL_MODEL: realModel ? '1' : '0',
     E2E_SUPABASE_URL: env.API_URL,
     E2E_SERVICE_ROLE_KEY: env.SERVICE_ROLE_KEY,
   },

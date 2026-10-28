@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 39**
+**Total Changelogs: 40**
+
+### [2026-10-28-0835 - ath-2-resolution-journey](./2026-10-28-0835-ath-2-resolution-journey.md)
+**Keywords:** [TESTING] [E2E] [RESOLUTION] [OPENROUTER] [ATH-2]
+The automated journey resolves one stubbed conflict before both partners sign. A real-model run is a separate command and is not what CI runs.
 
 ### [2026-10-28-0735 - ath-46-codebase-audit-snapshot](./2026-10-28-0735-ath-46-codebase-audit-snapshot.md)
 **Keywords:** [DOCS] [AUDIT] [HISTORY] [ATH-46]
