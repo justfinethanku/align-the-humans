@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 38**
+**Total Changelogs: 39**
+
+### [2026-10-28-0735 - ath-46-codebase-audit-snapshot](./2026-10-28-0735-ath-46-codebase-audit-snapshot.md)
+**Keywords:** [DOCS] [AUDIT] [HISTORY] [ATH-46]
+The December 5, 2025 codebase audit is on main as a dated snapshot. Its findings have not been rechecked since.
 
 ### [2026-10-28-0730 - ath-42-local-journey-environment](./2026-10-28-0730-ath-42-local-journey-environment.md)
 **Keywords:** [TESTING] [SUPABASE] [DOCS] [ATH-42]
