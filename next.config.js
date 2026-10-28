@@ -9,6 +9,8 @@ const supabaseConnectSources = supabaseUrl
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Cursor browser previews use 127.0.0.1 for the development HMR socket.
+  allowedDevOrigins: ['127.0.0.1'],
   reactStrictMode: true,
   images: {
     remotePatterns: [
