@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 36**
+**Total Changelogs: 37**
+
+### [2026-10-28-0230 - ath-45-migration-filename-versions](./2026-10-28-0230-ath-45-migration-filename-versions.md)
+**Keywords:** [DATABASE] [MIGRATION] [SUPABASE] [ATH-45]
+Twelve migration files are renamed to the versions production already recorded, so history matches the filenames without a production write.
 
 ### [2026-10-28-0045 - ath-14-pdf-page-breaks](./2026-10-28-0045-ath-14-pdf-page-breaks.md)
 **Keywords:** [PDF] [PAGINATION] [JSPDF] [HTML2PDF] [ATH-14] [ATH-28]

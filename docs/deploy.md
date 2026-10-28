@@ -58,13 +58,13 @@ The only Supabase project ref named in the repo is `qvzfcezbuzmvglgiolmh` (`.env
 
 Vercel has `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` on the development, preview, and production targets. Those values were not read. **UNKNOWN:** whether preview and production point at the same Supabase project.
 
-`supabase/migrations` holds the SQL files. On 2026-10-27 there are 24. Filenames sort by their timestamp prefix. `20250120120000_add_clarity_draft_and_invite_usage.sql` sorts ahead of the `20251110…` files. A search of those files found no down-migration section.
+`supabase/migrations` holds the SQL files. There are 25. Filenames sort by their timestamp prefix. `20250120120000_add_clarity_draft_and_invite_usage.sql` sorts ahead of the `20251110…` files. A search of those files found no down-migration section.
 
-Nothing in `.github/workflows/ci.yml` applies SQL. A Vercel production deploy publishes the Next.js build. It does not, by anything visible in the repo, run `supabase db push`.
+Nothing in `.github/workflows/ci.yml` applies SQL. A Vercel production deploy publishes the Next.js build. It does not run `supabase db push`.
 
-Session notes record manual applies: the 2025-11-10 setup log says the project was linked with `npx supabase link --project-ref qvzfcezbuzmvglgiolmh` and deployed with `npx supabase db push`. Later notes say particular files were still unapplied at the time of writing. The 2026-10-27 ATH-20 note says applying `20261027062707_shared_rate_limit_store.sql` to production is a separate step from the code change, and that session did not apply it. Fleet notes cited by [ATH-17](https://linear.app/contentionmedia/issue/ATH-17) say production migrations are applied by hand through a Supabase MCP connector. This session could not authenticate that connector (interactive login is desktop-only here). **UNKNOWN:** which tool applied each migration that is actually on the database.
+As of Oct 27, 2026, all 25 files are applied on production (`qvzfcezbuzmvglgiolmh`) and each history version matches its filename. Twelve had been applied through the Supabase MCP, which records an apply-time version instead of the filename prefix. `supabase migration list --linked` then showed those files as not applied, and `supabase db push` would have run them again. Several use plain `create table`, so a re-run would fail partway. The repo files were renamed to the recorded versions, contents unchanged, rather than rewriting production's history. The new prefixes stay in the same order, including before `20261027120000_repair_fresh_db_columns.sql`, which is recorded under its own filename version. See [ATH-45](https://linear.app/contentionmedia/issue/ATH-45).
 
-The Supabase CLI's documented apply path, from the CLI reference checked the same day, is:
+Apply a future migration with the CLI so the recorded version stays the filename prefix:
 
 ```bash
 supabase link --project-ref qvzfcezbuzmvglgiolmh
@@ -72,7 +72,16 @@ supabase db push --linked --dry-run
 supabase db push --linked
 ```
 
-`--dry-run` prints the migrations that would be applied. `db push` records each applied file in `supabase_migrations.schema_migrations` and skips versions already in that table. `migration repair` changes that table without running the file.
+`--dry-run` prints the migrations that would be applied. `db push` writes each filename prefix into `supabase_migrations.schema_migrations` and skips versions already there.
+
+If the SQL is applied through the Supabase MCP, that write uses an apply-time version. Right afterward, record the filename prefix and remove the apply-time row. Neither command runs SQL:
+
+```bash
+supabase migration repair <filename-version> --status applied --linked
+supabase migration repair <apply-time-version> --status reverted --linked
+```
+
+`<filename-version>` is the 14-digit prefix of the file. Then `supabase migration list --linked` should show the file as applied and no extra remote version.
 
 ## Check applied migrations against the repo
 
@@ -93,11 +102,9 @@ order by version;
 
 A local prefix missing from the remote column is not recorded as applied. A remote version with no local file is on the database and not in the repo.
 
-That diff was not run. **UNKNOWN:** whether `supabase_migrations.schema_migrations` on `qvzfcezbuzmvglgiolmh` matches `supabase/migrations`.
+As of Oct 27, 2026, production's history matches these filenames. A read of `supabase_migrations.schema_migrations` at 10:20 PM ET that day showed every migration's effect present, with twelve rows under apply-time versions because the Supabase MCP stamps the time of the apply. `20261027120000_repair_fresh_db_columns` was recorded afterward under its filename version. The twelve files were renamed to the versions from that read, so the history table was left unchanged. This repository change does not write to production.
 
-What blocked the diff: the Data API rejects schema `supabase_migrations` (`PGRST106`). The app env has the Supabase URL and API keys and no database password. The Supabase MCP server was not authenticated.
-
-One object from the newest file was readable. A service-role `GET` of `public.rate_limit_hits?select=id&limit=0` against `qvzfcezbuzmvglgiolmh` returned `200` and `[]` on 2026-10-27. That table is created by `20261027062707_shared_rate_limit_store.sql`. The empty response shows the relation exists. It does not show a history row, and it does not show that every earlier file was applied.
+The Data API rejects schema `supabase_migrations` (`PGRST106`), so this check needs the database password or the Supabase CLI, not the service-role key. A service-role `GET` of `public.rate_limit_hits?select=id&limit=0` against `qvzfcezbuzmvglgiolmh` returned `200` and `[]` on 2026-10-27. That table is created by `20261027072516_shared_rate_limit_store.sql`.
 
 ## Roll back a deploy
 
@@ -111,7 +118,7 @@ Rollback restores the previous build. Vercel does not roll environment variables
 
 ## Roll back a migration
 
-Write a new file in `supabase/migrations` that reverses the change, then apply it with the same path used for any other migration (`supabase db push --linked` after `supabase link`, or whichever manual path the operator can actually run). Confirm with `supabase migration list --linked` afterward.
+Write a new file in `supabase/migrations` that reverses the change, then apply it with `supabase db push --linked` after `supabase link`. If it is applied through the Supabase MCP, run `supabase migration repair <filename-version> --status applied --linked` right afterward and revert the apply-time version, as in Database above. Confirm with `supabase migration list --linked`.
 
 `supabase migration repair <version> --status reverted` deletes the history row. `--status applied` inserts one. Neither runs inverse SQL. Use repair only to fix the history table after the schema is already in the intended state.
 
@@ -119,8 +126,7 @@ Write a new file in `supabase/migrations` that reverses the change, then apply i
 
 ## UNKNOWN
 
-- Whether `supabase_migrations.schema_migrations` matches `supabase/migrations`.
-- Which tool applied the migrations that are on `qvzfcezbuzmvglgiolmh`, including the apply that created `rate_limit_hits`.
+- Which tool applied the thirteen migrations whose history versions already matched their filenames on Oct 27, 2026. The other twelve were applied through the Supabase MCP. `rate_limit_hits` is one of those twelve (`20261027072516_shared_rate_limit_store.sql`).
 - Whether the Vercel preview and production Supabase env vars are the same project.
 - The dashboard build, install, and ignored-build settings.
 - Why 16 older `main` commits have no deployment record.
