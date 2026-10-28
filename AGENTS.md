@@ -275,3 +275,11 @@ Session notes live in `/changelog/`:
 
 - Linear team: ATH. Work and status live in Linear.
 - SOPs: Align the Humans SOP index: https://linear.app/contentionmedia/document/align-the-humans-sop-index-b96ebc9261ae
+
+## Cursor Cloud
+
+The saved environment points to `.cursor/environment.json`. Setup and retest
+are in `docs/testing-runbook.md` under Cursor Cloud. In a Bash shell, source
+`.cursor/runtime.sh` before npm commands to select the pinned Node version.
+The managed preview uses placeholders and no mail or AI credentials; use an
+isolated local Supabase stack for stateful tests, never real customer data.

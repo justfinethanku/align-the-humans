@@ -2,6 +2,17 @@
 
 This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 share-link flow, assumed a local Supabase instance, and stored sample account passwords. It is removed. Passwords, invite tokens, and other credentials stay in the operator handoff. Labeled test accounts come from that handoff.
 
+
+## Cursor Cloud environment
+
+Status: tested locally on Node 22.23.4; the Linux baseline and candidate installs passed (FLEET-273). The fresh prepared Build and browser check are tracked in that issue. The saved environment selects `.cursor/environment.json`; its Build runs `.cursor/install.sh`, which selects Node 22.23.4 and runs `npm ci`. It no longer writes injected credentials to `.env.local`. `start: true` is finite; the managed terminal runs `.cursor/dev.sh` with compile-only Supabase placeholders and empty mail and AI credentials, overriding any inherited values or dotenv file. This preview cannot run the signed-in journey. For that, use the isolated local stack described below. In every new Bash shell, `source .cursor/runtime.sh` before npm commands, because Cursor can place its Node shim first on PATH.
+
+Read the current Fleet Handbook and issue. Before intervention, record Cursor environment-info (actual Build, config source/version) and `git rev-parse HEAD` separately; check the managed terminal and GET `/`, `/example`, and `/pricing`. Record whether relevant variables are set, never their values. Run the installer twice on disposable worker state, and `npm run lint`, `npm run type-check`, `npm test`, and `npm run build` (CI uses compile-only placeholders). Check the lockfile and git status. Never copy production service credentials into smoke tests.
+
+Public smoke: with isolated or placeholder Supabase configuration, open `/`, follow the example and pricing links, and verify their headings. Do not submit forms or use real customer data. The signed-in journey needs the disposable local Supabase stack described in the end-to-end section. Test hot reload with a temporary local-only edit and restore it. Check unrelated browser origins remain rejected. Stop only manually started servers and remove temporary files. Record actual results and limitations in FLEET-273.
+
+Rollback: revert the repo recipe commit and rebuild the same saved environment, or select a previously successful Build in Cursor. The pre-change environment is `bb11cff2-aca3-11f1-ba66-0e7d0216e441`, version `9e1cd435-acae-11f1-ba66-0e7d0216e441`; pre-change Build `bld-20261028-cc641225-9c41-450d-af69-67a5adac3218` used commit `6dd698a6d11855b0aa0d397396f8166bda7d6a3c`. Recheck current Builds before rollback.
+
 ## Status
 
 On October 27, 2026 three completed agreements were exported from production (`https://www.alignthehumans.com`) and every page was checked. The 5-page "A fair guest and shared-space policy" (7 terms) and the 3-page overnight-guests agreement (1 long term) kept each term whole. Both had one fully blank page between the last term and the disclaimer. The 5-page file also left the "Detailed Terms" heading alone at the bottom of page 1. A 2-page single-short-term export had no blank page. Those two defects are fixed in the PDF exporter ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14)). Retest from a completed agreement: Download Agreement, then open every page. There should be no blank page, no term sliced mid-line, and "Detailed Terms" on the same page as Term 1. Repeat with one long term that fills a page and with one short term.
