@@ -10,17 +10,16 @@ The July 11–12, 2026 sections below are historical evidence from before that r
 
 ## Automated checks
 
-`npm test` runs the seven `node --test` cases for the Supabase Auth Send Email hook in `app/api/auth/email/hook.test.ts` (pull request #12). The script typechecks `hook.ts` and `hook.test.ts`, then runs the compiled file. The cases are:
+`npm test` is the `test` script in `package.json`. It typechecks each group with `tsc`, then runs `node --test` on:
 
-1. accepts a current Standard Webhooks signature
-2. rejects a request missing the Standard Webhooks headers
-3. rejects a wrong signature
-4. rejects a stale signature
-5. rejects a timestamp newer than the 5 minute tolerance
-6. fails closed in production when the hook secret is not configured
-7. plans each auth email type the route handles
+- `app/api/auth/email/hook.test.ts` — seven cases for the Supabase Auth Send Email hook (pull request #12): a current Standard Webhooks signature, missing headers, a wrong signature, a stale signature, a timestamp newer than the 5 minute tolerance, fail-closed in production when the hook secret is unset, and a plan for each auth email type the route handles
+- `app/lib/partner-search.test.ts`
+- `app/lib/rate-limit.test.ts`
+- `app/lib/ops-alert.test.ts`
+- `app/lib/ai-recovery.test.ts`
+- `app/lib/api-error-message.test.ts`
 
-These tests do not cover invite, join, answers, analysis, signatures, or PDF export. `npm run lint`, `npm run type-check`, and `npm run build` are the other repository checks. The signed-in core journey (invite, join, answer, analyze, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts.
+These unit tests do not cover invite, join, answers, analysis, signatures, or PDF export. `npm run lint`, `npm run type-check`, and `npm run build` are the other checks in `.github/workflows/ci.yml`. The signed-in core journey (invite, join, answer, analyze, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts. `.github/workflows/e2e.yml` runs that command on pull requests to `main` and on pushes to `main`.
 
 ## Current journey
 

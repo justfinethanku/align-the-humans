@@ -10,7 +10,80 @@ Some Linear issues are synced from GitHub issues. The sync overwrites edits made
 
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Ship order for any coding agent. Product facts are in `CLAUDE.md`. Human setup is in `README.md`. Production deploys, previews, migrations, and rollback are in `docs/deploy.md`. The sections after Ship are the map of the code.
+
+## Ship
+
+Commands below are the scripts in `package.json` and the steps in `.github/workflows/ci.yml` and `.github/workflows/e2e.yml`. Do not commit secrets. Env values stay in `.env.local` (gitignored). Names are listed under Environment Variables and in `.env.example`.
+
+### Install
+
+CI uses Node 22 (`.github/workflows/ci.yml`). The repo has no `.nvmrc` and no `engines` field. README's local prerequisite is Node.js 20.9 or newer.
+
+```bash
+npm ci
+```
+
+That is the install CI runs. README's first-time setup also documents `npm install`.
+
+### Lint, types, unit tests, and build
+
+Same order as the `ci` job:
+
+```bash
+npm run lint        # eslint .
+npm run type-check  # tsc --noEmit
+npm test            # node --test; files listed below
+npm run build       # next build
+```
+
+`npm test` typechecks each group with `tsc`, then runs `node --test` on:
+
+- `app/api/auth/email/hook.test.ts`
+- `app/lib/partner-search.test.ts`
+- `app/lib/rate-limit.test.ts`
+- `app/lib/ops-alert.test.ts`
+- `app/lib/ai-recovery.test.ts`
+- `app/lib/api-error-message.test.ts`
+
+`npm run build` needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `INVITE_TOKEN_SECRET` set. The CI build step sets placeholder strings for those four names. They are compile stand-ins. A local build reads `.env.local`.
+
+### End-to-end
+
+```bash
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+`npm run test:e2e` is `node tests/e2e/run.mjs`. It starts the local Supabase stack, resets that database to `supabase/migrations`, and runs `tests/e2e/core-journey.spec.ts` in Chromium. The journey is invite, join, answer, analyze, sign, and a PDF. Accounts are made up for the run. The model is stubbed. Docker is required, because the runner starts that Supabase stack. Playwright builds the app and serves it on port 3100, and it does not reuse a server that is already running (`playwright.config.ts`).
+
+`.github/workflows/e2e.yml` runs this on every pull request to `main` and every push to `main`. The job name is `e2e`: `npm ci` (Node 22), `npx playwright install --with-deps chromium`, then `npm run test:e2e`. That job name is the status-check context.
+
+`docs/testing-runbook.md` is the manual journey. `E2E_TEST_PLAN.md` was removed.
+
+### Run locally
+
+```bash
+cp .env.example .env.local
+npm run dev     # http://localhost:3000
+npm start       # serves the production build from npm run build
+```
+
+What each key is for: `README.md` (Getting Started) and `.env.example`.
+
+### Pull request
+
+1. Branch from `main` and open a pull request into `main`. The repo has no pull request template. `README.md` says to open an issue or a pull request.
+2. `.github/workflows/ci.yml` runs on every pull request to `main` and on every push to `main`. The job name is `ci`. Steps: `npm ci` (Node 22), `npm run lint`, `npm run type-check`, `npm test`, `npm run build`. The workflow says branch protection and rulesets on `main` should require the `ci` status-check context.
+3. `.github/workflows/e2e.yml` runs on the same events. The job name is `e2e`. It is a separate check from `ci`.
+4. The Vercel GitHub integration adds a preview deployment and a commit status named `Vercel`. Pull request 25 also had `Vercel Preview Comments`. Whether every pull request has that third check is unknown; see `docs/deploy.md`.
+5. Merge when `ci` and `e2e` are green and the Vercel preview status has completed. `docs/deploy.md` records that a read of classic branch protection returned 403 and the ruleset list was empty, so whether GitHub itself blocks a red check was not confirmed. Treat a red `ci`, a red `e2e`, or a failed Vercel preview as a stop.
+
+### Merge and deploy
+
+Merging the pull request pushes `main`. The Vercel GitHub integration publishes that push to production (project `align-the-humans`; domains and rollback in `docs/deploy.md`). `.github/workflows/ci.yml` does not call the Vercel CLI. On the push checked in `docs/deploy.md`, the production deployment finished while `ci` was still running. The push is what deploys.
+
+The app deploy does not apply SQL. Migrations are a separate step, documented in `docs/deploy.md`.
 
 ## Project Overview
 
@@ -22,15 +95,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-```bash
-npm run dev          # Start dev server (localhost:3000)
-npm run build        # Production build
-npm run lint         # ESLint CLI (flat config in eslint.config.mjs)
-npm run type-check   # TypeScript check (tsc --noEmit)
-npm test             # node --test cases for the auth email hook, partner search, rate limit, and ops alerts
-npm run test:e2e     # Core journey in Chromium against local Supabase (needs Docker; model stubbed)
-npm start            # Run production build
-```
+Install, lint, type-check, `npm test`, `npm run test:e2e`, build, local run, pull request, and merge are in [Ship](#ship) above. `README.md` lists the same scripts for humans.
 
 ## Environment Variables
 

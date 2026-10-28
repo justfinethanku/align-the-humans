@@ -1,5 +1,7 @@
 @AGENTS.md
 
+Ship order (install, tests, pull request, merge, deploy) is the Ship section of `AGENTS.md`.
+
 Current product facts. `AGENTS.md` repeats them. If the two files disagree, trust the code cited here and update both.
 
 - **Audience.** Two business partners or co-owners. The public site (`app/page.tsx`, `app/layout.tsx`, `components/homepage/FAQ.tsx`) is for people starting a company together, bringing someone into an existing one, or changing how they split the work and the money. It is the conversation before a lawyer drafts an agreement.
