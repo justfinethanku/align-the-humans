@@ -2,6 +2,18 @@
 
 Journey tests run on the local Supabase stack. That is the Docker stack the automated journey already uses (`npm run test:e2e`, `tests/e2e/core-journey.spec.ts`): made-up accounts and a stubbed model. It costs nothing and does not write to the live database. The run proves the code. It does not prove the live project's settings. A hosted staging Supabase project is not set up, and one is used only if Jon approves the cost. Production is not the default place for journey runs.
 
+## Real-model variant
+
+`npm run test:e2e` stubs OpenRouter. The stub's first analysis returns one ownership conflict. Both partners resolve it with the same custom solution, the next analysis returns no conflicts, and the journey continues through both signatures on one snapshot and a multi-page PDF. CI runs that command on every pull request.
+
+To run the same browser journey once against this local stack with the real model:
+
+```bash
+E2E_REAL_MODEL=1 npm run test:e2e
+```
+
+The app reads `OPEN_ROUTER_API_KEY` and falls back to `OPENROUTER_API_KEY`. Export the key in the environment for that command. The runner exits before Playwright starts when neither name is set. It does not load `tests/e2e/support/openrouter-stub.cjs`, and it does not read the key from a file. One run is the whole cost: question generation and the analysis calls for that alignment. Accounts are still made up on the local stack. The test prints `E2E_ALIGNMENT_ID` and `E2E_EVIDENCE`. Record the date, the git SHA, and that alignment id.
+
 This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 share-link flow, assumed a local Supabase instance, and stored sample account passwords. It is removed. Passwords, invite tokens, and other credentials stay in the operator handoff. Labeled test accounts come from that handoff.
 
 
@@ -35,7 +47,7 @@ The July 11–12, 2026 sections below are historical evidence from before that r
 - `app/lib/api-error-message.test.ts`
 - `app/lib/agreement-pdf.test.ts` — keeps "Detailed Terms" with Term 1, and drops only the full-page disclaimer spacer
 
-These unit tests do not cover invite, join, answers, analysis, signatures, or the browser PDF rasterizer. `npm run lint`, `npm run type-check`, and `npm run build` are the other checks in `.github/workflows/ci.yml`. The signed-in core journey (invite, join, answer, analyze, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts. `.github/workflows/e2e.yml` runs that command on pull requests to `main` and on pushes to `main`.
+These unit tests do not cover invite, join, answers, analysis, signatures, or the browser PDF rasterizer. `npm run lint`, `npm run type-check`, and `npm run build` are the other checks in `.github/workflows/ci.yml`. The signed-in core journey (invite, join, answer, analyze, resolve a conflict, analyze again, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts. The stub returns one conflict, then a conflict-free analysis after both partners submit the same resolution. `.github/workflows/e2e.yml` runs that command on pull requests to `main` and on pushes to `main`. The real-model variant is `E2E_REAL_MODEL=1 npm run test:e2e`, described above. CI does not set that variable.
 
 ## Current journey
 

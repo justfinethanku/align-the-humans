@@ -1,7 +1,9 @@
 name: E2E
 
-# Runs the core two-partner journey (invite, join, answer, analyze, sign, PDF)
-# against a local Supabase stack with made-up accounts. The model is stubbed.
+# Runs the core two-partner journey (invite, join, answer, analyze, resolve,
+# sign, PDF) against a local Supabase stack with made-up accounts. The model
+# is stubbed. The stub returns a conflict, then a clean analysis after both
+# partners resolve it.
 # The job name `e2e` is the status-check context.
 
 on:
