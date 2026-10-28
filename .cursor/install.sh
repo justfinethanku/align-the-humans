@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Cursor runs this finite, repeatable step during a Build, from the repo root.
 set -euo pipefail
-cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.."
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 version="$(tr -d '[:space:]' < .nvmrc)"
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 if [[ -s "$NVM_DIR/nvm.sh" ]]; then
