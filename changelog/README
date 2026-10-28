@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 37**
+**Total Changelogs: 38**
+
+### [2026-10-28-0730 - ath-42-local-journey-environment](./2026-10-28-0730-ath-42-local-journey-environment.md)
+**Keywords:** [TESTING] [SUPABASE] [DOCS] [ATH-42]
+Journey tests run on the local Supabase stack the automated journey already uses. The run proves the code, not the live project's settings.
 
 ### [2026-10-28-0230 - ath-45-migration-filename-versions](./2026-10-28-0230-ath-45-migration-filename-versions.md)
 **Keywords:** [DATABASE] [MIGRATION] [SUPABASE] [ATH-45]

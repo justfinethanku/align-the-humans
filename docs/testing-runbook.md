@@ -1,5 +1,7 @@
 # Human Alignment Testing Runbook
 
+Journey tests run on the local Supabase stack. That is the Docker stack the automated journey already uses (`npm run test:e2e`, `tests/e2e/core-journey.spec.ts`): made-up accounts and a stubbed model. It costs nothing and does not write to the live database. The run proves the code. It does not prove the live project's settings. A hosted staging Supabase project is not set up, and one is used only if Jon approves the cost. Production is not the default place for journey runs.
+
 This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 share-link flow, assumed a local Supabase instance, and stored sample account passwords. It is removed. Passwords, invite tokens, and other credentials stay in the operator handoff. Labeled test accounts come from that handoff.
 
 
@@ -19,7 +21,7 @@ On October 27, 2026 three completed agreements were exported from production (`h
 
 The signed-in two-partner journey has not been re-run since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)).
 
-The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. How production deploys, how to compare applied migrations with `supabase/migrations`, and how to roll a deploy or a migration back are in `docs/deploy.md`. `supabase/config.toml` describes a local Supabase stack only; it names no hosted project. A recipe that says "isolated project" means a project an operator names. Migrations, invite-row inserts, and forced failures in those recipes run on that isolated project.
+The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. How production deploys, how to compare applied migrations with `supabase/migrations`, and how to roll a deploy or a migration back are in `docs/deploy.md`. `supabase/config.toml` describes a local Supabase stack only; it names no hosted project. A recipe that says "isolated project" means that local Supabase stack (Docker, made-up accounts, stubbed model). Migrations, invite-row inserts, and forced failures in those recipes run on that local stack.
 
 ## Automated checks
 
@@ -243,7 +245,7 @@ Status: historical July 11, 2026 recipe. Static checks had passed when this sect
 
 Purpose: Verify `20260711235125_account_entitlements.sql`, the one-free-alignment activation gate, upgrade-interest capture, and invite-only partner enrollment.
 
-Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Use the first as creator and the second as invitee. This smoke test runs on that isolated project, with a test account and a throwaway alignment.
+Role/account: Two disposable authenticated users on the local Supabase stack. No staging project is verified, and this repo has no `supabase/config.toml`. Use the first as creator and the second as invitee. This smoke test runs on that isolated project, with a test account and a throwaway alignment.
 
 Safe actions:
 
@@ -294,7 +296,7 @@ Status: historical July 11, 2026 recipe. Static checks had passed when this sect
 
 Purpose: Verify the journey integrity fixes introduced by `20260711234901_atomic_sign_completion.sql`.
 
-Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Destructive setup for this recipe runs on that isolated project. Smoke tests use a test account and a throwaway alignment.
+Role/account: Two disposable authenticated users on the local Supabase stack. No staging project is verified, and this repo has no `supabase/config.toml`. Destructive setup for this recipe runs on that isolated project. Smoke tests use a test account and a throwaway alignment.
 
 Safe actions:
 
