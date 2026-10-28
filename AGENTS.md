@@ -281,5 +281,5 @@ Session notes live in `/changelog/`:
 The saved environment points to `.cursor/environment.json`. Setup and retest
 are in `docs/testing-runbook.md` under Cursor Cloud. In a Bash shell, source
 `.cursor/runtime.sh` before npm commands to select the pinned Node version.
-The existing installer generates `.env.local` from injected variables; use an
+The managed preview uses placeholders and no mail or AI credentials; use an
 isolated local Supabase stack for stateful tests, never real customer data.

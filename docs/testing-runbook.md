@@ -5,7 +5,7 @@ This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 
 
 ## Cursor Cloud environment
 
-Status: starter (FLEET-273). The saved environment selects `.cursor/environment.json`; its Build runs `.cursor/install.sh`, which selects Node 22.23.4 and runs `npm ci`. It retains the existing behavior of generating `.env.local` from injected values. `start: true` is finite; the managed terminal runs `.cursor/dev.sh`. In every new Bash shell, `source .cursor/runtime.sh` before npm commands, because Cursor can place its Node shim first on PATH.
+Status: starter (FLEET-273). The saved environment selects `.cursor/environment.json`; its Build runs `.cursor/install.sh`, which selects Node 22.23.4 and runs `npm ci`. It no longer writes injected credentials to `.env.local`. `start: true` is finite; the managed terminal runs `.cursor/dev.sh` with compile-only Supabase placeholders and empty mail and AI credentials, overriding any inherited values or dotenv file. This preview cannot run the signed-in journey. For that, use the isolated local stack described below. In every new Bash shell, `source .cursor/runtime.sh` before npm commands, because Cursor can place its Node shim first on PATH.
 
 Read the current Fleet Handbook and issue. Before intervention, record Cursor environment-info (actual Build, config source/version) and `git rev-parse HEAD` separately; check the managed terminal and GET `/`, `/example`, and `/pricing`. Record whether relevant variables are set, never their values. Run the installer twice on disposable worker state, and `npm run lint`, `npm run type-check`, `npm test`, and `npm run build` (CI uses compile-only placeholders). Check the lockfile and git status. Never copy production service credentials into smoke tests.
 
