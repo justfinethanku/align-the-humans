@@ -8,7 +8,7 @@ if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   source "$NVM_DIR/nvm.sh"
   nvm install --no-progress "$version"
   nvm alias default "$version"
-elif [[ "$(node --version 2>/dev/null || true)" != "v$version" ]]; then
+elif [[ "$(/usr/local/bin/node --version 2>/dev/null || true)" != "v$version" ]]; then
   # The standard Cursor base may change. Bootstrap the official binary if nvm
   # is absent, rather than depending on a previous snapshot's installed Node.
   [[ "$(uname -s)-$(uname -m)" == "Linux-x86_64" ]] || {
