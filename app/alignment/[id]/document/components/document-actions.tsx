@@ -9,6 +9,11 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Check, Loader2 } from 'lucide-react';
+import {
+  agreementPdfPagebreak,
+  prepareAgreementExportElement,
+  removeFullPageDisclaimerPad,
+} from '@/app/lib/agreement-pdf';
 
 interface DocumentActionsProps {
   alignmentId: string;
@@ -32,32 +37,39 @@ export function DocumentActions({
         throw new Error('Unable to locate document content for export.');
       }
 
-      const html2pdfModule: any = (await import('html2pdf.js')).default;
+      // Package root dist/html2pdf.js embeds jsPDF 4.0.0. The source entry
+      // resolves the direct jspdf dependency (4.2.1, the ATH-28 patch).
+      const html2pdfModule: any = (await import('html2pdf.js/src/index.js')).default;
       const safeTitle = alignmentTitle
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '') || 'alignment-agreement';
+      const prepared = prepareAgreementExportElement(content);
 
-      await html2pdfModule()
+      const worker = html2pdfModule()
         .set({
           filename: `${safeTitle}.pdf`,
           margin: 0.5,
           image: { type: 'jpeg', quality: 0.95 },
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-          // Without this, html2canvas slices the render wherever a page ends,
-          // clipping text (e.g. the disclaimer) across page boundaries.
-          pagebreak: {
-            mode: ['css', 'legacy'],
-            // Break before the disclaimer, not .document-footer: frozen
-            // snapshots stored before 'footer' entered the sanitizer
-            // allowlist have no footer wrapper, but the <p> class survives.
-            before: ['.document-disclaimer'],
-            avoid: ['h1', 'h2', 'h3', 'tr', '.term', '.signature-participant-row', '.document-disclaimer', '.document-footer', '.document-meta'],
-          },
+          // Break before the disclaimer, not .document-footer: frozen
+          // snapshots stored before 'footer' entered the sanitizer
+          // allowlist have no footer wrapper, but the <p> class survives.
+          // A break that lands on a disclaimer already at the top of a page
+          // inserts a blank page; that spacer is removed below.
+          pagebreak: agreementPdfPagebreak,
         })
-        .from(content)
-        .save();
+        .from(prepared);
+
+      await worker.toContainer();
+      const pageSize = await worker.get('pageSize');
+      const pageHeight = pageSize?.inner?.px?.height;
+      const container = await worker.get('container');
+      if (typeof pageHeight === 'number' && container) {
+        removeFullPageDisclaimerPad(container, pageHeight);
+      }
+      await worker.save();
     } catch (err) {
       console.error('Failed to download agreement PDF:', err);
     } finally {

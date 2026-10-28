@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 35**
+**Total Changelogs: 36**
+
+### [2026-10-28-0045 - ath-14-pdf-page-breaks](./2026-10-28-0045-ath-14-pdf-page-breaks.md)
+**Keywords:** [PDF] [PAGINATION] [JSPDF] [HTML2PDF] [ATH-14] [ATH-28]
+Agreement PDFs no longer insert a blank page before the disclaimer or leave "Detailed Terms" behind Term 1. The exporter uses jsPDF 4.2.1 instead of the 4.0.0 copy bundled in html2pdf.
 
 ### [2026-10-28-0026 - ath-40-agents-ship-order](./2026-10-28-0026-ath-40-agents-ship-order.md)
 **Keywords:** [DOCS] [AGENTS] [CI] [E2E] [VERCEL] [ATH-40]
