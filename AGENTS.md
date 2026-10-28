@@ -163,7 +163,7 @@ AI routes use the Vercel AI SDK. Analysis, question generation, and conflict res
 
 `POST /api/alignment/generate-document` renders the agreement preview from stored answers (`app/lib/agreement-snapshots.ts`).
 
-Provider: `resolveModel()` in `app/lib/ai-config.ts` returns an OpenRouter chat model (`createOpenRouter` from `@openrouter/ai-sdk-provider`). Routes pass `resolveModel(promptConfig.model)`. `AI_MODELS.SONNET` is `anthropic/claude-sonnet-4.6`. The `prompts.model` column defaults to that slug (`supabase/migrations/20260701130000_add_prompts_and_audit.sql`). Seed prompts in `app/lib/db/seed-prompts.ts` currently set `z-ai/glm-5.2`; a slug that already contains `/` is forwarded as-is. Analysis temperature defaults to 0.3 (`AI_DEFAULTS.analysis` and the `prompts.temperature` column default). Suggestion and clarity defaults are 0.7.
+Provider: `resolveModel()` in `app/lib/ai-config.ts` returns an OpenRouter chat model (`createOpenRouter` from `@openrouter/ai-sdk-provider`). Routes pass `resolveModel(promptConfig.model)`. `AI_MODELS.SONNET` is `anthropic/claude-sonnet-4.6`. The `prompts.model` column defaults to that slug (`supabase/migrations/20260702024742_add_prompts_and_audit.sql`). Seed prompts in `app/lib/db/seed-prompts.ts` currently set `z-ai/glm-5.2`; a slug that already contains `/` is forwarded as-is. Analysis temperature defaults to 0.3 (`AI_DEFAULTS.analysis` and the `prompts.temperature` column default). Suggestion and clarity defaults are 0.7.
 
 ### Invite System
 

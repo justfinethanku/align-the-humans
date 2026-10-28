@@ -230,7 +230,7 @@ Known selector/flow lessons:
 
 Status: historical July 11, 2026 recipe. Static checks had passed when this section was written; the database integration test was still pending. No staging project is verified. These steps describe the July three-tier gate. The live gate is the partnership pilot in "Current journey" above.
 
-Purpose: Verify `20260711140000_account_entitlements.sql`, the one-free-alignment activation gate, upgrade-interest capture, and invite-only partner enrollment.
+Purpose: Verify `20260711235125_account_entitlements.sql`, the one-free-alignment activation gate, upgrade-interest capture, and invite-only partner enrollment.
 
 Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Use the first as creator and the second as invitee. This smoke test runs on that isolated project, with a test account and a throwaway alignment.
 
@@ -248,7 +248,7 @@ Scope:
 
 Verification steps:
 
-1. Apply migrations through `20260711140000_account_entitlements.sql` on the isolated project and confirm every auth user has one `account_entitlements` row.
+1. Apply migrations through `20260711235125_account_entitlements.sql` on the isolated project and confirm every auth user has one `account_entitlements` row.
 2. Create a new auth user and confirm `handle_new_user()` creates both `profiles` and `account_entitlements` rows.
 3. As the creator, create several drafts from `/alignment/new`. Confirm no entitlement is claimed and every dashboard Start button still opens a new draft.
 4. Generate questions for one draft. Confirm it becomes `active`, `free_alignment_claimed_at` and `free_alignment_id` are set, and one `alignment_activation_claims` row has `claim_source='free'`.
@@ -281,7 +281,7 @@ Known selector/flow lessons:
 
 Status: historical July 11, 2026 recipe. Static checks had passed when this section was written; the database integration test was still pending. No staging project is verified. Follow "Current journey" for the product path. This section is the July integrity recipe.
 
-Purpose: Verify the journey integrity fixes introduced by `20260711130000_atomic_sign_completion.sql`.
+Purpose: Verify the journey integrity fixes introduced by `20260711234901_atomic_sign_completion.sql`.
 
 Role/account: Two disposable authenticated users on an isolated Supabase project an operator names. No staging project is verified, and this repo has no `supabase/config.toml`. Destructive setup for this recipe runs on that isolated project. Smoke tests use a test account and a throwaway alignment.
 
@@ -298,7 +298,7 @@ Scope:
 
 Verification steps:
 
-1. Apply migrations through `20260711130000_atomic_sign_completion.sql` on the isolated project and regenerate database types if the schema differs.
+1. Apply migrations through `20260711234901_atomic_sign_completion.sql` on the isolated project and regenerate database types if the schema differs.
 2. Run `npm run type-check && npm run lint && npm run build`.
 3. Create an alignment from `/alignment/new`; confirm one `alignments` row and its owner `alignment_participants` row are created together.
 4. Add the second user, submit the owner questionnaire, then open `/alignment/<id>/questions` directly. Confirm it redirects to waiting or the current later phase and does not reopen the form.
