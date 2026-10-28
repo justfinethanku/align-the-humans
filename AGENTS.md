@@ -87,6 +87,8 @@ Merging the pull request pushes `main`. The Vercel GitHub integration publishes 
 
 The app deploy does not apply SQL. Migrations are a separate step, documented in `docs/deploy.md`.
 
+Fleet migration ledger (last applied, next free number, who has one checked out, and how to check out and in): https://linear.app/contentionmedia/document/migration-ledger-every-supabase-database-its-last-migration-and-who-0de040077d30
+
 ## Project Overview
 
 **Human Alignment** is a Next.js 16 (`^16.4.3`) and React 19 (`^19.3.1`) web application for two business partners or co-owners. Each person answers independently. AI comparison surfaces different expectations, and the pair works toward a shared brief for their lawyer. The public site covers starting a business together, bringing someone into the company, or changing how they already work. It is the process before legal drafting. A lawyer drafts the operating agreement from the brief.
