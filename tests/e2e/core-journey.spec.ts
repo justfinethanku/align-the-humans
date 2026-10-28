@@ -151,20 +151,18 @@ async function resolveConflicts(page: Page) {
 }
 
 async function waitForReport(page: Page): Promise<'conflicts' | 'document'> {
-  await expect
-    .poll(
-      async () => {
-        if (await page.getByRole('link', { name: /resolve conflicts/i }).isVisible()) return 'conflicts';
-        if (await page.getByRole('link', { name: /generate final document/i }).isVisible()) return 'document';
-        const viewReport = page.getByRole('button', { name: /view report/i });
-        if (await viewReport.isVisible()) await viewReport.click();
-        return '';
-      },
-      { timeout: reportTimeout },
-    )
-    .not.toBe('');
-
-  if (await page.getByRole('link', { name: /generate final document/i }).isVisible()) return 'document';
+  const resolveLink = page.getByRole('link', { name: /resolve conflicts/i });
+  const documentLink = page.getByRole('link', { name: /generate final document/i });
+  const outcome = resolveLink.or(documentLink);
+  const viewReport = page.getByRole('button', { name: /view report/i });
+  // The progress card can stay on "Analysis complete" after a 200. A full
+  // click waits for the load event, which this page does not settle.
+  await expect(outcome.or(viewReport)).toBeVisible({ timeout: reportTimeout });
+  if (await viewReport.isVisible()) {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+  }
+  await expect(outcome).toBeVisible({ timeout: 30_000 });
+  if (await documentLink.isVisible()) return 'document';
   return 'conflicts';
 }
 
