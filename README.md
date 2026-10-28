@@ -134,7 +134,8 @@ The current schema is the SQL in `supabase/migrations`. Apply those files to the
 - `npm run start` - Run production build
 - `npm run lint` - Run ESLint
 - `npm run type-check` - TypeScript check
-- `npm test` - Seven `node --test` cases for the Supabase Auth email hook
+- `npm test` - `node --test` for the auth email hook, partner search, rate limit, ops alerts, AI reply recovery, and API error messages (the `test` script in `package.json`)
+- `npm run test:e2e` - Playwright core journey on a local Supabase stack (`node tests/e2e/run.mjs`; needs Docker)
 
 ### Code Style
 

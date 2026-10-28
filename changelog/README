@@ -2,7 +2,11 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 34**
+**Total Changelogs: 35**
+
+### [2026-10-28-0026 - ath-40-agents-ship-order](./2026-10-28-0026-ath-40-agents-ship-order.md)
+**Keywords:** [DOCS] [AGENTS] [CI] [E2E] [VERCEL] [ATH-40]
+`AGENTS.md` states the install, unit-test, Playwright e2e, pull-request, and Vercel merge order.
 
 ### [2026-10-27-2245 - ath-38-ai-empty-reply-recovery](./2026-10-27-2245-ath-38-ai-empty-reply-recovery.md)
 **Keywords:** [AI] [OPENROUTER] [RETRY] [FALLBACK] [ATH-38]
