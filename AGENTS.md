@@ -45,6 +45,8 @@ npm run build       # next build
 - `app/lib/ops-alert.test.ts`
 - `app/lib/ai-recovery.test.ts`
 - `app/lib/api-error-message.test.ts`
+- `app/lib/agreement-pdf.test.ts`
+- `app/lib/generated-questions.test.ts`
 
 `npm run build` needs `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `INVITE_TOKEN_SECRET` set. The CI build step sets placeholder strings for those four names. They are compile stand-ins. A local build reads `.env.local`.
 

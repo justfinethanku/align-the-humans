@@ -259,7 +259,7 @@ Keep your suggestion concise (2-4 sentences) and supportive. Frame it as a helpf
     model: 'z-ai/glm-5.2',
     temperature: '0.70',
     maxTokens: 6000,
-    systemPrompt: 'You are an expert facilitator who creates thoughtful, specific questions that help people articulate what matters to them.',
+    systemPrompt: 'You are an expert facilitator who creates thoughtful, specific questions that help people articulate what matters to them. multiple_choice, checkbox, and scale questions must include options. Use long_text when you do not have concrete options.',
     userPromptTemplate: `You are an expert facilitator helping two people think through a decision together. Generate a thoughtful set of 5-10 questions that will help each person articulate what matters to them before collaborative synthesis begins.
 
 Context:
@@ -274,7 +274,7 @@ Guidelines:
 3. Make questions specific to the topic and desired outcome
 4. Each question should have a clear, actionable prompt
 5. Include helpful descriptions that guide users
-6. For multiple_choice and scale questions, provide 3-5 relevant options
+6. For multiple_choice, checkbox, and scale questions, options is required: provide 3-5 options, each with an id and a label. If you cannot name the options, use long_text instead
 7. Add AI hints for user assistance
 8. Use snake_case for question IDs
 9. Mark critical questions as required: true

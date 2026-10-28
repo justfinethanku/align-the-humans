@@ -12,18 +12,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateObjectRecovered } from '@/app/lib/ai-generate';
 import { asAIGenerationError, InvalidModelOutputError } from '@/app/lib/ai-recovery';
+import {
+  CHOICE_QUESTION_OPTIONS_RULE,
+  generatedQuestionsSchema,
+  takeUsableGeneratedQuestions,
+} from '@/app/lib/generated-questions';
 import { getPrompt, renderPrompt } from '@/app/lib/prompts';
-import { z } from 'zod';
 
 import { createServerClient, requireAuth } from '@/app/lib/supabase-server';
-import {
-  GenerateQuestionsRequestSchema,
-  AlignmentQuestionsArraySchema,
-} from '@/app/lib/schemas';
+import { GenerateQuestionsRequestSchema } from '@/app/lib/schemas';
 import {
   getFallbackTemplate,
   sanitizeQuestions,
-  isValidQuestion,
 } from '@/app/lib/templates';
 import {
   ValidationError,
@@ -136,6 +136,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const promptConfig = await getPrompt('generate-questions');
     let questions: AlignmentQuestion[];
     let source: GenerateQuestionsResponse['data']['source'];
+    let droppedQuestionCount = 0;
 
     try {
       const generatedQuestions = await generateQuestionsWithAI(
@@ -143,16 +144,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         userId
       );
       questions = generatedQuestions.questions;
+      droppedQuestionCount = generatedQuestions.dropped;
       source = {
         type: 'ai',
         model: generatedQuestions.modelId,
       };
-
-      // Validate generated questions
-      const validationResult = AlignmentQuestionsArraySchema.safeParse(questions);
-      if (!validationResult.success) {
-        console.warn('AI-generated questions failed validation, using fallback', validationResult.error);
-        throw new Error('Generated questions failed validation');
+      if (generatedQuestions.dropped > 0) {
+        console.warn('Kept generated questions that passed validation and dropped the rest', {
+          alignmentId: validatedRequest.alignmentId,
+          kept: questions.length,
+          dropped: generatedQuestions.dropped,
+        });
       }
     } catch (aiError) {
       // Fall back to curated template
@@ -198,6 +200,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             source: source.type,
             model: source.model,
             alignmentId: validatedRequest.alignmentId,
+            ...(source.type === 'ai' ? { droppedQuestionCount } : {}),
           },
         } as any, // Type assertion needed for JSONB field
         created_by: userId,
@@ -296,7 +299,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 async function generateQuestionsWithAI(
   request: GenerateQuestionsRequest,
   userId: string
-): Promise<{ questions: AlignmentQuestion[]; modelId: string }> {
+): Promise<{ questions: AlignmentQuestion[]; dropped: number; modelId: string }> {
   const timer = new PerformanceTimer();
 
   const promptConfig = await getPrompt('generate-questions');
@@ -310,63 +313,36 @@ async function generateQuestionsWithAI(
     userId,
   });
 
-  const questionSchema = z.object({
-    questions: z.array(
-      z.object({
-        id: z.string(),
-        prompt: z.string(),
-        description: z.string().optional(),
-        type: z.enum(['short_text', 'long_text', 'multiple_choice', 'checkbox', 'number', 'scale']),
-        required: z.boolean(),
-        options: z.array(
-          z.object({
-            id: z.string(),
-            label: z.string(),
-          })
-        ).optional(),
-        followUps: z.array(z.any()).optional(),
-        aiHints: z.object({
-          explainPrompt: z.string().optional(),
-          examplePrompt: z.string().optional(),
-          suggestionPrompt: z.string().optional(),
-        }).optional(),
-        // Explicit keys: the AI SDK marks zod 4 records as closed objects,
-        // so a record here would tell the model metadata must be empty.
-        metadata: z.object({
-          category: z.string().optional(),
-          placeholder: z.string().optional(),
-          min: z.number().optional(),
-          max: z.number().optional(),
-        }).optional(),
-      })
-    ),
-  });
-
   try {
     const recovered = await generateObjectRecovered({
       modelId: promptConfig.model,
       task: 'structured',
-      schema: questionSchema,
+      schema: generatedQuestionsSchema,
       system: promptConfig.systemPrompt,
-      prompt: renderPrompt(promptConfig.userPromptTemplate, {
+      prompt: `${renderPrompt(promptConfig.userPromptTemplate, {
         topic: request.clarity.topic,
         participants: request.clarity.participants.join(' and '),
         desiredOutcome: request.clarity.desiredOutcome,
         templateSeed: request.templateSeed,
         focusAreas: buildFocusAreas(request.templateSeed),
-      }),
+      })}\n\n${CHOICE_QUESTION_OPTIONS_RULE}`,
       temperature: promptConfig.temperature,
       maxOutputTokens: promptConfig.maxTokens,
+      // A mixed batch is usable. Retry only when every question is unusable,
+      // so one option-less choice question does not discard the rest.
       validate: (object) => {
-        const validQuestions = object.questions.filter(isValidQuestion);
-        if (validQuestions.length === 0) {
-          throw new InvalidModelOutputError('No valid questions produced');
+        if (takeUsableGeneratedQuestions(object.questions).questions.length === 0) {
+          throw new InvalidModelOutputError('No usable questions produced');
         }
       },
     });
 
-    const validQuestions = recovered.object.questions.filter(isValidQuestion);
-    return { questions: validQuestions as AlignmentQuestion[], modelId: recovered.modelId };
+    const selected = takeUsableGeneratedQuestions(recovered.object.questions);
+    return {
+      questions: selected.questions,
+      dropped: selected.dropped,
+      modelId: recovered.modelId,
+    };
   } catch (error) {
     logError(error, {
       alignmentId: request.alignmentId,
