@@ -4,7 +4,9 @@ This runbook replaces `E2E_TEST_PLAN.md`. That plan described the November 2025 
 
 ## Status
 
-The long-document PDF check and the signed-in two-partner journey have not been re-run since the September 27, 2026 redesign. Those checks are tracked in [ATH-14](https://linear.app/contentionmedia/issue/ATH-14) and [ATH-32](https://linear.app/contentionmedia/issue/ATH-32).
+On October 27, 2026 three completed agreements were exported from production (`https://www.alignthehumans.com`) and every page was checked. The 5-page "A fair guest and shared-space policy" (7 terms) and the 3-page overnight-guests agreement (1 long term) kept each term whole. Both had one fully blank page between the last term and the disclaimer. The 5-page file also left the "Detailed Terms" heading alone at the bottom of page 1. A 2-page single-short-term export had no blank page. Those two defects are fixed in the PDF exporter ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14)). Retest from a completed agreement: Download Agreement, then open every page. There should be no blank page, no term sliced mid-line, and "Detailed Terms" on the same page as Term 1. Repeat with one long term that fills a page and with one short term.
+
+The signed-in two-partner journey has not been re-run since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)).
 
 The July 11–12, 2026 sections below are historical evidence from before that redesign. They are not a current pass. No staging Supabase project is verified. How production deploys, how to compare applied migrations with `supabase/migrations`, and how to roll a deploy or a migration back are in `docs/deploy.md`. `supabase/config.toml` describes a local Supabase stack only; it names no hosted project. A recipe that says "isolated project" means a project an operator names. Migrations, invite-row inserts, and forced failures in those recipes run on that isolated project.
 
@@ -18,12 +20,13 @@ The July 11–12, 2026 sections below are historical evidence from before that r
 - `app/lib/ops-alert.test.ts`
 - `app/lib/ai-recovery.test.ts`
 - `app/lib/api-error-message.test.ts`
+- `app/lib/agreement-pdf.test.ts` — keeps "Detailed Terms" with Term 1, and drops only the full-page disclaimer spacer
 
-These unit tests do not cover invite, join, answers, analysis, signatures, or PDF export. `npm run lint`, `npm run type-check`, and `npm run build` are the other checks in `.github/workflows/ci.yml`. The signed-in core journey (invite, join, answer, analyze, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts. `.github/workflows/e2e.yml` runs that command on pull requests to `main` and on pushes to `main`.
+These unit tests do not cover invite, join, answers, analysis, signatures, or the browser PDF rasterizer. `npm run lint`, `npm run type-check`, and `npm run build` are the other checks in `.github/workflows/ci.yml`. The signed-in core journey (invite, join, answer, analyze, sign, PDF) runs as `npm run test:e2e` on a local Supabase stack with a stubbed model and made-up accounts. `.github/workflows/e2e.yml` runs that command on pull requests to `main` and on pushes to `main`.
 
 ## Current journey
 
-Status: not re-run since the September 27, 2026 redesign ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14), [ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The steps below describe the routes as the code implements them today. They are the procedure for the next signed-in pass. They are not a record of a pass.
+Status: the signed-in journey has not been re-run since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The October 27, 2026 PDF page check is in the status section ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14)). The steps below describe the routes as the code implements them today. They are the procedure for the next signed-in pass. They are not a record of a pass.
 
 Role/account: two authenticated users. On production (`https://alignthehumans.com`), use the labeled comped creator and partner accounts from the operator handoff. A creator with no paid credit, no `pro` or `team` plan, and no future `comped_until` can activate one alignment. The second activation returns `402` with `error.code` `FREE_LIMIT_REACHED` before any AI request. Passwords stay in the operator handoff. A localhost run is separate from production evidence.
 
@@ -100,9 +103,9 @@ Opening `/alignment/[id]` routes by status:
 ### 8. PDF
 
 1. Download Agreement is rendered only after both participants have signed (`allSigned`). It is not a server PDF route.
-2. The button rasterizes `#alignment-document-export` in the browser with `html2pdf.js` 0.14.0 and jsPDF 4.2.1 (letter, portrait, 0.5 inch margin, JPEG via html2canvas). The filename is the alignment title slug plus `.pdf`.
-3. Page breaks use `before: ['.document-disclaimer']` and avoid headings, table rows, `.term`, `.signature-participant-row`, `.document-disclaimer`, `.document-footer`, and `.document-meta`. The file is an image, so text is not selectable.
-4. Open every page. Terms must not be sliced mid-line. The agreement date must match between the summary and the body. Both signature rows must be intact and show explicit UTC timestamps. This is the long-document check in ATH-14. A signed-in PDF export and one live AI generation (`generate-questions` or `analyze`) are the checks in ATH-32. Neither has been re-run on the current production build.
+2. The button rasterizes `#alignment-document-export` in the browser with `html2pdf.js` 0.14.0 (letter, portrait, 0.5 inch margin, JPEG via html2canvas). The import is `html2pdf.js/src/index.js`. The published `dist/html2pdf.js` embeds jsPDF 4.0.0, which is the Producer string on production PDFs from before this fix, and that copy does not include the 4.2.1 patches for the ATH-28 advisories. The source entry uses the direct `jspdf` dependency 4.2.1. The filename is the alignment title slug plus `.pdf`.
+3. Page breaks use `before: ['.document-disclaimer']` and avoid headings, table rows, `.term`, `.term-heading-keep`, `.signature-participant-row`, `.document-disclaimer`, `.document-footer`, and `.document-meta`. html2pdf inserts a full extra page when that forced break lands on a disclaimer already at the top of a page; the exporter removes that spacer. The "Detailed Terms" heading is grouped with the first term so it is not left at the bottom of a page. The file is an image, so text is not selectable.
+4. Open every page. Terms must not be sliced mid-line. "Detailed Terms" must be on the same page as Term 1. There must be no blank page. The agreement date must match between the summary and the body. Both signature rows must be intact and show explicit UTC timestamps. The October 27, 2026 production check found the 5-page and 3-page exports above: terms were not split, each file had a blank page, and the 5-page file had the orphaned heading. This change fixes the blank page and the heading. Retest with Download Agreement on a multi-term agreement, a long single term, and a short term. A signed-in walk through invite, answers, analysis, and one live AI generation remains [ATH-32](https://linear.app/contentionmedia/issue/ATH-32).
 
 What to record when that pass happens: alignment id, invite HTTP status (not the token), analysis rounds with score and conflict count, the snapshot hash both people signed, whether status stayed `resolving` after the first signature and became `complete` after the second, and the PDF page count plus any clipped line. Credentials and the raw invite token stay out of the notes.
 
@@ -112,7 +115,7 @@ The sections below keep the July 11–12 lessons. Read them as what that run obs
 
 ## Deployed production journey and capture gate
 
-Status: historical July 12, 2026 production run. The long-document PDF check and the signed-in journey have not been re-run since the September 27, 2026 redesign (tracked in [ATH-14](https://linear.app/contentionmedia/issue/ATH-14) and [ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The July "needs repair" pagination note is not the current status.
+Status: historical July 12, 2026 production run. The October 27, 2026 production PDF check, including the blank page and orphaned heading fixed after it, is in the status section ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14)). The signed-in journey has not been re-run since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)). The July "needs repair" pagination note is not the current status.
 
 Purpose: Verify the deployed `alignthehumans.com` build through invite generation, multi-round analysis, report transition, agreement signatures, and PDF export before creating a separate clean demo-capture alignment.
 
@@ -168,7 +171,7 @@ Known selector/flow lessons:
 
 ## Recovery checkpoint: round 3 through signed agreement
 
-Status: tested locally against the production database on 2026-07-11. Deployed production was exercised on July 12, 2026, in the section above. The long-document PDF check and the signed-in journey have not been re-run since the September 27, 2026 redesign (tracked in [ATH-14](https://linear.app/contentionmedia/issue/ATH-14) and [ATH-32](https://linear.app/contentionmedia/issue/ATH-32)).
+Status: tested locally against the production database on 2026-07-11. Deployed production was exercised on July 12, 2026, in the section above. The October 27, 2026 production PDF check is in the status section ([ATH-14](https://linear.app/contentionmedia/issue/ATH-14)). The signed-in journey has not been re-run since the September 27, 2026 redesign ([ATH-32](https://linear.app/contentionmedia/issue/ATH-32)).
 
 Purpose: Complete an existing two-person alignment from the round-3 analysis checkpoint through document generation, both signatures, completed status, and PDF export. This exercises the current branch through localhost against the production database; it does not prove that the deployed production application has the same fixes or configuration.
 
