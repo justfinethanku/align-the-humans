@@ -2,7 +2,7 @@
 
 This is an auto-generated index of all changelog entries. Use Cmd+F to search across all sessions.
 
-**Total Changelogs: 86**
+**Total Changelogs: 87**
 
 ### [2026-10-28-1028 - ath-50-question-options](./2026-10-28-1028-ath-50-question-options.md)
 **Keywords:** [AI] [QUESTIONS] [VALIDATION] [OPENROUTER] [ATH-50]
@@ -35,6 +35,10 @@ Agreement PDFs no longer insert a blank page before the disclaimer or leave "Det
 ### [2026-10-27-2245 - ath-38-ai-empty-reply-recovery](./2026-10-27-2245-ath-38-ai-empty-reply-recovery.md)
 **Keywords:** [AI] [OPENROUTER] [RETRY] [FALLBACK] [ATH-38]
 An empty or schema-invalid model reply is retried on the prompt's model, then on the other configured model, and the user is asked to try again if that still fails.
+
+### [2026-10-27-2227 - ath-9-privacy-openrouter](./2026-10-27-2227-ath-9-privacy-openrouter.md)
+**Keywords:** [PRIVACY] [OPENROUTER] [COPY] [ATH-9]
+The public privacy page names OpenRouter and the models the AI routes actually send alignment responses to.
 
 ### [2026-10-27-1648 - ath-fleet-207b-restore-linear-lines](./2026-10-27-1648-ath-fleet-207b-restore-linear-lines.md)
 **Keywords:** [DOCS] [AGENTS] [LINEAR] [FLEET-207] [ATH-FLEET-207B]

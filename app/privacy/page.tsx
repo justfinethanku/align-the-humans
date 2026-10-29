@@ -35,7 +35,7 @@ export default function PrivacyPage() {
               Privacy Policy
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
-              Last updated: July 1, 2026
+              Last updated: October 27, 2026
             </p>
           </header>
 
@@ -89,9 +89,9 @@ export default function PrivacyPage() {
               </p>
               <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                 <li>
-                  <strong className="text-foreground">Anthropic Claude</strong> (via the Vercel AI
-                  Gateway) — processes your alignment responses to generate analysis, suggestions,
-                  and agreement documents
+                  <strong className="text-foreground">OpenRouter</strong> — sends your alignment
+                  responses to Z.ai (GLM 5.2) or Anthropic Claude (Sonnet 4.6 or Haiku 4.5) for
+                  analysis, suggestions, and questions
                 </li>
                 <li>
                   <strong className="text-foreground">Resend</strong> — delivers transactional
